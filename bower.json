@@ -1,0 +1,24 @@
+{
+  "name": "Tiem",
+  "version": "0.0.0",
+  "homepage": "https://github.com/jon49/Tiem",
+  "authors": [
+    "Jon Nyman <nymanjon@gmail.com>"
+  ],
+  "description": "Static timecard app",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.1.1",
+    "bacon": "~0.7.10",
+    "bacon.jquery": "~0.4.7",
+    "lodash": "~2.4.1",
+    "selectize": "~0.9.0"
+  }
+}
