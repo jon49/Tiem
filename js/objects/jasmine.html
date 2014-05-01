@@ -1,4 +1,19 @@
-/**
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>Jasmine Test - objects.js</title>
+  <link rel="stylesheet" type="text/css" href="jasmine.css">
+  <script type="text/javascript" src="jasmine.js"></script>
+  <script type="text/javascript" src="jasmine-html.js"></script>
+  <script type="text/javascript" src="jasmineCompleteReporter.js"></script>
+  <script src="jquery.js"></script>
+  
+  
+</head>
+<body>
+<script type="text/javascript">
+    /**
  * Created by jon on 2/11/14.
  */
 
@@ -32,16 +47,10 @@ Tiem.k = Tiem.constants([['jobId'],
 
 // **Validate objects**
 
-Tiem.O = function () {
+Tiem.O.bilby = function () {
 
-   var Jobs = function(){
-      this.list = []
-      this.current = undefined
-   }
-   var JobSettings = function(){
-      this.list = []
-      this.current = undefined
-   }
+   var Jobs = function(){this.jobList = []}
+   var JobSettings = function(){this.jobSettingList = []}
    
    // {jobID: 0, jobName: 'jobName', jobActive: true|false}
    var JobSetting = bilby.tagged('JobSetting', [Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.jobActive()])
@@ -121,20 +130,18 @@ Tiem.O = function () {
    var addCurrentJob = function(theseJobs){
       var job = theseJobs.currentJob
       //this.job Tubple5(id, comment, singleDay, inOut, date)
-      var list = _.reject(theseJobs.jobList, function(item){
+      var jobList = _.reject(this.jobList, function(item){
          return _.isEqual(item.id, job.id)
-      })
-      list.push(job)
-      theseJobs.jobList = list
-      return theseJobs
+      }).push(job)
+      this.jobList = jobList
    }
    
    var addCurrentJobSetting = function(theseJobSettings){
-      var job = theseJobSettings.current
-      theseJobSettings.list = _.reject(theseJobSettings.list, function(item){
-         return _.isEqual(item.jobId, job.jobId)
-      }).concat(job)
-      return theseJobSettings
+      var job = theseJobSettings.currentJobSetting
+      var jobSettings = _.reject(this.jobSettingList, function(item){
+         return _.isEqual(item.id, job.id)
+      })
+      this.jobSettingList = jobSettings
    }
    
    //See https://github.com/antris/js-polymorphism/blob/master/feed/feed.js
@@ -150,12 +157,12 @@ Tiem.O = function () {
    
    //Associate job settings ID with different job name
    var changeJobName = function(name){
-      this.current[Tiem.k.jobName()] = name
+      this.currentJobSetting[Tiem.k.jobName()] = name
       return addCurrentJobSetting(this)
    }
    
    var changeJobActive = function(active){
-      this.current[Tiem.k.jobActive()] = active
+      this.currentJobSetting[Tiem.k.jobActive()] = active
       return addCurrentJobSetting(this)
    }
    
@@ -182,7 +189,7 @@ Tiem.O = function () {
    }
    
    var addJobSetting = function(jobSetting){
-      this.current = jobSetting
+      this.currentJobSetting = jobSetting
       return addCurrentJobSetting(this)
    }
    
@@ -195,69 +202,69 @@ Tiem.O = function () {
    }
    
    var idSetting = function(id){
-      var current = _.filter(this.list, function(job){
-         return _.isEqual(job.jobId, id)
+      var current = _.filter(this.jobSettingList, function(id_){
+         return _.isEqual(id_, id)
       })
-      this.current = _.first(current)
+      this.currentJobSetting = current
       return this
    }
-
-   var getSettings = function(){
-      return this.list
-   }
    
-   var isObjectAnd = _.curry(function(object, func){
+   var isJobsAnd = function(func){
       return function(v){
-         return bilby.isInstanceOf.apply(this, object) && func.apply(null, [v])
-      }
-   })
-
-   var isJobsAnd = isObjectAnd(Jobs)
-   
-   var isJobSettingsAnd = isObjectAnd(JobSettings)
-
-   //Do I need to check for option or can I just do the code in the some branch? Probably.
-   var isOptionAnd = function(func){
-      return function(v){
-         if (bilby.isOption(v)){
-            return bilby.some(v).fold(func.apply(null, [v]), function(){return true})
-         } else return false
+         return bilby.isInstanceOf(Jobs, this) && func.apply(null, [v])
       }
    }
-
-   var toList = function(){return this.list}
-
-   var toObject = function(){return this.current}
    
-   var settingExtensions = bilby.environment()
+   var isJobSettingsAnd = function(func){
+      return function(v){
+         return bilby.isInstanceOf(JobSettings, this) && func.apply(null, [v])
+      }
+   }
+   
+   return bilby.environment()
+      .method(
+         'validate',
+         true,
+         validateJob
+      )
+      .method(
+         'add',
+         bilby.isInstanceOf(Jobs),
+         addJob
+      )
+      .method(
+         'id',
+         isJobsAnd(Tiem.isWholeNumber),
+         id
+      )
+      .method(
+         'update',
+         isJobsAnd(_.isDate),
+         updateJobDate
+      )
+      .method(
+         'update',
+         isJobsAnd(_.isString),
+         updateJobComment
+      )
       .property(
          'JobSettings',
          function(){return new JobSettings()}
       )
       .method(
-         'toList',
-         isJobSettingsAnd(bilby.constant(true)),
-         toList
-      )
-      .method(
-         'toObject',
-         isJobSettingsAnd(bilby.constant(true)),
-         toObject
-      )
-      .method(
-         'create',
-         isJobSettingsAnd(function(id, name, active){
+         'createJobSetting',
+         function(id, name, active){
             return Tiem.isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
-         }),
+         },
          JobSetting
       )
       .method(
-         'add',
-         isJobSettingsAnd(bilby.isInstanceOf(JobSetting)),
+         'addJobSetting',
+         bilby.isInstanceOf(JobSettings),
          addJobSetting
       )
       .method(
-         'id',
+         'idSetting',
          isJobSettingsAnd(Tiem.isWholeNumber),
          idSetting
       )
@@ -271,77 +278,6 @@ Tiem.O = function () {
          isJobSettingsAnd(_.isBoolean),
          changeJobActive
       )
-   
-   var isJobs = bilby.isInstanceOf(Jobs)
-
-   var jobExtensions = bilby.environment()
-      .property(
-         'Jobs',
-         function(){return new Jobs()}
-      )
-      .method(
-         'toList',
-         isJobs, 
-         toList
-      )
-      .method(
-         'toObject',
-         isJobs,
-         toObject
-      )
-
-   // var ClockState = bilby.tagged(Tiem.k.state(), [Tiem.k. in (), Tiem.k.out()])
-   // var clockState = _.curry(ClockState)
-   // var JobSkeleton = bilby.tagged('JobSkeleton', [Tiem.k.jobId(), Tiem.k.comment(), Tiem.k.singleDay(), ClockState])
-   // var jobSkeleton = _.curry(JobSkeleton)
-            function(id, name, active){
-               return bilby.isInstanceOf(this) && Tiem.isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
-            },
-      .method(
-         'create',
-         isJobsAnd(function(id, comment, singleDay, inOut, date){
-            return Tiem.isWholeNumber(id) && (bilby.isOption(comment)) && bilby.isOption
-         })
-      )
-      
-
-   var extendObject = function(object, extensions){
-      _(extensions).forIn(function(value, key){
-         object.prototype[key] = value 
-      })
-   }
-
-   extendObject(JobSettings, settingExtensions)
-   
-   return settingExtensions
-   
-//   bilby.environment()
-//      .method(
-//         'validate',
-//         true,
-//         validateJob
-//      )
-//      .method(
-//         'add',
-//         bilby.isInstanceOf(Jobs),
-//         addJob
-//      )
-//      .method(
-//         'id',
-//         isJobsAnd(Tiem.isWholeNumber),
-//         id
-//      )
-//      .method(
-//         'update',
-//         isJobsAnd(_.isDate),
-//         updateJobDate
-//      )
-//      .method(
-//         'update',
-//         isJobsAnd(_.isString),
-//         updateJobComment
-//      )
-
       /*.property(
          'validateJob',
          validateJob
@@ -751,3 +687,88 @@ Tiem.Settings.jobs = function () {
       _.assign(Tiem.Settings.createJobActive(false), Tiem.Settings.createJobId(2), Tiem.Settings.createJobName('Not a Job'))
       ]
 }
+    
+    
+    
+    
+    var myParent = window.parent;
+    var jasmineEnv = jasmine.getEnv();
+    jasmineEnv.updateInterval = 1000;
+
+    var htmlReporter = new jasmine.HtmlReporter();
+    var reportRunnerResults = htmlReporter.reportRunnerResults;
+
+    htmlReporter.reportRunnerResults = function(runner) {
+        reportRunnerResults(runner);
+
+        var specs = runner.specs();
+        var specResults;
+        var assertionCount = {total: 0, passed: 0, failed: 0};
+        var result = {};
+        for (var i = 0; i < specs.length; ++i) {
+            if (this.specFilter(specs[i])) {
+                specResults = specs[i].results();
+                assertionCount.total += specResults.totalCount;
+                assertionCount.passed += specResults.passedCount;
+                assertionCount.failed += specResults.failedCount;
+            }
+        }
+    
+        if (console && console.log) {
+            console.log('Total: ' + assertionCount.total);
+            console.log('Passed: ' + assertionCount.passed);
+            console.log('Failed: ' + assertionCount.failed);
+        }
+        
+        
+        if (assertionCount.failed) {
+            result.status = "failed";
+            result.message = assertionCount.failed + " failures";
+        } else {
+            result.status = "passed";
+            result.message = "Success! " + assertionCount.passed + " passed";
+        }
+        
+        if(myParent.reportComplete) {
+            console.log("myParent.reportComplete", result);
+            myParent.reportComplete(result);
+        }
+        
+        var totals = document.querySelectorAll(".grand-total .rs");
+        if(myParent.coverageComplete) {
+            myParent.coverageComplete({
+                message: totals && totals[0] ? totals[0].innerHTML + " coverage" : "No coverage"
+            });
+        }
+        
+    };
+   
+    jasmineEnv.addReporter(htmlReporter);
+    
+    jasmineEnv.specFilter = function(spec) {
+        return htmlReporter.specFilter(spec);
+    };
+
+    var currentWindowOnload = window.onload;
+                                                      
+    window.onload = function() {
+        if (currentWindowOnload) {
+            currentWindowOnload();
+        }
+        execJasmine();
+    };
+
+    function execJasmine() {
+        var oldCallback = jasmineEnv.currentRunner().finishCallback;
+        jasmineEnv.currentRunner().finishCallback = function () {
+            oldCallback.apply(this, arguments);
+            console.log(this, arguments);
+            
+            htmlReporter.reportRunnerResults();
+           
+        };
+        jasmineEnv.execute();
+    }
+</script>
+</body>
+</html>

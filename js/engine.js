@@ -24,7 +24,7 @@ Tiem.Clock.isClockedIn = function (clockState) {
  * @param {Date} clockInTime Time at which the person clocks in.
  * @return {Object<clockInfo>} New information on the clock and hours status.
  */
-Tiem.Clock. in = function (clockInfo, clockInTime) {
+Tiem.Clock.in = function (clockInfo, clockInTime) {
     return _.assign(
         (_.isEmpty(clockInfo)) ? _.assign(Tiem.O.defaultClockInfo(), Tiem.O.createClockState(Tiem.O.createIn(clockInTime))) : _.clone(clockInfo),
         Tiem.O.inState(clockInTime))
