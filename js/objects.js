@@ -207,14 +207,21 @@ Tiem.O = function () {
    }
    
    var isObjectAnd = _.curry(function(object, func){
-      return function(v){
-         return bilby.isInstanceOf.apply(this, object) && func.apply(null, [v])
+      var isObject = bilby.isInstanceOf(object)
+      return function(){
+         return isObject.apply(this) && func.apply(null, arguments)
       }
    })
 
    var isJobsAnd = isObjectAnd(Jobs)
-   
+   //isObjectAnd(JobSettings)
+   //return bilby.isInstanceOf.apply(this, object) && func.apply(null, [v])
    var isJobSettingsAnd = isObjectAnd(JobSettings)
+//       function(func){
+//      return function(){
+//         return bilby.isInstanceOf(JobSettings).apply(this) && func.apply(null, arguments) // bilby.isInstanceOf(JobSettings)(this) && 
+//      }
+//   }
 
    //Do I need to check for option or can I just do the code in the some branch? Probably.
    var isOptionAnd = function(func){
@@ -294,9 +301,9 @@ Tiem.O = function () {
    // var clockState = _.curry(ClockState)
    // var JobSkeleton = bilby.tagged('JobSkeleton', [Tiem.k.jobId(), Tiem.k.comment(), Tiem.k.singleDay(), ClockState])
    // var jobSkeleton = _.curry(JobSkeleton)
-            function(id, name, active){
-               return bilby.isInstanceOf(this) && Tiem.isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
-            },
+//            function(id, name, active){
+//               return bilby.isInstanceOf(this) && Tiem.isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
+//            },
       .method(
          'create',
          isJobsAnd(function(id, comment, singleDay, inOut, date){
@@ -311,6 +318,10 @@ Tiem.O = function () {
       })
    }
 
+//   _(settingExtensions).forIn(function(value, key){
+//      JobSettings.prototype[key] = value 
+//   })
+   
    extendObject(JobSettings, settingExtensions)
    
    return settingExtensions
