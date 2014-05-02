@@ -136,32 +136,32 @@ describe("How the utilities are used in project", function () {
    })
 })
 
-describe("Contraints", function () {
-   var throwString = 'This is a test.'
-   var testFunction = _.isNumber
-   var isValid = Tiem.Constraints.validator(throwString, testFunction)
-   var num = _.partial(Tiem.Constraints.condition1(isValid), _.identity)
-   it("should return a predicate closure with a message property", function () {
-      expect(isValid.message).toBe(throwString)
-      expect(isValid(0)).toBe(true)
-      expect(isValid('nope')).toBe(false)
-   })
-   it("should return an empty array when valid", function () {
-      expect(num(0)).toEqual(0)
-   })
-   it("should throw an error when not valid", function () {
-      expect(function () {
-         num('not a number')
-      }).toThrow(new Error(throwString))
-   })
-   it("should accept an array of validator arguments and return an identity partial application of condition1", function () {
-      expect(Tiem.Constraints.conditions([throwString, testFunction])(0)).toEqual(0)
-      expect(function () {
-         return Tiem.Constraints.conditions([throwString, testFunction])('not a number')
-      })
-         .toThrow(new Error(throwString))
-   })
-})
+// describe("Contraints", function () {
+//    var throwString = 'This is a test.'
+//    var testFunction = _.isNumber
+//    var isValid = Tiem.Constraints.validator(throwString, testFunction)
+//    var num = _.partial(Tiem.Constraints.condition1(isValid), _.identity)
+//    it("should return a predicate closure with a message property", function () {
+//       expect(isValid.message).toBe(throwString)
+//       expect(isValid(0)).toBe(true)
+//       expect(isValid('nope')).toBe(false)
+//    })
+//    it("should return an empty array when valid", function () {
+//       expect(num(0)).toEqual(0)
+//    })
+//    it("should throw an error when not valid", function () {
+//       expect(function () {
+//          num('not a number')
+//       }).toThrow(new Error(throwString))
+//    })
+//    it("should accept an array of validator arguments and return an identity partial application of condition1", function () {
+//       expect(Tiem.Constraints.conditions([throwString, testFunction])(0)).toEqual(0)
+//       expect(function () {
+//          return Tiem.Constraints.conditions([throwString, testFunction])('not a number')
+//       })
+//          .toThrow(new Error(throwString))
+//    })
+// })
 
 describe("Core constants", function () {
    it("should return the string 'id'", function () {
@@ -225,12 +225,12 @@ describe('JobSettings object manipulation and creation', function(){
          expect(settings.id(1).toObject()).toEqual(job2)
       })
    })
-   describe('the function change', function(){
+   describe('the function update', function(){
       it('should be able to update the job name', function(){
-         expect(settings.id(0).change('New Job Name').toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: true})
+         expect(settings.id(0).update('New Job Name').toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: true})
       })
       it('should be able to update the job active status', function(){
-         expect(settings.id(0).change(false).toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: false})
+         expect(settings.id(0).update(false).toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: false})
       })
    })
 })
@@ -244,8 +244,8 @@ describe('Job object manipulation and creation', function(){
 
    var jobs = Tiem.O.Jobs.Jobs()
    // (id, comment, singleDay, inOut, date)
-   var job1 = jobs.create(settings, 0, '', bilby.none, Tiem.k.in(), new Date())
-   var job2 = jobs.create(settings, 1, 'My Comment', bilby.some(_.range(24).map(function(){return 1})), Tiem.k.out(), new Date())
+   var job1 = jobs.create(settings, 0, '', bilby.none, Tiem.k.out(), new Date())
+   var job2 = jobs.create(settings, 1, 'My Comment', bilby.some(_.range(24).map(function(){return 1})), Tiem.k.in(), new Date())
 
    describe('the function create', function(){
       it('should be able to create a valid job', function(){
@@ -254,352 +254,363 @@ describe('Job object manipulation and creation', function(){
          expect(job1[Tiem.k.jobName()]).toBe('My lovely job')
       })
    })
-
-//   describe('the function add', function(){
-//      it('should add a new job setting to the job setting list', function(){
-//         expect(settings.add(newJobSetting).toList()).toEqual([newJobSetting])
-//      })
-//   })
-//   describe('the function id', function(){
-//      it('should select the object with selected id', function(){
-//         settings.add(newJobSetting).add(job2)
-//         expect(settings.id(0).toObject()).toEqual(newJobSetting)
-//         expect(settings.id(1).toObject()).toEqual(job2)
-//      })
-//   })
-//   describe('the function change', function(){
-//      it('should be able to update the job name', function(){
-//         expect(settings.id(0).change('New Job Name').toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: true})
-//      })
-//      it('should be able to update the job active status', function(){
-//         expect(settings.id(0).change(false).toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: false})
-//      })
-//   })
-})
-
-describe("Core validation methods", function () {
-   describe("The function areUniqueIds", function () {
-      it("should determine if an array of objects with key 'jobId' is unique", function () {
-         var id = Tiem.k.jobId()
-         var uniqueIds = [_.zipObject([id], [0]), _.zipObject([id], [1])]
-         var notUniqueIds = [_.zipObject([id], [0]), _.zipObject([id], [0])]
-         expect(Tiem.O.areUniqueIds(uniqueIds)).toBe(true)
-         expect(Tiem.O.areUniqueIds(notUniqueIds)).toBe(false)
+   describe('the function add', function(){
+      it('should add a new job to the job list', function(){
+         expect(jobs.add(job1).add(job2).toList()).toEqual([job1, job2])
       })
    })
-   describe("The function areUniqueNames", function () {
-      it("should determine if an array of objects with key 'jobName' is unique", function () {
-            var name = Tiem.k.jobName()
-            var uniqueNames = [_.zipObject([name], ['my job']), _.zipObject([name], ['my next job'])]
-            var notUniqueNames = [_.zipObject([name], ['same old job']), _.zipObject([name], ['same old job'])]
-            expect(Tiem.O.areUniqueNames(uniqueNames)).toBe(true)
-            expect(Tiem.O.areUniqueNames(notUniqueNames)).toBe(false)
-         })
+   describe('the function id', function(){
+      it('should select the job with selected id', function(){
+         jobs.add(job1).add(job2)
+         expect(jobs.id(0).toObject()).toEqual(job1)
+         expect(jobs.id(1).toObject()).toEqual(job2)
+      })
    })
-      it("should validate the job ID as whole number", function () {
-          expect(Tiem.O.validateJobId(0)).toEqual(0)
-          expect(function () {
-            Tiem.O.validateJobId(1.5)
-          }).toThrow(new Error('Job ID: must be a whole number'))
-          expect(function () {
-            Tiem.O.validateJobId('0')
-          }).toThrow(new Error('Job ID: must be a whole number'))
+   describe('the function update', function(){
+      it('should be able to update the job name', function(){
+         var j1 = _.cloneDeep(jobs.id(0).toObject())
+         var j1_ = _.assign(j1, {comment: 'New comment.'})
+         expect(jobs.id(0).update('New comment.').toObject()).toEqual(j1_)
+         expect(jobs.toList()[1]).toEqual(j1_)
       })
-      it("should validate the job name as a string with length greater than 0", function () {
-          var validJobName = Tiem.O.validateJobName
-          expect(validJobName('0')).toEqual('0')
-          expect(function () {
-            return validJobName([1])
-          }).toThrow(new Error('Job Name: must be string'))
-          expect(function () {
-            validJobName('')
-          }).toThrow(new Error('Job Name: must have a length greater zero'))
-          expect(function () {
-            validJobName(0)
-          }).toThrow(new Error('Job Name: must be string, Job Name: must have a length greater zero'))
+      it('should be able to toggle clocked in/out status', function(){
+         var j1 = _.cloneDeep(jobs.id(0).toObject())
+         var newDate = new Date(2014, 4, 2, 10)
+         var dateOut = new Date(2014, 4, 2, 10, 30)
+         var j1_ = _.assign(j1, {clockState: {'in': newDate}})
+         expect(jobs.id(0).update(newDate).toObject()).toEqual(j1_)
+         var singleDay_ = _.range(24).map(function(){return 0})
+         singleDay_[10] = 0.5
+         var j1$ = _.assign(j1_, {clockState: {'out': dateOut}}, {total: 0.5}, {singleDay: singleDay_})
+         expect(jobs.id(0).update(dateOut).toObject()).toEqual(j1$)
+         expect(jobs.toList()[1]).toEqual(j1$)
       })
-      describe("The function validateJobList", function () {
-          var jobValues = _.curry(_.zipObject)([Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.jobActive()])
-          var listOfJobs = [jobValues([0, 'My job', true]), jobValues([1, 'My Awesome Job', true])]
-          it("should validate a valid list of jobs setting and return the list", function () {
-            expect(Tiem.O.validateJobList(listOfJobs)).toEqual(listOfJobs)
-          })
-          it("should throw the exception 'Jobs must have unique IDs' when IDs are not unique", function () {
-            expect(function () {
-                Tiem.O.validateJobList(_.map(_.cloneDeep(listOfJobs), function (job) {
-                    return _.assign(job, _.zipObject([Tiem.k.jobId()], [0]))
-                }))
-            }).toThrow(new Error('Jobs must have unique IDs'))
-          })
-          it("should throw the exception 'Jobs must have unique names' when names are not unique", function () {
-            expect(function () {
-                Tiem.O.validateJobList(_.map(_.cloneDeep(listOfJobs), function (job) {
-                    return _.assign(job, _.zipObject([Tiem.k.jobName()], [0]))
-                }))
-            }).toThrow(new Error('Jobs must have unique names'))
-          })
-      })
-      it('should validate the active job setting as a boolean', function () {
-          var validActiveJob = Tiem.O.validateActiveJob
-          expect(validActiveJob(true)).toBe(true)
-          expect(validActiveJob(false)).toBe(false)
-          expect(function () {
-            return validActiveJob(0)
-          }).toThrow(new Error('Job Active: value must be a boolean'))
-      })
-      var singleDay = _.range(24).map(function () {
-        return 0
-    })
-    it('should validate the Single Day object as an array of numbers between -1 and 1 (inclusive) with length 24', function () {
-      var validSingleDay = Tiem.O.validateSingleDay
-      var alternatingSingleDay = _.range(24).map(function (index) {
-          return (index % 2) ? 1 : -1
-      })
-      //length of 24
-      expect(validSingleDay(singleDay)).toEqual(singleDay)
-      expect(function () {
-          return validSingleDay(_.take(singleDay, 20))
-      }).toThrow(new Error('Single Day: Must be array of size 24'))
-      expect(function () {
-          var temp = _.clone(singleDay);
-          temp.push(0)
-          return validSingleDay(temp)
-      }).toThrow(new Error('Single Day: Must be array of size 24'))
-      //all numbers
-      expect(function () {
-          var notAllNumbers = _.clone(singleDay)
-          notAllNumbers[23] = 's'
-          return validSingleDay(notAllNumbers)
-      }).toThrow(new Error('Single Day: Must be all numbers, Single Day: Value must be between -1 and 1'))
-      //between -1 and 1 inclusive
-      expect(validSingleDay(alternatingSingleDay)).toEqual(alternatingSingleDay)
-      expect(function () {
-          return validSingleDay(alternatingSingleDay)
-      })
-    })
-    it('should validate the date object as a date', function () {
-      var newDate = new Date()
-      var validDate = Tiem.O.validateDate
-      expect(validDate(newDate)).toEqual(newDate)
-      expect(function () {
-          return validDate('not a date')
-      }).toThrow(new Error('In: Must have valid date'))
-    })
-    var in_ = _.zipObject([Tiem.k. in ()], [new Date()])
-    it('should validate the in/out objects', function () {
-      var out_ = _.zipObject([Tiem.k.out()], [])
-      var notInOut = {
-          inOut: new Date()
-      }
-      var validInOut = Tiem.O.validateClockState
-      expect(validInOut(in_)).toEqual(in_)
-      expect(validInOut(out_)).toEqual(out_)
-      expect(function () {
-          return validInOut(notInOut)
-      }).toThrow('Clock State: Must be an object type In or Out')
-    })
-    it('should validate the clock information object as an array of single day, total, and clock state', function () {
-      var singleDay = Tiem.O.createSingleDay('')
-      var clockInfo = [singleDay, Tiem.O.createTotal(singleDay), Tiem.O.defaultClockInfo()]
-      var notClockInfo = _.clone(clockInfo)
-      delete notClockInfo[0]
-      var validClockInfo = Tiem.O.validateClockInfo
-      expect(validClockInfo(clockInfo)).toEqual(clockInfo)
-      expect(function () {
-          return validClockInfo(notClockInfo)
-      }).toThrow(new Error('Clock Info: Must be an object of Clock State, Total, and Single Day'))
-    })
-    it('should validate the job information object as an array of clockInfo, jobId, jobName, and comment', function () {
-      var jobInfo = [Tiem.O.defaultClockInfo(),
-                 Tiem.O.createJobId(0),
-                 Tiem.O.createJobName('Name'),
-                 Tiem.O.createComment('')
-                ]
-      var notJobInfo = _.clone(jobInfo)
-      delete notJobInfo[0]
-      var validJobInfo = Tiem.O.validateJobInfo
-      expect(validJobInfo(jobInfo)).toEqual(jobInfo)
-      expect(function () {
-          return validJobInfo(notJobInfo)
-      }).toThrow(new Error('Job Info: Must have objects Clock Info, Job ID/Name, and comment'))
-    })
-    it('should validate the day array as a date and job information object', function () {
-      var dayArray = [new Date(), [_.zipObject([Tiem.k.jobId()], [0]), _.zipObject([Tiem.k.jobId()], [1])]]
-      var notDayArray = _.clone(dayArray);
-      delete notDayArray[1]
-      var validDay = Tiem.O.validateDay
-      expect(validDay(dayArray)).toEqual(dayArray)
-      expect(function () {
-          return validDay(notDayArray)
-      }).toThrow(new Error('Day: Must have unique IDs, Day: Must have date and job list'))
-    })
+   })
 })
 
-describe("Core object creation", function () {
-    it("should create a job ID object as whole number", function () {
-      expect(Tiem.O.createJobId(0)).toEqual(_.zipObject([Tiem.k.jobId()], [0]))
-      expect(function () {
-          Tiem.O.createJobId(1.5)
-      }).toThrow(new Error('Job ID: must be a whole number'))
-      expect(function () {
-          Tiem.O.createJobId('0')
-      }).toThrow(new Error('Job ID: must be a whole number'))
-    })
-    it('should create the Single Day object ({singleDay: [0..23]}) as an array of numbers between -1 and 1 (inclusive) with length 24', function () {
-      var alternatingSingleDay = _.range(24).map(function (index) {
-          return (index % 2) ? 1 : -1
-      })
-      //length of 24
-      expect(Tiem.O.createSingleDay(alternatingSingleDay)).toEqual(_.zipObject([Tiem.k.singleDay()], [alternatingSingleDay]))
-      expect(Tiem.O.createSingleDay([])).toEqual(_.zipObject([Tiem.k.singleDay()], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
-      expect(function () {
-          return Tiem.O.createSingleDay(_.take(alternatingSingleDay, 20))
-      }).toThrow(new Error('Single Day: Must be array of size 24'))
-      expect(function () {
-          var temp = _.clone(alternatingSingleDay);
-          temp.push(0)
-          return Tiem.O.createSingleDay(temp)
-      }).toThrow(new Error('Single Day: Must be array of size 24'))
-      //all numbers
-      expect(function () {
-          var notAllNumbers = _.clone(alternatingSingleDay);
-          notAllNumbers[23] = 's'
-          return Tiem.O.createSingleDay(notAllNumbers)
-      }).toThrow(new Error('Single Day: Must be all numbers, Single Day: Value must be between -1 and 1'))
-    })
-    describe('The function createTotal', function () {
-      it('should create a total object from the single day object', function () {
-          var singleDay = Tiem.O.createSingleDay(_.range(24).map(function () {
-          return 1
-          }))
-          expect(Tiem.O.createTotal(singleDay)).toEqual({
-          total: 24
-          })
-      })
-    })
-    it('should create an "in" object with a date', function () {
-      var newDate = new Date()
-      expect(Tiem.O.createIn(newDate)).toEqual(_.zipObject([Tiem.k. in ()], [newDate]))
-      expect(function () {
-          return Tiem.O.createIn('not a date')
-      }).toThrow(new Error('In: Must have valid date'))
-    })
-    it('should create an "out" object with an empty value', function () {
-      expect(Tiem.O.createOut()).toEqual(_.zipObject([Tiem.k.out()], ['']))
-    })
-    it('should create clock state object containing an in or out object', function () {
-      var newDate = new Date()
-      var in_ = _.zipObject([Tiem.k. in ()], [newDate])
-      var out_ = _.zipObject([Tiem.k.out()], [''])
-      expect(Tiem.O.createClockState(in_)).toEqual(_.zipObject([Tiem.k.state()], [in_]))
-      expect(Tiem.O.createClockState(out_)).toEqual(_.zipObject([Tiem.k.state()], [out_]))
-      expect(function () {
-          return Tiem.O.createClockState({
-            notInOut: ''
-          })
-        }).toThrow('Clock State: Must be an object type In or Out')
-    })
-    it('should validate the clock information object as an array of single day, total, and clock state', function () {
-        var state = Tiem.O.createClockState(Tiem.O.createOut())
-        var singleDay = Tiem.O.createSingleDay('')
-        var total = Tiem.O.createTotal(singleDay)
-        var clockInfo = _.assign(singleDay, total, state)
-        expect(Tiem.O.createClockInfo(singleDay, total, state)).toEqual(clockInfo)
-        expect(function () {
-          return Tiem.O.createClockInfo({
-              notSingleDay: ''
-          }, {
-              notInOut: ''
-          })
-        }).toThrow(new Error('Clock Info: Must be an object of Clock State, Total, and Single Day'))
-    })
-    it('should create job information object from clockInfo, jobId, job name, and comment objects', function () {
-        var jobInfo = [Tiem.O.defaultClockInfo(),
-                   Tiem.O.createJobId(0),
-                   Tiem.O.createJobName('Name'),
-                   Tiem.O.createComment('')
-                  ]
-        expect(Tiem.O.createJobInfo(jobInfo[0], jobInfo[1], jobInfo[2], jobInfo[3])).toEqual(_.assign.apply(null, jobInfo))
-        expect(function () {
-          return Tiem.O.createJobInfo({
-              notClock: ''
-          }, {
-              notJobId: ''
-          })
-        }).toThrow(new Error('Job Info: Must have objects Clock Info, Job ID/Name, and comment'))
-    })
-    it('should create the day object as a date and list of job information objects', function () {
-        var newDate = new Date()
-        var jobInfo = Tiem.O.defaultJobInfo()
-        var jobInfo2 = _.assign(_.clone(jobInfo), _.zipObject([Tiem.k.jobId()], [1]))
-        var listOfJobInfo = [jobInfo, jobInfo2]
-        expect(Tiem.O.createDay(newDate, listOfJobInfo)).toEqual(_.zipObject([Tiem.k.day(), Tiem.k.jobList()], [newDate, [jobInfo, jobInfo2]]))
-        expect(function () {
-          return Tiem.O.createDay('s', listOfJobInfo)
-        }).toThrow(new Error('Day: Must have date and job list'))
-        expect(function () {
-          return Tiem.O.createDay(newDate, [jobInfo, jobInfo])
-        }).toThrow(new Error('Day: Must have unique IDs'))
-    })
-})
-
-describe('Main engine for time card', function () {
-    var newDate = new Date(2014, 2, 6, 16, 15, 0)
-    var outDate = new Date(2014, 2, 6, 18, 15, 0)
-    var clockedInState = Tiem.O.createClockState(Tiem.O.createIn(newDate))
-    var clockedOutState_ = Tiem.O.createClockState(Tiem.O.createOut())
-    var singleDay = Tiem.O.createSingleDay('')
-    var clockInfoOut = Tiem.O.defaultClockInfo()
-    var clockInfoIn = Tiem.O.createClockInfo(singleDay, Tiem.O.createTotal(singleDay), clockedInState)
-    var singleDayOut = Tiem.O.createSingleDay([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.75, 1.0, 0.25, 0, 0, 0, 0, 0])
-    var result = _.assign(Tiem.O.defaultClockInfo(), singleDayOut, Tiem.O.createTotal(singleDayOut))
-    describe('createClockedInState: Create clocked in state', function () {
-        it('should create designated time at stated time', function () {
-          expect(Tiem.O.inState(newDate)).toEqual(clockedInState)
-        })
-    })
-    describe('clockedOutState:', function () {
-        it('should create clockState object with out object', function () {
-          expect(Tiem.O.outState()).toEqual(clockedOutState_)
-        })
-    })
-    describe('defaultClockInfo:', function () {
-        it('should create a default clock information object which is clocked out', function () {
-          var singleDay = Tiem.O.createSingleDay('')
-          expect(Tiem.O.defaultClockInfo()).toEqual(Tiem.O.createClockInfo(singleDay, Tiem.O.createTotal(singleDay), clockedOutState_))
-        })
-    })
-    describe('isClockedIn:', function () {
-        it('should determine if clock state is clocked in ', function () {
-          expect(Tiem.Clock.isClockedIn(clockedInState)).toBe(true)
-        })
-        it('should determine if clock state is clocked out', function () {
-          expect(Tiem.Clock.isClockedIn(Tiem.O.outState())).toBe(false)
-        })
-    })
-    describe('clockIn:', function () {
-        it('should clock in clock information which is clocked out', function () {
-          expect(Tiem.Clock. in (clockInfoOut, newDate)).toEqual(clockInfoIn)
-        })
-        it('should create a new clock information object if one is not provided', function () {
-          expect(Tiem.Clock. in ('', newDate)).toEqual(clockInfoIn)
-        })
-    })
-    describe('clockOut:', function () {
-        it('should return a "clock information" object with added time which clock state\'s is out', function () {
-          expect(Tiem.Clock.out(clockInfoIn, outDate)).toEqual(result)
-        })
-        it('should return the correct time when clocking in and out during the same hour', function () {
-          var singleDay = Tiem.O.createSingleDay([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0])
-          expect(Tiem.Clock.out(clockInfoIn, new Date(2014, 2, 6, 16, 45, 0))).toEqual(_.assign(Tiem.O.defaultClockInfo(), singleDay, Tiem.O.createTotal(singleDay)))
-        })
-    })
-    describe('toggleClock:', function () {
-        it('should return a clocked in clock information when toggling from out', function () {
-          expect(Tiem.Clock.toggle(Tiem.O.defaultClockInfo(), newDate)).toEqual(_.assign(Tiem.O.defaultClockInfo(), Tiem.O.inState(newDate)))
-        })
-        it('should return a clocked out clock information with updated hours when toggling from in', function () {
-          expect(Tiem.Clock.toggle(clockInfoIn, outDate)).toEqual(result)
-        })
-    })
-})
+// describe("Core validation methods", function () {
+//    describe("The function areUniqueIds", function () {
+//       it("should determine if an array of objects with key 'jobId' is unique", function () {
+//          var id = Tiem.k.jobId()
+//          var uniqueIds = [_.zipObject([id], [0]), _.zipObject([id], [1])]
+//          var notUniqueIds = [_.zipObject([id], [0]), _.zipObject([id], [0])]
+//          expect(Tiem.O.areUniqueIds(uniqueIds)).toBe(true)
+//          expect(Tiem.O.areUniqueIds(notUniqueIds)).toBe(false)
+//       })
+//    })
+//    describe("The function areUniqueNames", function () {
+//       it("should determine if an array of objects with key 'jobName' is unique", function () {
+//             var name = Tiem.k.jobName()
+//             var uniqueNames = [_.zipObject([name], ['my job']), _.zipObject([name], ['my next job'])]
+//             var notUniqueNames = [_.zipObject([name], ['same old job']), _.zipObject([name], ['same old job'])]
+//             expect(Tiem.O.areUniqueNames(uniqueNames)).toBe(true)
+//             expect(Tiem.O.areUniqueNames(notUniqueNames)).toBe(false)
+//          })
+//    })
+//       it("should validate the job ID as whole number", function () {
+//           expect(Tiem.O.validateJobId(0)).toEqual(0)
+//           expect(function () {
+//             Tiem.O.validateJobId(1.5)
+//           }).toThrow(new Error('Job ID: must be a whole number'))
+//           expect(function () {
+//             Tiem.O.validateJobId('0')
+//           }).toThrow(new Error('Job ID: must be a whole number'))
+//       })
+//       it("should validate the job name as a string with length greater than 0", function () {
+//           var validJobName = Tiem.O.validateJobName
+//           expect(validJobName('0')).toEqual('0')
+//           expect(function () {
+//             return validJobName([1])
+//           }).toThrow(new Error('Job Name: must be string'))
+//           expect(function () {
+//             validJobName('')
+//           }).toThrow(new Error('Job Name: must have a length greater zero'))
+//           expect(function () {
+//             validJobName(0)
+//           }).toThrow(new Error('Job Name: must be string, Job Name: must have a length greater zero'))
+//       })
+//       describe("The function validateJobList", function () {
+//           var jobValues = _.curry(_.zipObject)([Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.jobActive()])
+//           var listOfJobs = [jobValues([0, 'My job', true]), jobValues([1, 'My Awesome Job', true])]
+//           it("should validate a valid list of jobs setting and return the list", function () {
+//             expect(Tiem.O.validateJobList(listOfJobs)).toEqual(listOfJobs)
+//           })
+//           it("should throw the exception 'Jobs must have unique IDs' when IDs are not unique", function () {
+//             expect(function () {
+//                 Tiem.O.validateJobList(_.map(_.cloneDeep(listOfJobs), function (job) {
+//                     return _.assign(job, _.zipObject([Tiem.k.jobId()], [0]))
+//                 }))
+//             }).toThrow(new Error('Jobs must have unique IDs'))
+//           })
+//           it("should throw the exception 'Jobs must have unique names' when names are not unique", function () {
+//             expect(function () {
+//                 Tiem.O.validateJobList(_.map(_.cloneDeep(listOfJobs), function (job) {
+//                     return _.assign(job, _.zipObject([Tiem.k.jobName()], [0]))
+//                 }))
+//             }).toThrow(new Error('Jobs must have unique names'))
+//           })
+//       })
+//       it('should validate the active job setting as a boolean', function () {
+//           var validActiveJob = Tiem.O.validateActiveJob
+//           expect(validActiveJob(true)).toBe(true)
+//           expect(validActiveJob(false)).toBe(false)
+//           expect(function () {
+//             return validActiveJob(0)
+//           }).toThrow(new Error('Job Active: value must be a boolean'))
+//       })
+//       var singleDay = _.range(24).map(function () {
+//         return 0
+//     })
+//     it('should validate the Single Day object as an array of numbers between -1 and 1 (inclusive) with length 24', function () {
+//       var validSingleDay = Tiem.O.validateSingleDay
+//       var alternatingSingleDay = _.range(24).map(function (index) {
+//           return (index % 2) ? 1 : -1
+//       })
+//       //length of 24
+//       expect(validSingleDay(singleDay)).toEqual(singleDay)
+//       expect(function () {
+//           return validSingleDay(_.take(singleDay, 20))
+//       }).toThrow(new Error('Single Day: Must be array of size 24'))
+//       expect(function () {
+//           var temp = _.clone(singleDay);
+//           temp.push(0)
+//           return validSingleDay(temp)
+//       }).toThrow(new Error('Single Day: Must be array of size 24'))
+//       //all numbers
+//       expect(function () {
+//           var notAllNumbers = _.clone(singleDay)
+//           notAllNumbers[23] = 's'
+//           return validSingleDay(notAllNumbers)
+//       }).toThrow(new Error('Single Day: Must be all numbers, Single Day: Value must be between -1 and 1'))
+//       //between -1 and 1 inclusive
+//       expect(validSingleDay(alternatingSingleDay)).toEqual(alternatingSingleDay)
+//       expect(function () {
+//           return validSingleDay(alternatingSingleDay)
+//       })
+//     })
+//     it('should validate the date object as a date', function () {
+//       var newDate = new Date()
+//       var validDate = Tiem.O.validateDate
+//       expect(validDate(newDate)).toEqual(newDate)
+//       expect(function () {
+//           return validDate('not a date')
+//       }).toThrow(new Error('In: Must have valid date'))
+//     })
+//     var in_ = _.zipObject([Tiem.k. in ()], [new Date()])
+//     it('should validate the in/out objects', function () {
+//       var out_ = _.zipObject([Tiem.k.out()], [])
+//       var notInOut = {
+//           inOut: new Date()
+//       }
+//       var validInOut = Tiem.O.validateClockState
+//       expect(validInOut(in_)).toEqual(in_)
+//       expect(validInOut(out_)).toEqual(out_)
+//       expect(function () {
+//           return validInOut(notInOut)
+//       }).toThrow('Clock State: Must be an object type In or Out')
+//     })
+//     it('should validate the clock information object as an array of single day, total, and clock state', function () {
+//       var singleDay = Tiem.O.createSingleDay('')
+//       var clockInfo = [singleDay, Tiem.O.createTotal(singleDay), Tiem.O.defaultClockInfo()]
+//       var notClockInfo = _.clone(clockInfo)
+//       delete notClockInfo[0]
+//       var validClockInfo = Tiem.O.validateClockInfo
+//       expect(validClockInfo(clockInfo)).toEqual(clockInfo)
+//       expect(function () {
+//           return validClockInfo(notClockInfo)
+//       }).toThrow(new Error('Clock Info: Must be an object of Clock State, Total, and Single Day'))
+//     })
+//     it('should validate the job information object as an array of clockInfo, jobId, jobName, and comment', function () {
+//       var jobInfo = [Tiem.O.defaultClockInfo(),
+//                  Tiem.O.createJobId(0),
+//                  Tiem.O.createJobName('Name'),
+//                  Tiem.O.createComment('')
+//                 ]
+//       var notJobInfo = _.clone(jobInfo)
+//       delete notJobInfo[0]
+//       var validJobInfo = Tiem.O.validateJobInfo
+//       expect(validJobInfo(jobInfo)).toEqual(jobInfo)
+//       expect(function () {
+//           return validJobInfo(notJobInfo)
+//       }).toThrow(new Error('Job Info: Must have objects Clock Info, Job ID/Name, and comment'))
+//     })
+//     it('should validate the day array as a date and job information object', function () {
+//       var dayArray = [new Date(), [_.zipObject([Tiem.k.jobId()], [0]), _.zipObject([Tiem.k.jobId()], [1])]]
+//       var notDayArray = _.clone(dayArray);
+//       delete notDayArray[1]
+//       var validDay = Tiem.O.validateDay
+//       expect(validDay(dayArray)).toEqual(dayArray)
+//       expect(function () {
+//           return validDay(notDayArray)
+//       }).toThrow(new Error('Day: Must have unique IDs, Day: Must have date and job list'))
+//     })
+// })
+// 
+// describe("Core object creation", function () {
+//     it("should create a job ID object as whole number", function () {
+//       expect(Tiem.O.createJobId(0)).toEqual(_.zipObject([Tiem.k.jobId()], [0]))
+//       expect(function () {
+//           Tiem.O.createJobId(1.5)
+//       }).toThrow(new Error('Job ID: must be a whole number'))
+//       expect(function () {
+//           Tiem.O.createJobId('0')
+//       }).toThrow(new Error('Job ID: must be a whole number'))
+//     })
+//     it('should create the Single Day object ({singleDay: [0..23]}) as an array of numbers between -1 and 1 (inclusive) with length 24', function () {
+//       var alternatingSingleDay = _.range(24).map(function (index) {
+//           return (index % 2) ? 1 : -1
+//       })
+//       //length of 24
+//       expect(Tiem.O.createSingleDay(alternatingSingleDay)).toEqual(_.zipObject([Tiem.k.singleDay()], [alternatingSingleDay]))
+//       expect(Tiem.O.createSingleDay([])).toEqual(_.zipObject([Tiem.k.singleDay()], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+//       expect(function () {
+//           return Tiem.O.createSingleDay(_.take(alternatingSingleDay, 20))
+//       }).toThrow(new Error('Single Day: Must be array of size 24'))
+//       expect(function () {
+//           var temp = _.clone(alternatingSingleDay);
+//           temp.push(0)
+//           return Tiem.O.createSingleDay(temp)
+//       }).toThrow(new Error('Single Day: Must be array of size 24'))
+//       //all numbers
+//       expect(function () {
+//           var notAllNumbers = _.clone(alternatingSingleDay);
+//           notAllNumbers[23] = 's'
+//           return Tiem.O.createSingleDay(notAllNumbers)
+//       }).toThrow(new Error('Single Day: Must be all numbers, Single Day: Value must be between -1 and 1'))
+//     })
+//     describe('The function createTotal', function () {
+//       it('should create a total object from the single day object', function () {
+//           var singleDay = Tiem.O.createSingleDay(_.range(24).map(function () {
+//           return 1
+//           }))
+//           expect(Tiem.O.createTotal(singleDay)).toEqual({
+//           total: 24
+//           })
+//       })
+//     })
+//     it('should create an "in" object with a date', function () {
+//       var newDate = new Date()
+//       expect(Tiem.O.createIn(newDate)).toEqual(_.zipObject([Tiem.k. in ()], [newDate]))
+//       expect(function () {
+//           return Tiem.O.createIn('not a date')
+//       }).toThrow(new Error('In: Must have valid date'))
+//     })
+//     it('should create an "out" object with an empty value', function () {
+//       expect(Tiem.O.createOut()).toEqual(_.zipObject([Tiem.k.out()], ['']))
+//     })
+//     it('should create clock state object containing an in or out object', function () {
+//       var newDate = new Date()
+//       var in_ = _.zipObject([Tiem.k. in ()], [newDate])
+//       var out_ = _.zipObject([Tiem.k.out()], [''])
+//       expect(Tiem.O.createClockState(in_)).toEqual(_.zipObject([Tiem.k.state()], [in_]))
+//       expect(Tiem.O.createClockState(out_)).toEqual(_.zipObject([Tiem.k.state()], [out_]))
+//       expect(function () {
+//           return Tiem.O.createClockState({
+//             notInOut: ''
+//           })
+//         }).toThrow('Clock State: Must be an object type In or Out')
+//     })
+//     it('should validate the clock information object as an array of single day, total, and clock state', function () {
+//         var state = Tiem.O.createClockState(Tiem.O.createOut())
+//         var singleDay = Tiem.O.createSingleDay('')
+//         var total = Tiem.O.createTotal(singleDay)
+//         var clockInfo = _.assign(singleDay, total, state)
+//         expect(Tiem.O.createClockInfo(singleDay, total, state)).toEqual(clockInfo)
+//         expect(function () {
+//           return Tiem.O.createClockInfo({
+//               notSingleDay: ''
+//           }, {
+//               notInOut: ''
+//           })
+//         }).toThrow(new Error('Clock Info: Must be an object of Clock State, Total, and Single Day'))
+//     })
+//     it('should create job information object from clockInfo, jobId, job name, and comment objects', function () {
+//         var jobInfo = [Tiem.O.defaultClockInfo(),
+//                    Tiem.O.createJobId(0),
+//                    Tiem.O.createJobName('Name'),
+//                    Tiem.O.createComment('')
+//                   ]
+//         expect(Tiem.O.createJobInfo(jobInfo[0], jobInfo[1], jobInfo[2], jobInfo[3])).toEqual(_.assign.apply(null, jobInfo))
+//         expect(function () {
+//           return Tiem.O.createJobInfo({
+//               notClock: ''
+//           }, {
+//               notJobId: ''
+//           })
+//         }).toThrow(new Error('Job Info: Must have objects Clock Info, Job ID/Name, and comment'))
+//     })
+//     it('should create the day object as a date and list of job information objects', function () {
+//         var newDate = new Date()
+//         var jobInfo = Tiem.O.defaultJobInfo()
+//         var jobInfo2 = _.assign(_.clone(jobInfo), _.zipObject([Tiem.k.jobId()], [1]))
+//         var listOfJobInfo = [jobInfo, jobInfo2]
+//         expect(Tiem.O.createDay(newDate, listOfJobInfo)).toEqual(_.zipObject([Tiem.k.day(), Tiem.k.jobList()], [newDate, [jobInfo, jobInfo2]]))
+//         expect(function () {
+//           return Tiem.O.createDay('s', listOfJobInfo)
+//         }).toThrow(new Error('Day: Must have date and job list'))
+//         expect(function () {
+//           return Tiem.O.createDay(newDate, [jobInfo, jobInfo])
+//         }).toThrow(new Error('Day: Must have unique IDs'))
+//     })
+// })
+// 
+// describe('Main engine for time card', function () {
+//     var newDate = new Date(2014, 2, 6, 16, 15, 0)
+//     var outDate = new Date(2014, 2, 6, 18, 15, 0)
+//     var clockedInState = Tiem.O.createClockState(Tiem.O.createIn(newDate))
+//     var clockedOutState_ = Tiem.O.createClockState(Tiem.O.createOut())
+//     var singleDay = Tiem.O.createSingleDay('')
+//     var clockInfoOut = Tiem.O.defaultClockInfo()
+//     var clockInfoIn = Tiem.O.createClockInfo(singleDay, Tiem.O.createTotal(singleDay), clockedInState)
+//     var singleDayOut = Tiem.O.createSingleDay([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.75, 1.0, 0.25, 0, 0, 0, 0, 0])
+//     var result = _.assign(Tiem.O.defaultClockInfo(), singleDayOut, Tiem.O.createTotal(singleDayOut))
+//     describe('createClockedInState: Create clocked in state', function () {
+//         it('should create designated time at stated time', function () {
+//           expect(Tiem.O.inState(newDate)).toEqual(clockedInState)
+//         })
+//     })
+//     describe('clockedOutState:', function () {
+//         it('should create clockState object with out object', function () {
+//           expect(Tiem.O.outState()).toEqual(clockedOutState_)
+//         })
+//     })
+//     describe('defaultClockInfo:', function () {
+//         it('should create a default clock information object which is clocked out', function () {
+//           var singleDay = Tiem.O.createSingleDay('')
+//           expect(Tiem.O.defaultClockInfo()).toEqual(Tiem.O.createClockInfo(singleDay, Tiem.O.createTotal(singleDay), clockedOutState_))
+//         })
+//     })
+//     describe('isClockedIn:', function () {
+//         it('should determine if clock state is clocked in ', function () {
+//           expect(Tiem.Clock.isClockedIn(clockedInState)).toBe(true)
+//         })
+//         it('should determine if clock state is clocked out', function () {
+//           expect(Tiem.Clock.isClockedIn(Tiem.O.outState())).toBe(false)
+//         })
+//     })
+//     describe('clockIn:', function () {
+//         it('should clock in clock information which is clocked out', function () {
+//           expect(Tiem.Clock. in (clockInfoOut, newDate)).toEqual(clockInfoIn)
+//         })
+//         it('should create a new clock information object if one is not provided', function () {
+//           expect(Tiem.Clock. in ('', newDate)).toEqual(clockInfoIn)
+//         })
+//     })
+//     describe('clockOut:', function () {
+//         it('should return a "clock information" object with added time which clock state\'s is out', function () {
+//           expect(Tiem.Clock.out(clockInfoIn, outDate)).toEqual(result)
+//         })
+//         it('should return the correct time when clocking in and out during the same hour', function () {
+//           var singleDay = Tiem.O.createSingleDay([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0])
+//           expect(Tiem.Clock.out(clockInfoIn, new Date(2014, 2, 6, 16, 45, 0))).toEqual(_.assign(Tiem.O.defaultClockInfo(), singleDay, Tiem.O.createTotal(singleDay)))
+//         })
+//     })
+//     describe('toggleClock:', function () {
+//         it('should return a clocked in clock information when toggling from out', function () {
+//           expect(Tiem.Clock.toggle(Tiem.O.defaultClockInfo(), newDate)).toEqual(_.assign(Tiem.O.defaultClockInfo(), Tiem.O.inState(newDate)))
+//         })
+//         it('should return a clocked out clock information with updated hours when toggling from in', function () {
+//           expect(Tiem.Clock.toggle(clockInfoIn, outDate)).toEqual(result)
+//         })
+//     })
+// })
