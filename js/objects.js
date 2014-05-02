@@ -43,66 +43,68 @@ Tiem.O = function () {
       this.current = undefined
    }
    
+   // #Object Definitions
    // {jobID: 0, jobName: 'jobName', jobActive: true|false}
    var JobSetting = bilby.tagged('JobSetting', [Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.jobActive()])
-   var jobSetting = _.curry(JobSetting)
+//   var jobSetting = _.curry(JobSetting)
    // {jobID: 0, jobName: 'jobName', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out|in: ''}}
-   var ClockState = bilby.tagged(Tiem.k.state(), [Tiem.k. in (), Tiem.k.out()])
-   var clockState = _.curry(ClockState)
-   var JobSkeleton = bilby.tagged('JobSkeleton', [Tiem.k.jobId(), Tiem.k.comment(), Tiem.k.singleDay(), ClockState])
-   var jobSkeleton = _.curry(JobSkeleton)
-   var Job = bilby.tagged('Job', [Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.comment(), Tiem.k.singleDay(), Tiem.k.total(), ClockState])
-   var job = _.curry(Job)
+   var ClockedIn = bilby.tagged('ClockedIn', [Tiem.k.in()])
+   var ClockedOut = bilby.tagged('ClockedOut', [Tiem.k.out()])
+//   var JobSkeleton = bilby.tagged('JobSkeleton', [Tiem.k.jobId(), Tiem.k.comment(), Tiem.k.singleDay(), Tiem.k.state()])
+//   var jobSkeleton = _.curry(JobSkeleton)
+   var Job = bilby.tagged('Job', [Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.comment(), Tiem.k.singleDay(), Tiem.k.total(), Tiem.k.state()])
+//   var job = _.curry(Job)
+   var Objects = bilby.tagged('Objects', ['Jobs', 'JobSettings'])
    
 //   var CurrentJob = bilby.tagged('CurrentJob', ['jobList', 'currentJob'])
 //   var currentJob = _.curry(CurrentJob)
    
    // Validation
-   var validId = function (id) {
-      return Tiem.isWholeNumber(id) ? bilby.success(id) : bilby.failure(['ID must be a whole number'])
-   }
+//   var validId = function (id) {
+//      return Tiem.isWholeNumber(id) ? bilby.success(id) : bilby.failure(['ID must be a whole number'])
+//   }
+//   
+//   var validJobName = function (name) {
+//      var name_ = String(name).trim()
+//      return _.isEmpty(name_) ? bilby.failure(['Name must not be empty']) : bilby.success(name_)
+//   }
+//   
+//   var validJobActive = function (activeJob) {
+//      return _.isBoolean(activeJob) ? bilby.success(activeJob) : bilby.failure(['Active job must be of type Boolean'])
+//   }
+//   
+//   var validSingleDay = function (singleDay) {
+//      var countNot24 = function (dayArray) {
+//         return !_.isEqual(dayArray.length, 24)
+//      }
+//      var areNumbers = _.compose(_.all, _.partialRight(_.map, _.isNumber))
+//      var isBetweenAbs1 = _.partial(Tiem.isBetween, -1, 1)
+//      var allBetweenAbs1 = _.compose(_.all, _.partialRight(_.map, isBetweenAbs1))
+//
+//      return   !_.isArray(singleDay) 
+//                  ? bilby.failure(['Single day must be an array']) 
+//               : countNot24(singleDay) 
+//                  ? bilby.failure(['Single day must have array size of twenty-four']) 
+//               : !areNumbers(singleDay) 
+//                  ? bilby.failure(['Single day must only have numbers in array']) 
+//               : !allBetweenAbs1(singleDay) 
+//                  ? bilby.failure(['Single day must only have numbers between -1 and 1']) 
+//               : bilby.success(singleDay)
+//   }
    
-   var validJobName = function (name) {
-      var name_ = String(name).trim()
-      return _.isEmpty(name_) ? bilby.failure(['Name must not be empty']) : bilby.success(name_)
-   }
-   
-   var validJobActive = function (activeJob) {
-      return _.isBoolean(activeJob) ? bilby.success(activeJob) : bilby.failure(['Active job must be of type Boolean'])
-   }
-   
-   var validSingleDay = function (singleDay) {
-      var countNot24 = function (dayArray) {
-         return !_.isEqual(dayArray.length, 24)
-      }
-      var areNumbers = _.compose(_.all, _.partialRight(_.map, _.isNumber))
-      var isBetweenAbs1 = _.partial(Tiem.isBetween, -1, 1)
-      var allBetweenAbs1 = _.compose(_.all, _.partialRight(_.map, isBetweenAbs1))
-
-      return   !_.isArray(singleDay) 
-                  ? bilby.failure(['Single day must be an array']) 
-               : countNot24(singleDay) 
-                  ? bilby.failure(['Single day must have array size of twenty-four']) 
-               : !areNumbers(singleDay) 
-                  ? bilby.failure(['Single day must only have numbers in array']) 
-               : !allBetweenAbs1(singleDay) 
-                  ? bilby.failure(['Single day must only have numbers between -1 and 1']) 
-               : bilby.success(singleDay)
-   }
-   
-   var validDate = function(date){
-      var date_ = _.isString(date) ? Date.parse(date) : date
-      return _.isDate(date_) ? bilby.success(date_) : bilby.failure(['Is not a date'])
-   }
-   var validInOut = function(inOut){
-      return (_.isEqual(inOut, Tiem.k.in()) || _.isEqual(inOut, Tiem.k.out())) ? bilby.success(inOut) : bilby.failure(["Clock state must be 'in' or 'out'"])
-   }
-   
-   var validComment = function(comment){
-      return String(comment).trim()
-   }
-   
-   var createSingleDay = function(){return _.range(24).map(function(){return 0})}
+//   var validDate = function(date){
+//      var date_ = _.isString(date) ? Date.parse(date) : date
+//      return _.isDate(date_) ? bilby.success(date_) : bilby.failure(['Is not a date'])
+//   }
+//   var validInOut = function(inOut){
+//      return (_.isEqual(inOut, Tiem.k.in()) || _.isEqual(inOut, Tiem.k.out())) ? bilby.success(inOut) : bilby.failure(["Clock state must be 'in' or 'out'"])
+//   }
+//   
+//   var validComment = function(comment){
+//      return String(comment).trim()
+//   }
+//   
+//   var createSingleDay = function(){return _.range(24).map(function(){return 0})}
    
 //   var newJobSetting = function(id, name, active){
 //      var id_ = bilby.isNone(id) ? validId((new Date()).getTime) : validId(id),
@@ -118,16 +120,16 @@ Tiem.O = function () {
 //          inOut_ = validInOut(inOut),
 //          date_ = validDate(date)
    
-   var addCurrentJob = function(theseJobs){
-      var job = theseJobs.currentJob
-      //this.job Tubple5(id, comment, singleDay, inOut, date)
-      var list = _.reject(theseJobs.jobList, function(item){
-         return _.isEqual(item.id, job.id)
-      })
-      list.push(job)
-      theseJobs.jobList = list
-      return theseJobs
-   }
+//   var addCurrentJob = function(theseJobs){
+//      var job = theseJobs.currentJob
+//      //this.job Tubple5(id, comment, singleDay, inOut, date)
+//      var list = _.reject(theseJobs.jobList, function(item){
+//         return _.isEqual(item.id, job.id)
+//      })
+//      list.push(job)
+//      theseJobs.jobList = list
+//      return theseJobs
+//   }
    
    var addCurrentJobSetting = function(theseJobSettings){
       var job = theseJobSettings.current
@@ -137,16 +139,21 @@ Tiem.O = function () {
       return theseJobSettings
    }
    
-   //See https://github.com/antris/js-polymorphism/blob/master/feed/feed.js
-   var updateJobDate = function(date){
-      this.currentJob = Tiem.Clock.toggle(this.currentJob, date)
-      return addCurrentJob(this)
+   var addJobSetting = function(jobSetting){
+      this.current = jobSetting
+      return addCurrentJobSetting(this)
    }
    
-   var updateJobComment = function(comment){
-      this.currentJob[Tiem.k.comment()] = comment
-      return addCurrentJob(this)
-   }
+   //See https://github.com/antris/js-polymorphism/blob/master/feed/feed.js
+//   var updateJobDate = function(date){
+//      this.currentJob = Tiem.Clock.toggle(this.currentJob, date)
+//      return addCurrentJob(this)
+//   }
+//   
+//   var updateJobComment = function(comment){
+//      this.currentJob[Tiem.k.comment()] = comment
+//      return addCurrentJob(this)
+//   }
    
    //Associate job settings ID with different job name
    var changeJobName = function(name){
@@ -159,40 +166,48 @@ Tiem.O = function () {
       return addCurrentJobSetting(this)
    }
    
-   var validateJob = function(id, comment, singleDay, inOut, date){
-      var id_ = validId(id),
-          //name_ = bilby.isNone(name) ? validJobName(getJobName(id_)) : validJobName(name),
-          comment_ = bilby.isNone(comment) ? '' : validComment(comment),
-          singleDay_ = bilby.isNone(singleDay) ? validSingleDay(createSingleDay()) : validSingleDay(singleDay),
-          //total = Tiem.sum(singleDay_),
-          inOut_ = bilby.isNone(inOut) ? validInOut(Tiem.k.in()) : validInOut(inOut),
-          date_ = bilby.isNone(date) ? validDate(new Date()) : validDate(date)
-      
-      return bilby.Do()(
-         bilby.Do()(jobSkeleton < id_) * comment_ * singleDay_ * (bilby.Do()(clockState < inOut_) * date_)
-      )
-      
-      //result.cata ... do on other side
-      
-   }
+//   var validateJob = function(id, comment, singleDay, inOut, date){
+//      var id_ = validId(id),
+//          //name_ = bilby.isNone(name) ? validJobName(getJobName(id_)) : validJobName(name),
+//          comment_ = bilby.isNone(comment) ? '' : validComment(comment),
+//          singleDay_ = bilby.isNone(singleDay) ? validSingleDay(createSingleDay()) : validSingleDay(singleDay),
+//          //total = Tiem.sum(singleDay_),
+//          inOut_ = bilby.isNone(inOut) ? validInOut(Tiem.k.in()) : validInOut(inOut),
+//          date_ = bilby.isNone(date) ? validDate(new Date()) : validDate(date)
+//      
+////      return bilby.Do()(
+////         bilby.Do()(jobSkeleton < id_) * comment_ * singleDay_ * (bilby.Do()(clockState < inOut_) * date_)
+////      )
+//      
+//      //result.cata ... do on other side
+//      
+//   }
    
-   var addJob = function(job){
-      this.currentJob = job
-      return addCurrentJob(this)
-   }
-   
-   var addJobSetting = function(jobSetting){
-      this.current = jobSetting
-      return addCurrentJobSetting(this)
-   }
-   
-   var id = function(id){
-      var current = _.filter(this.jobList, function(id_){
-         return _.isEqual(id_, id)
+   //id, comment, singleDay, inOut, date
+   //Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.comment(), Tiem.k.singleDay(), Tiem.k.total(), ClockState
+   var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
+      var jobSetting = _.find(jobSettings.list, function(setting){
+         return _.isEqual(setting[Tiem.k.jobId()], id)
       })
-      this.currentJob = current
-      return this
+      if (_.isEmpty(jobSetting))
+         return bilby.error('A new job must be created in the job settings first!')
+      var singleDay_ = singleDay.getOrElse(_.range(24).map(function(){return 0}))
+      var inOut_ = _.isEqual(inOut, Tiem.k.out()) ? ClockedOut(date) : ClockedIn(date)
+      return Job(id, jobSetting[Tiem.k.jobName()], comment, singleDay_, Tiem.sum(singleDay_), inOut_)
    }
+
+//   var addJob = function(job){
+//      this.currentJob = job
+//      return addCurrentJob(this)
+//   }
+   
+//   var id = function(id){
+//      var current = _.filter(this.jobList, function(id_){
+//         return _.isEqual(id_, id)
+//      })
+//      this.currentJob = current
+//      return this
+//   }
    
    var idSetting = function(id){
       var current = _.filter(this.list, function(job){
@@ -202,9 +217,9 @@ Tiem.O = function () {
       return this
    }
 
-   var getSettings = function(){
-      return this.list
-   }
+//   var getSettings = function(){
+//      return this.list
+//   }
    
    var isObjectAnd = _.curry(function(object, func){
       var isObject = bilby.isInstanceOf(object)
@@ -214,23 +229,8 @@ Tiem.O = function () {
    })
 
    var isJobsAnd = isObjectAnd(Jobs)
-   //isObjectAnd(JobSettings)
-   //return bilby.isInstanceOf.apply(this, object) && func.apply(null, [v])
-   var isJobSettingsAnd = isObjectAnd(JobSettings)
-//       function(func){
-//      return function(){
-//         return bilby.isInstanceOf(JobSettings).apply(this) && func.apply(null, arguments) // bilby.isInstanceOf(JobSettings)(this) && 
-//      }
-//   }
 
-   //Do I need to check for option or can I just do the code in the some branch? Probably.
-   var isOptionAnd = function(func){
-      return function(v){
-         if (bilby.isOption(v)){
-            return bilby.some(v).fold(func.apply(null, [v]), function(){return true})
-         } else return false
-      }
-   }
+   var isJobSettingsAnd = isObjectAnd(JobSettings)
 
    var toList = function(){return this.list}
 
@@ -296,19 +296,17 @@ Tiem.O = function () {
          isJobs,
          toObject
       )
-
-   // var ClockState = bilby.tagged(Tiem.k.state(), [Tiem.k. in (), Tiem.k.out()])
-   // var clockState = _.curry(ClockState)
-   // var JobSkeleton = bilby.tagged('JobSkeleton', [Tiem.k.jobId(), Tiem.k.comment(), Tiem.k.singleDay(), ClockState])
-   // var jobSkeleton = _.curry(JobSkeleton)
-//            function(id, name, active){
-//               return bilby.isInstanceOf(this) && Tiem.isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
-//            },
       .method(
          'create',
-         isJobsAnd(function(id, comment, singleDay, inOut, date){
-            return Tiem.isWholeNumber(id) && (bilby.isOption(comment)) && bilby.isOption
-         })
+         isJobsAnd(function(jobSettings, id, comment, singleDay, inOut, date){
+            return Tiem.isWholeNumber(id)
+               && _.isString(comment)
+               && (bilby.isOption(singleDay) && singleDay.fold(function(a){return _.isArray(a) && a.length === 24}, function(){return true}))
+               && (_.isEqual(inOut, Tiem.k.in()) || _.isEqual(inOut, Tiem.k.out()))
+               && _.isDate(date)
+               && bilby.isInstanceOf(JobSettings, jobSettings)
+         }),
+         createJob
       )
       
 
@@ -318,13 +316,10 @@ Tiem.O = function () {
       })
    }
 
-//   _(settingExtensions).forIn(function(value, key){
-//      JobSettings.prototype[key] = value 
-//   })
-   
    extendObject(JobSettings, settingExtensions)
-   
-   return settingExtensions
+   extendObject(Jobs, jobExtensions)
+
+   return Objects(jobExtensions, settingExtensions) //settingExtensions
    
 //   bilby.environment()
 //      .method(

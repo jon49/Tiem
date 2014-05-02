@@ -199,20 +199,62 @@ describe("Core constants", function () {
    })
 })
 
-describe('Object manipulation and creation', function(){
-//   var o = Tiem.O.bilby
-   var settings = Tiem.O.JobSettings()
-   var newJobSetting = settings.create(0, 'My lovely job', true)
-//   var job2 = settings.create(1, 'Tiem', true)
+describe('JobSettings object manipulation and creation', function(){
 
-//   describe('the function create', function(){
-//      //[Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.jobActive()]
-//      it('should be able to create a new job setting', function(){
-//         expect(newJobSetting[Tiem.k.jobId()]).toBe(0)
-//         expect(newJobSetting[Tiem.k.jobName()]).toBe('My lovely job')
-//         expect(newJobSetting[Tiem.k.jobActive()]).toBe(true)
-//      })
-//   })
+   var settings = Tiem.O.JobSettings.JobSettings()
+   var newJobSetting = settings.create(0, 'My lovely job', true)
+   var job2 = settings.create(1, 'Tiem', true)
+
+   describe('the function create', function(){
+      //[Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.jobActive()]
+      it('should be able to create a new job setting', function(){
+         expect(newJobSetting[Tiem.k.jobId()]).toBe(0)
+         expect(newJobSetting[Tiem.k.jobName()]).toBe('My lovely job')
+         expect(newJobSetting[Tiem.k.jobActive()]).toBe(true)
+      })
+   })
+   describe('the function add', function(){
+      it('should add a new job setting to the job setting list', function(){
+         expect(settings.add(newJobSetting).toList()).toEqual([newJobSetting])
+      })
+   })
+   describe('the function id', function(){
+      it('should select the object with selected id', function(){
+         settings.add(newJobSetting).add(job2)
+         expect(settings.id(0).toObject()).toEqual(newJobSetting)
+         expect(settings.id(1).toObject()).toEqual(job2)
+      })
+   })
+   describe('the function change', function(){
+      it('should be able to update the job name', function(){
+         expect(settings.id(0).change('New Job Name').toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: true})
+      })
+      it('should be able to update the job active status', function(){
+         expect(settings.id(0).change(false).toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: false})
+      })
+   })
+})
+
+describe('Job object manipulation and creation', function(){
+
+   var settings = Tiem.O.JobSettings.JobSettings()
+   var jobSetting1 = settings.create(0, 'My lovely job', true)
+   var jobSetting2 = settings.create(1, 'Tiem', true)
+   settings.add(jobSetting1).add(jobSetting2)
+
+   var jobs = Tiem.O.Jobs.Jobs()
+   // (id, comment, singleDay, inOut, date)
+   var job1 = jobs.create(settings, 0, '', bilby.none, Tiem.k.in(), new Date())
+   var job2 = jobs.create(settings, 1, 'My Comment', bilby.some(_.range(24).map(function(){return 1})), Tiem.k.out(), new Date())
+
+   describe('the function create', function(){
+      it('should be able to create a valid job', function(){
+         expect(job1[Tiem.k.jobId()]).toBe(0)
+         expect(job2[Tiem.k.jobId()]).toBe(1)
+         expect(job1[Tiem.k.jobName()]).toBe('My lovely job')
+      })
+   })
+
 //   describe('the function add', function(){
 //      it('should add a new job setting to the job setting list', function(){
 //         expect(settings.add(newJobSetting).toList()).toEqual([newJobSetting])
