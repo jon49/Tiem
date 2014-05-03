@@ -4,7 +4,7 @@
 
 /*jslint asi: true*/
 /*jshint indent:3, curly:false, laxbreak:true */
-/*global Tiem, _, bilby */
+/*global tiem, _, bilby */
 
 /**
  **Objects**
@@ -13,73 +13,73 @@
 /**
  * Object constants
  */
-Tiem.k = Tiem.constants([['jobId'],
-                     ['singleDay'],
-                     ['in'],
-                     ['out'],
-                     ['state', 'clockState'],
-                     ['day'],
-                     ['jobList'],
-                     ['clockedState'],
-                     ['jobName'],
-                     ['clocked'],
-                     ['comment'],
-                     ['total'],
-                     ['jobActive'],
-                     ['jobs'],
-                     ['jobPlaceHolder', 'Add Job']
-                       ])
+var k = constants([['jobId'],
+                   ['singleDay'],
+                   ['in'],
+                   ['out'],
+                   ['state', 'clockState'],
+                   ['day'],
+                   ['jobList'],
+                   ['clockedState'],
+                   ['jobName'],
+                   ['clocked'],
+                   ['comment'],
+                   ['total'],
+                   ['jobActive'],
+                   ['jobs'],
+                   ['jobPlaceHolder', 'Add Job']
+])
+
+tiem = tiem.property('k', k)
 
 // **Validate objects**
 
-Tiem.O = function () {
+var Jobs = function(){
+   this.list = []
+   this.current = undefined
+}
+var JobSettings = function(){
+   this.list = []
+   this.current = undefined
+}
 
-   var Jobs = function(){
-      this.list = []
-      this.current = undefined
-   }
-   var JobSettings = function(){
-      this.list = []
-      this.current = undefined
-   }
+// #Object Definitions
+// {jobID: 0, jobName: 'jobName', jobActive: true|false}
+var JobSetting = bilby.tagged('JobSetting', [k.jobId(), k.jobName(), k.jobActive()])
+//var jobSetting = _.curry(JobSetting)
+// {jobID: 0, jobName: 'jobName', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out|in: ''}}
+var ClockedIn = bilby.tagged('ClockedIn', [k.in()])
+var ClockedOut = bilby.tagged('ClockedOut', [k.out()])
+//var JobSkeleton = bilby.tagged('JobSkeleton', [k.jobId(), k.comment(), k.singleDay(), k.state()])
+//var jobSkeleton = _.curry(JobSkeleton)
+var Job = bilby.tagged('Job', [k.jobId(), k.jobName(), k.comment(), k.singleDay(), k.total(), k.state()])
+//var job = _.curry(Job)
+var Objects = bilby.tagged('Objects', ['Jobs', 'JobSettings'])
    
-   // #Object Definitions
-   // {jobID: 0, jobName: 'jobName', jobActive: true|false}
-   var JobSetting = bilby.tagged('JobSetting', [Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.jobActive()])
-//   var jobSetting = _.curry(JobSetting)
-   // {jobID: 0, jobName: 'jobName', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out|in: ''}}
-   var ClockedIn = bilby.tagged('ClockedIn', [Tiem.k.in()])
-   var ClockedOut = bilby.tagged('ClockedOut', [Tiem.k.out()])
-//   var JobSkeleton = bilby.tagged('JobSkeleton', [Tiem.k.jobId(), Tiem.k.comment(), Tiem.k.singleDay(), Tiem.k.state()])
-//   var jobSkeleton = _.curry(JobSkeleton)
-   var Job = bilby.tagged('Job', [Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.comment(), Tiem.k.singleDay(), Tiem.k.total(), Tiem.k.state()])
-//   var job = _.curry(Job)
-   var Objects = bilby.tagged('Objects', ['Jobs', 'JobSettings'])
-   
-//   var CurrentJob = bilby.tagged('CurrentJob', ['jobList', 'currentJob'])
-//   var currentJob = _.curry(CurrentJob)
+//var CurrentJob = bilby.tagged('CurrentJob', ['jobList', 'currentJob'])
+//var currentJob = _.curry(CurrentJob)
    
    // Validation
-//   var validId = function (id) {
-//      return Tiem.isWholeNumber(id) ? bilby.success(id) : bilby.failure(['ID must be a whole number'])
+//var validId = function (id) {
+//      return tiem.isWholeNumber(id) ? bilby.success(id) : bilby.failure(['ID must be a whole number'])
 //   }
 //   
-//   var validJobName = function (name) {
-//      var name_ = String(name).trim()
+//var validJobName = function (name) {
+//   var name_ = String(name).trim()
 //      return _.isEmpty(name_) ? bilby.failure(['Name must not be empty']) : bilby.success(name_)
 //   }
 //   
-//   var validJobActive = function (activeJob) {
+//var validJobActive = function (activeJob) {
 //      return _.isBoolean(activeJob) ? bilby.success(activeJob) : bilby.failure(['Active job must be of type Boolean'])
 //   }
 //   
-//   var validSingleDay = function (singleDay) {
-//      var countNot24 = function (dayArray) {
+//var validSingleDay = function (singleDay) {
+//   var countNot24 = function (dayArray) {
 //         return !_.isEqual(dayArray.length, 24)
 //      }
-//      var areNumbers = _.compose(_.all, _.partialRight(_.map, _.isNumber))
-//      var isBetweenAbs1 = _.partial(Tiem.isBetween, -1, 1)
-//      var allBetweenAbs1 = _.compose(_.all, _.partialRight(_.map, isBetweenAbs1))
+//   var areNumbers = _.compose(_.all, _.partialRight(_.map, _.isNumber))
+//   var isBetweenAbs1 = _.partial(tiem.isBetween, -1, 1)
+//   var allBetweenAbs1 = _.compose(_.all, _.partialRight(_.map, isBetweenAbs1))
 //
 //      return   !_.isArray(singleDay) 
 //                  ? bilby.failure(['Single day must be an array']) 
@@ -92,22 +92,22 @@ Tiem.O = function () {
 //               : bilby.success(singleDay)
 //   }
    
-//   var validDate = function(date){
-//      var date_ = _.isString(date) ? Date.parse(date) : date
+//var validDate = function(date){
+//   var date_ = _.isString(date) ? Date.parse(date) : date
 //      return _.isDate(date_) ? bilby.success(date_) : bilby.failure(['Is not a date'])
 //   }
-//   var validInOut = function(inOut){
-//      return (_.isEqual(inOut, Tiem.k.in()) || _.isEqual(inOut, Tiem.k.out())) ? bilby.success(inOut) : bilby.failure(["Clock state must be 'in' or 'out'"])
+//var validInOut = function(inOut){
+//      return (_.isEqual(inOut, k.in()) || _.isEqual(inOut, k.out())) ? bilby.success(inOut) : bilby.failure(["Clock state must be 'in' or 'out'"])
 //   }
 //   
-//   var validComment = function(comment){
+//var validComment = function(comment){
 //      return String(comment).trim()
 //   }
 //   
-//   var createSingleDay = function(){return _.range(24).map(function(){return 0})}
+//var createSingleDay = function(){return _.range(24).map(function(){return 0})}
    
-//   var newJobSetting = function(id, name, active){
-//      var id_ = bilby.isNone(id) ? validId((new Date()).getTime) : validId(id),
+//var newJobSetting = function(id, name, active){
+//   var id_ = bilby.isNone(id) ? validId((new Date()).getTime) : validId(id),
 //          name_ = bilby.isNone(name) ? validJobName(String(id_)) : validJobName(name),
 //          active_ = bilby.isNone(active) ? true : validJobActive(active)
 //      return bilby.Do()(
@@ -115,15 +115,15 @@ Tiem.O = function () {
 //      )
 //   }
    
-//   var comment_ = (bilby.isNone(comment)) ? job[Tiem.k.comment()] : validComment(comment),
+//var comment_ = (bilby.isNone(comment)) ? job[k.comment()] : validComment(comment),
 //          singleDay_ = validSingleDay(singleDay),
 //          inOut_ = validInOut(inOut),
 //          date_ = validDate(date)
    
-//   var addCurrentJob = function(theseJobs){
-//      var job = theseJobs.currentJob
+//var addCurrentJob = function(theseJobs){
+//   var job = theseJobs.currentJob
 //      //this.job Tubple5(id, comment, singleDay, inOut, date)
-//      var list = _.reject(theseJobs.jobList, function(item){
+//   var list = _.reject(theseJobs.jobList, function(item){
 //         return _.isEqual(item.id, job.id)
 //      })
 //      list.push(job)
@@ -131,7 +131,7 @@ Tiem.O = function () {
 //      return theseJobs
 //   }
    
-   var addCurrentJob = function(theseJobs){
+var addCurrentJob = function(theseJobs){
       var job = theseJobs.current
       theseJobs.list = _.reject(theseJobs.list, function(item){
          return _.isEqual(item.jobId, job.jobId)
@@ -139,65 +139,65 @@ Tiem.O = function () {
       return theseJobs
    }
    
-   var addJob = function(job){
+var addJob = function(job){
       this.current = job
       return addCurrentJob(this)
    }
    
    //See https://github.com/antris/js-polymorphism/blob/master/feed/feed.js
-//   var updateJobDate = function(date){
-//      this.currentJob = Tiem.Clock.toggle(this.currentJob, date)
+//var updateJobDate = function(date){
+//      this.currentJob = tiem.Clock.toggle(this.currentJob, date)
 //      return addCurrentJob(this)
 //   }
 //   
-//   var updateJobComment = function(comment){
-//      this.currentJob[Tiem.k.comment()] = comment
+//var updateJobComment = function(comment){
+//      this.currentJob[k.comment()] = comment
 //      return addCurrentJob(this)
 //   }
    
    
-   var change = _.curry(function(property, value){
+var change = _.curry(function(property, value){
       this.current[property] = value
       return addCurrentJob(this)
    })
 
    
    //Determine if the job is clocked in or out.
-   var isClockedIn = function (job) {
-       return _.has(job[Tiem.k.state()], Tiem.k.in())
+var isClockedIn = function (job) {
+       return _.has(job[k.state()], k.in())
    }
 
    //Change job state to clocked in.
-   var clockIn = function (job, date) {
-      job[Tiem.k.state()] = ClockedIn(date)
+var clockIn = function (job, date) {
+      job[k.state()] = ClockedIn(date)
       return job
    }
    
    //Job is clocked in. Clock it out and update number of hours worked.
-   var clockOut = function (job, date) {
-       var start = Tiem.fractionalHours(job[Tiem.k.state()][Tiem.k.in()])
-       var end = Tiem.fractionalHours(date)
-       var newSingleDay = Tiem.addRollingArray(job[Tiem.k.singleDay()], start, end, 1)
-       job[Tiem.k.state()] = ClockedOut(date)
-       job[Tiem.k.singleDay()] = newSingleDay
-       job[Tiem.k.total()] = Tiem.sum(newSingleDay)
+var clockOut = function (job, date) {
+       var start = fractionalHours(job[k.state()][k.in()])
+       var end = fractionalHours(date)
+       var newSingleDay = addRollingArray(job[k.singleDay()], start, end, 1)
+       job[k.state()] = ClockedOut(date)
+       job[k.singleDay()] = newSingleDay
+       job[k.total()] = sum(newSingleDay)
        return job
    }
 
-   var updateDate = function(date){
+var updateDate = function(date){
       //Toggle clock
       var job = this.current
       this.current = (isClockedIn(job)) ? clockOut(job, date) : clockIn(job, date)
       return addCurrentJob(this)
    }
 
-//   var validateJob = function(id, comment, singleDay, inOut, date){
+//var validateJob = function(id, comment, singleDay, inOut, date){
 //      var id_ = validId(id),
 //          //name_ = bilby.isNone(name) ? validJobName(getJobName(id_)) : validJobName(name),
 //          comment_ = bilby.isNone(comment) ? '' : validComment(comment),
 //          singleDay_ = bilby.isNone(singleDay) ? validSingleDay(createSingleDay()) : validSingleDay(singleDay),
-//          //total = Tiem.sum(singleDay_),
-//          inOut_ = bilby.isNone(inOut) ? validInOut(Tiem.k.in()) : validInOut(inOut),
+//          //total = sum(singleDay_),
+//          inOut_ = bilby.isNone(inOut) ? validInOut(k.in()) : validInOut(inOut),
 //          date_ = bilby.isNone(date) ? validDate(new Date()) : validDate(date)
 //      
 ////      return bilby.Do()(
@@ -209,24 +209,24 @@ Tiem.O = function () {
 //   }
    
    //id, comment, singleDay, inOut, date
-   //Tiem.k.jobId(), Tiem.k.jobName(), Tiem.k.comment(), Tiem.k.singleDay(), Tiem.k.total(), ClockState
-   var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
+   //k.jobId(), k.jobName(), k.comment(), k.singleDay(), k.total(), ClockState
+var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
       var jobSetting = _.find(jobSettings.list, function(setting){
-         return _.isEqual(setting[Tiem.k.jobId()], id)
+         return _.isEqual(setting[k.jobId()], id)
       })
       if (_.isEmpty(jobSetting))
          return bilby.error('A new job must be created in the job settings first!')
       var singleDay_ = singleDay.getOrElse(_.range(24).map(function(){return 0}))
-      var inOut_ = _.isEqual(inOut, Tiem.k.out()) ? ClockedOut(date) : ClockedIn(date)
-      return Job(id, jobSetting[Tiem.k.jobName()], comment, singleDay_, Tiem.sum(singleDay_), inOut_)
+      var inOut_ = _.isEqual(inOut, k.out()) ? ClockedOut(date) : ClockedIn(date)
+      return Job(id, jobSetting[k.jobName()], comment, singleDay_, sum(singleDay_), inOut_)
    }
 
-//   var addJob = function(job){
+//var addJob = function(job){
 //      this.currentJob = job
 //      return addCurrentJob(this)
 //   }
    
-//   var id = function(id){
+//var id = function(id){
 //      var current = _.filter(this.jobList, function(id_){
 //         return _.isEqual(id_, id)
 //      })
@@ -234,7 +234,7 @@ Tiem.O = function () {
 //      return this
 //   }
    
-   var getJobById = function(id){
+var getJobById = function(id){
       var current = _.filter(this.list, function(job){
          return _.isEqual(job.jobId, id)
       })
@@ -242,140 +242,140 @@ Tiem.O = function () {
       return this
    }
 
-//   var getSettings = function(){
+//var getSettings = function(){
 //      return this.list
 //   }
    
-   var isObjectAnd = _.curry(function(object, func){
+var isObjectAnd = _.curry(function(object, func){
       var isObject = bilby.isInstanceOf(object)
       return function(){
          return isObject.apply(this) && func.apply(null, arguments)
       }
    })
 
-   var isJobsAnd = isObjectAnd(Jobs)
+var isJobsAnd = isObjectAnd(Jobs)
 
-   var isJobSettingsAnd = isObjectAnd(JobSettings)
+var isJobSettingsAnd = isObjectAnd(JobSettings)
 
-   var toList = function(){return this.list}
+var isJobSettings = function(){
+   return function(){
+      return bilby.isInstanceOf(Jobs)(this)
+   }
+}
 
-   var toObject = function(){return this.current}
+var toList = function(){return this.list}
+
+var toObject = function(){return this.current}
    
-   var settingExtensions = bilby.environment()
+tiem.JobSettings = bilby.environment() 
       .property(
-         'JobSettings',
+         'new',
          function(){return new JobSettings()}
       )
-      .method(
+      .property(
          'toList',
-         isJobSettingsAnd(bilby.constant(true)),
          toList
       )
-      .method(
+      .property(
          'toObject',
-         isJobSettingsAnd(bilby.constant(true)),
          toObject
       )
       .method(
          'create',
-         isJobSettingsAnd(function(id, name, active){
-            return Tiem.isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
-         }),
+         function(id, name, active){
+            return isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
+         },
          JobSetting
       )
       .method(
          'add',
-         isJobSettingsAnd(bilby.isInstanceOf(JobSetting)),
+         bilby.isInstanceOf(JobSetting),
          addJob
       )
       .method(
          'id',
-         isJobSettingsAnd(Tiem.isWholeNumber),
+         isWholeNumber,
          getJobById
       )
       .method(
          'update',
-         isJobSettingsAnd(_.isString),
-         change(Tiem.k.jobName())
+         _.isString,
+         change(k.jobName())
       )
       .method(
          'update',
-         isJobSettingsAnd(_.isBoolean),
-         change(Tiem.k.jobActive())
+         _.isBoolean,
+         change(k.jobActive())
       )
    
-   var isJobs = bilby.isInstanceOf(Jobs)
+var isJobs = bilby.isInstanceOf(Jobs)
 
-   var jobExtensions = bilby.environment()
+tiem.Jobs = bilby.environment()
       .property(
-         'Jobs',
+         'new',
          function(){return new Jobs()}
       )
-      .method(
+      .property(
          'toList',
-         isJobs, 
          toList
       )
-      .method(
+      .property(
          'toObject',
-         isJobs,
          toObject
       )
       .method(
          'create',
-         isJobsAnd(function(jobSettings, id, comment, singleDay, inOut, date){
-            return Tiem.isWholeNumber(id)
+         function(jobSettings, id, comment, singleDay, inOut, date){
+            return isWholeNumber(id)
                && _.isString(comment)
                && (bilby.isOption(singleDay) && singleDay.fold(function(a){return _.isArray(a) && a.length === 24}, function(){return true}))
-               && (_.isEqual(inOut, Tiem.k.in()) || _.isEqual(inOut, Tiem.k.out()))
+               && (_.isEqual(inOut, k.in()) || _.isEqual(inOut, k.out()))
                && _.isDate(date)
                && bilby.isInstanceOf(JobSettings, jobSettings)
-         }),
+         },
          createJob
       )
       .method(
          'add',
-         function(job){return isJobsAnd(bilby.isInstanceOf(Job, job))},
+         bilby.isInstanceOf(Job),
          addJob
       )
       .method(
          'id',
-         isJobsAnd(Tiem.isWholeNumber),
+         isWholeNumber,
          getJobById
       )
       .method(
          'update',
-         isJobsAnd(_.isString),
-         change(Tiem.k.comment())
+         _.isString,
+         change(k.comment())
       )
       .method(
          'update',
-         isJobsAnd(_.isDate),
+         function(d){return isJobs && _.isDate(d)},
          updateDate
       )
       
 
-   var extendObject = function(object, extensions){
+var extendObject = function(object, extensions){
       _(extensions).forIn(function(value, key){
          object.prototype[key] = value 
       })
-   }
+}
 
-   extendObject(JobSettings, settingExtensions)
-   extendObject(Jobs, jobExtensions)
+extendObject(JobSettings, tiem.JobSettings)
+extendObject(Jobs, tiem.Jobs)
 
-   return Objects(jobExtensions, settingExtensions) //settingExtensions
    
-}()
 
 // /**
 //  * Determine if job ids are unique in list of objects.
 //  */
-// Tiem.O.areUniqueIds = Tiem.areUniqueValues(Tiem.k.jobId())
+// tiem.O.areUniqueIds = tiem.areUniqueValues(k.jobId())
 // /**
 //  * Determine if job names are unique in list of objects.
 //  */
-// Tiem.O.areUniqueNames = Tiem.areUniqueValues(Tiem.k.jobName())
+// tiem.O.areUniqueNames = tiem.areUniqueValues(k.jobName())
 // 
 // /**
 //  * Validate Job ID
@@ -383,8 +383,8 @@ Tiem.O = function () {
 //  * @return {Number} if valid same number
 //  * @throws {Error} Job ID: must be a whole number.
 //  */
-// Tiem.O.validateJobId = function (id) {
-//    return Tiem.Constraints.conditions(['Job ID: must be a whole number', Tiem.isWholeNumber])(id)
+// tiem.O.validateJobId = function (id) {
+//    return tiem.Constraints.conditions(['Job ID: must be a whole number', tiem.isWholeNumber])(id)
 // }
 // 
 // /**
@@ -394,9 +394,9 @@ Tiem.O = function () {
 //  * @throws {Error} Job Name: must be string
 //  * @throws {Error} Job Name: value must have a length greater zero
 //  */
-// Tiem.O.validateJobName = function (name) {
-//    var isNotEmpty = Tiem.complement(_.isEmpty)
-//    return Tiem.Constraints.conditions(
+// tiem.O.validateJobName = function (name) {
+//    var isNotEmpty = tiem.complement(_.isEmpty)
+//    return tiem.Constraints.conditions(
 //        ['Job Name: must be string', _.isString], ['Job Name: must have a length greater zero', isNotEmpty]
 //    )(name)
 // }
@@ -407,8 +407,8 @@ Tiem.O = function () {
 //  * @return {Boolean} if valid boolean
 //  * @throws {Error} Job Active: value must be a boolean
 //  */
-// Tiem.O.validateActiveJob = function (active) {
-//    return Tiem.Constraints.conditions(['Job Active: value must be a boolean', _.isBoolean])(active)
+// tiem.O.validateActiveJob = function (active) {
+//    return tiem.Constraints.conditions(['Job Active: value must be a boolean', _.isBoolean])(active)
 // }
 // /**
 //  * Validate Single Day object
@@ -418,17 +418,17 @@ Tiem.O = function () {
 //  * @throws {Error} Single Day: Must be all numbers
 //  * @throws {Error} Single Day: Value must be between -1 and 1
 //  */
-// Tiem.O.validateSingleDay = function (singleDay) {
+// tiem.O.validateSingleDay = function (singleDay) {
 // 
 //    //Validate single day.
 //    var count24 = function (dayArray) {
 //       return dayArray.length === 24
 //    }
 //    var areNumbers = _.compose(_.all, _.partialRight(_.map, _.isNumber))
-//    var isBetweenAbs1 = _.partial(Tiem.isBetween, -1, 1)
+//    var isBetweenAbs1 = _.partial(tiem.isBetween, -1, 1)
 //    var allBetweenAbs1 = _.compose(_.all, _.partialRight(_.map, isBetweenAbs1))
 // 
-//    return Tiem.Constraints.conditions(
+//    return tiem.Constraints.conditions(
 //        ['Single Day: Must be array of size 24', count24], ['Single Day: Must be all numbers', areNumbers], ['Single Day: Value must be between -1 and 1', allBetweenAbs1])(singleDay)
 // 
 // }
@@ -438,9 +438,9 @@ Tiem.O = function () {
 //  * @return {Date} if valid date
 //  * @throws {Error} In: Must have valid date
 //  */
-// Tiem.O.validateDate = function (date) {
+// tiem.O.validateDate = function (date) {
 //    //Validate In
-//    return Tiem.Constraints.conditions(['In: Must have valid date', _.isDate])(date)
+//    return tiem.Constraints.conditions(['In: Must have valid date', _.isDate])(date)
 // }
 // /**
 //  * Validate clock state
@@ -448,12 +448,12 @@ Tiem.O = function () {
 //  * @return {in|out} if valid in/out object
 //  * @throws {Error} Clock State: Must be an object type In or Out
 //  */
-// Tiem.O.validateClockState = function (inOut) {
+// tiem.O.validateClockState = function (inOut) {
 //    //Validate input
 //    var isInOrOut = function (inOut) {
-//       return _.has(inOut, Tiem.k. in ()) || _.has(inOut, Tiem.k.out())
+//       return _.has(inOut, k. in ()) || _.has(inOut, k.out())
 //    }
-//    return Tiem.Constraints.conditions(['Clock State: Must be an object type In or Out', isInOrOut])(inOut)
+//    return tiem.Constraints.conditions(['Clock State: Must be an object type In or Out', isInOrOut])(inOut)
 // }
 // /**
 //  * Validate clock information
@@ -461,20 +461,20 @@ Tiem.O = function () {
 //  * @return {Array<Object>} if valid array object
 //  * @throws {Error} Clock Info: Must be an object of Clock State and Single Day
 //  */
-// Tiem.O.validateClockInfo = function (clockInfo) {
+// tiem.O.validateClockInfo = function (clockInfo) {
 //    //Validate input
 //    var containsClockInfoObjects = function ( /* [singleDay, state]) */ ) {
-//       var args = Tiem.toFlatArray(arguments)
+//       var args = tiem.toFlatArray(arguments)
 //       var singleDay = _.first(args),
 //          total = args[1],
 //          state = _.last(args);
-//       return Tiem.have([
-//             [singleDay, Tiem.k.singleDay()],
-//             [state, Tiem.k.state()],
-//             [total, Tiem.k.total()]
+//       return tiem.have([
+//             [singleDay, k.singleDay()],
+//             [state, k.state()],
+//             [total, k.total()]
 //          ])
 //    }
-//    return Tiem.Constraints.conditions(
+//    return tiem.Constraints.conditions(
 //         ['Clock Info: Must be an object of Clock State, Total, and Single Day', containsClockInfoObjects])(clockInfo)
 // }
 // /**
@@ -483,23 +483,23 @@ Tiem.O = function () {
 //  * @return {Array<Object>} if valid array object
 //  * @throws {Error} Job Info: Must have objects Clock Info and Job
 //  */
-// Tiem.O.validateJobInfo = function (jobInfo) {
+// tiem.O.validateJobInfo = function (jobInfo) {
 //    //Validate input
 //    var containsJobInfo = function ( /* [{single day, clock state}, job id, job name, comment] */ ) {
-//       var args = Tiem.toFlatArray(arguments)
+//       var args = tiem.toFlatArray(arguments)
 //       var clockInfo = _.first(args),
 //          jobId = args[1],
 //          jobName = args[2],
 //          comment = _.last(args);
-//       return (Tiem.have([
-//             [clockInfo, Tiem.k.singleDay()],
-//             [clockInfo, Tiem.k.state()],
-//             [jobId, Tiem.k.jobId()],
-//             [jobName, Tiem.k.jobName()],
-//             [comment, Tiem.k.comment()]
+//       return (tiem.have([
+//             [clockInfo, k.singleDay()],
+//             [clockInfo, k.state()],
+//             [jobId, k.jobId()],
+//             [jobName, k.jobName()],
+//             [comment, k.comment()]
 //         ]))
 //    }
-//    return Tiem.Constraints.conditions(
+//    return tiem.Constraints.conditions(
 //   ['Job Info: Must have objects Clock Info, Job ID/Name, and comment', containsJobInfo])(jobInfo)
 // }
 // 
@@ -510,10 +510,10 @@ Tiem.O = function () {
 //  * @throws {Error} Day: Must have unique IDs
 //  * @throws {Error} Day: Must have date and job list
 //  */
-// Tiem.O.validateDay = function (dayArray) {
+// tiem.O.validateDay = function (dayArray) {
 //    //Validate Jobs
 // 
-//    var areUniqueIdsLast = _.compose(Tiem.O.areUniqueIds, _.last)
+//    var areUniqueIdsLast = _.compose(tiem.O.areUniqueIds, _.last)
 // 
 //    var containsDayArray = function ( /* [date, [jobInfo]]*/ ) {
 //       var args = _.toArray(arguments)[0]
@@ -522,69 +522,69 @@ Tiem.O = function () {
 //       return _.isDate(date) && _.isArray(jobInfo)
 //    }
 // 
-//    return Tiem.Constraints.conditions(
+//    return tiem.Constraints.conditions(
 //       ['Day: Must have unique IDs', areUniqueIdsLast], ['Day: Must have date and job list', containsDayArray]
 //    )(dayArray)
 // }
 // 
-// Tiem.Settings.createJobList = Tiem.O.validateJobList = function (jobArray) {
-//    return Tiem.Constraints.conditions(
-//         ['Jobs must have unique IDs', Tiem.O.areUniqueIds], ['Jobs must have unique names', Tiem.O.areUniqueNames]
+// tiem.Settings.createJobList = tiem.O.validateJobList = function (jobArray) {
+//    return tiem.Constraints.conditions(
+//         ['Jobs must have unique IDs', tiem.O.areUniqueIds], ['Jobs must have unique names', tiem.O.areUniqueNames]
 //    )(jobArray)
 // }
 // 
 // /**
-//  * Tiem.O objects
-//  * @example Tiem.O.createJobId(0) -> {jobId: 0}
+//  * tiem.O objects
+//  * @example tiem.O.createJobId(0) -> {jobId: 0}
 //  * @param {Number} Whole number representing job object ID.
 //  * @return {Object} Object of type {jobId: 0}
 //  * @throws {Error} Job ID: must be a whole number
 //  */
-// Tiem.Settings.createJobId = Tiem.O.createJobId = function (id) {
-//    Tiem.O.validateJobId(id)
+// tiem.Settings.createJobId = tiem.O.createJobId = function (id) {
+//    tiem.O.validateJobId(id)
 // 
 //    return _.zipObject(
-//   [Tiem.k.jobId()], [id]
+//   [k.jobId()], [id]
 //    )
 // }
 // 
 // /**
 //  * Create a name for job.
-//  * @example Tiem.O.createJobName(' a job name  ') => {jobName: 'a job name'}
+//  * @example tiem.O.createJobName(' a job name  ') => {jobName: 'a job name'}
 //  * @param {String} name The job name for current instance. Must be string with less than 50 characters.
 //  * @returns {Object} {jobName: <String>}
 //  */
-// Tiem.O.createJobName = Tiem.Settings.createJobName = function (name) {
+// tiem.O.createJobName = tiem.Settings.createJobName = function (name) {
 //    var name_ = String(name.trim())
-//    Tiem.O.validateJobName(name_)
+//    tiem.O.validateJobName(name_)
 //    return _.zipObject(
-//   [Tiem.k.jobName()], [name_]
+//   [k.jobName()], [name_]
 //    )
 // }
 // 
 // /**
 //  * Create a comment.
-//  * @example Tiem.O.createComment(' a comment, yay!  ') => {comment: 'a comment, yay!'}
+//  * @example tiem.O.createComment(' a comment, yay!  ') => {comment: 'a comment, yay!'}
 //  * @param {String} comment The job comment for current instance. Must be a string.
 //  * @returns {Object} {comment: <String>}
 //  */
-// Tiem.O.createComment = function (comment) {
+// tiem.O.createComment = function (comment) {
 //    var comment_ = _.isEmpty(comment) ? '' : String(comment.trim())
 //    return _.zipObject(
-//   [Tiem.k.comment()], [comment_]
+//   [k.comment()], [comment_]
 //    )
 // }
 // 
 // /**
 //  * Object which represents a single day's time.
-//  * @example Tiem.O.createSingleDay([0..23]) -> {singleDay: [0..23]}
+//  * @example tiem.O.createSingleDay([0..23]) -> {singleDay: [0..23]}
 //  * @param {Array<Number>} dayArray Array of length 24 with values between -1 and 1 inclusive, a zero length array is acceptable
 //  * @return {Object} {singleDay: [0..23]}
 //  * @throws {Error} Single Day: Must be array of size 24
 //  * @throws {Error} Single Day: Must be all numbers
 //  * @throws {Error} Single Day: Value must be between -1 and 1
 //  */
-// Tiem.O.createSingleDay = function (dayArray) {
+// tiem.O.createSingleDay = function (dayArray) {
 // 
 //    'use strict';
 // 
@@ -595,92 +595,92 @@ Tiem.O = function () {
 //       _.clone(dayArray)
 // 
 //    // Determine the validity of the argument.
-//    Tiem.O.validateSingleDay(dayArray_)
+//    tiem.O.validateSingleDay(dayArray_)
 // 
 //    return _.zipObject(
-//     [Tiem.k.singleDay()], [dayArray_]
+//     [k.singleDay()], [dayArray_]
 //    )
 // 
 // }
 // 
 // /**
 //  * Creates an object wrapped around the total.
-//  * @example Tiem.O.createTotal({singleDay: [0..23].map(1)}) => {total: 24}
+//  * @example tiem.O.createTotal({singleDay: [0..23].map(1)}) => {total: 24}
 //  * @param {Object<singleDay>} singleDay Object single day.
 //  * @returns {Object<total>} Total object with number total.
 //  */
-// Tiem.O.createTotal = function (singleDay) {
+// tiem.O.createTotal = function (singleDay) {
 //    return _.zipObject(
-//         [Tiem.k.total()], [Tiem.sum(singleDay[Tiem.k.singleDay()])])
+//         [k.total()], [tiem.sum(singleDay[k.singleDay()])])
 // }
 // 
 // /*
 //  * Object representing the clocked in state.
-//  * @example Tiem.O.createIn(new Date()) -> {in: <date value>}
+//  * @example tiem.O.createIn(new Date()) -> {in: <date value>}
 //  * @param {Date} date Date/Time when clocked in
 //  * @return {Object} {in: <date value>}
 //  * @throws {Error} In: Must have valid date
 //  */
-// Tiem.O.createIn = function (date) {
+// tiem.O.createIn = function (date) {
 //    'use strict';
 // 
 //    //Determine the validity of the argument.
-//    Tiem.O.validateDate(date)
+//    tiem.O.validateDate(date)
 // 
 //    return _.zipObject(
-//     [Tiem.k. in ()], [date]
+//     [k. in ()], [date]
 //    )
 // }
 // /*
 //  * Object representing clocked out state.
-//  * @example Tiem.O.createOut() -> {out: ''}
+//  * @example tiem.O.createOut() -> {out: ''}
 //  * @return {Object} {out: ''}
 //  */
-// Tiem.O.createOut = function () {
+// tiem.O.createOut = function () {
 //    'use strict';
 // 
 //    return _.zipObject(
-//     [Tiem.k.out()], ['']
+//     [k.out()], ['']
 //    )
 // 
 // }
 // /*
 //  * Object which represents the toggle state of the job.
-//  * @example Tiem.O.createClockState({in:date}|{out:''}) -> {clockState: {<in|out>}}
+//  * @example tiem.O.createClockState({in:date}|{out:''}) -> {clockState: {<in|out>}}
 //  * @param {Object<in>|Object<out>} inOut In or out object.
 //  * @return {Object<in>|Object<out>} {clockState: {<in|out>}}
 //  * @throws {Error} In: Must have valid date
 //  */
-// Tiem.O.createClockState = function (inOut) {
+// tiem.O.createClockState = function (inOut) {
 //    "use strict";
 // 
-//    Tiem.O.validateClockState(inOut)
+//    tiem.O.validateClockState(inOut)
 // 
 //    return _.zipObject(
-//     [Tiem.k.state()], [inOut]
+//     [k.state()], [inOut]
 //    )
 // 
 // }
 // /*
 //  * Contains objects ClockState and SingleDay.
-//  * @example Tiem.O.createClockInfo({singleDay: [0..23]}, {clockState:{in|out:<value>}})
+//  * @example tiem.O.createClockInfo({singleDay: [0..23]}, {clockState:{in|out:<value>}})
 //  * @param {Object<singleDay>} singleDay Object singleDay with array value representing hours over 24 hour period.
 //  * @param {Object<total>} total Object total containing the sum of single day object.
 //  * @param {Object<in>|Object<out>} inOut In or out object.
 //  * @return {Object} {singleDay: [0..23], total: <Number>, clockState: {<in|out>}}
 //  * @throws {Error} Clock Info: Must be an object of Clock State and Single Day
 //  */
-// Tiem.O.createClockInfo = function (singleDay, total, state) {
+// tiem.O.createClockInfo = function (singleDay, total, state) {
 //    "use strict";
 // 
-//    Tiem.O.validateClockInfo([singleDay, total, state])
+//    tiem.O.validateClockInfo([singleDay, total, state])
 // 
 //    return _.assign(singleDay, total, state)
 // 
 // }
 // /*
 //  * Contains objects ClockInfo and Job
-//  * @example Tiem.O.createJobInfo({singleDay:<[0..23]>, in|out:<value>}, {jobId:<wholeNumber>}) -> {jobID:<wholeNumer>, singleDay:<[0..23]>, in|out:<value>}
+//  * @example tiem.O.createJobInfo({singleDay:<[0..23]>, in|out:<value>}, {jobId:<wholeNumber>}) -> {jobID:<wholeNumer>, singleDay:<[0..23]>, in|out:<value>}
 //  * @param {Object} clockInfo Object containing singleDay and in|out objects.
 //  * @param {Object<jobId>} jobId Object containing the unique job ID.
 //  * @param {Object<jobName>} jobName Object containing the unique job name.
@@ -688,29 +688,29 @@ Tiem.O = function () {
 //  * @return {Object} {jobId: <value>, singleDay: [0..23], clockState: {<in|out>}}
 //  * @throws {Error} Job Info: Must have objects Clock Info and Job
 //  */
-// Tiem.O.createJobInfo = function (clockInfo, jobId, jobName, comment) {
+// tiem.O.createJobInfo = function (clockInfo, jobId, jobName, comment) {
 //    "use strict";
 // 
-//    Tiem.O.validateJobInfo([clockInfo, jobId, jobName, comment])
+//    tiem.O.validateJobInfo([clockInfo, jobId, jobName, comment])
 // 
 //    return _.assign(jobId, jobName, comment, clockInfo)
 // 
 // }
 // /*
 //  * Contains a list of JobInfo objects.
-//  * @example Tiem.O.createJobs([jobInfo]) -> {jobID:<wholeNumber>, singleDay:<[0..23]>, in|out:<value>}
+//  * @example tiem.O.createJobs([jobInfo]) -> {jobID:<wholeNumber>, singleDay:<[0..23]>, in|out:<value>}
 //  * @param {Date} date The date of the list of Job information objects.
 //  * @param {Array<jobInfo>} jobInfos Array containing jobInfos.
 //  * @return {Object} {date: <value>, [jobInfo{}]}
 //  * @throws {Error} Day: Must have date and job list
 //  * @throws {Error} Day: Must have unique IDs
 //  */
-// Tiem.O.createDay = function (date, jobInfos) {
+// tiem.O.createDay = function (date, jobInfos) {
 //    "use strict";
 // 
-//    Tiem.O.validateDay([date, jobInfos])
+//    tiem.O.validateDay([date, jobInfos])
 // 
-//    return _.zipObject([Tiem.k.day(), Tiem.k.jobList()], [date, jobInfos])
+//    return _.zipObject([k.day(), k.jobList()], [date, jobInfos])
 // }
 // 
 // /**
@@ -719,36 +719,36 @@ Tiem.O = function () {
 //  * @param {Date} time The time when the person clocks in.
 //  * @return {Object<clockState>} {clockState: {in: <Date>}}
 //  */
-// Tiem.O.inState = _.compose(Tiem.O.createClockState, Tiem.O.createIn)
+// tiem.O.inState = _.compose(tiem.O.createClockState, tiem.O.createIn)
 // 
 // /**
 //  * The object 'clock state' which is clocked out.
 //  * @example clockedOutState -> {clockState: {out: ''}}
 //  */
-// Tiem.O.outState = _.compose(Tiem.O.createClockState, Tiem.O.createOut)
+// tiem.O.outState = _.compose(tiem.O.createClockState, tiem.O.createOut)
 // 
 // /**
 //  * The object 'clock information' which is clocked out.
-//  * @example Tiem.O.defaultClockInfo() -> {singleDay: [0..23].map(0), 0, clockState: {out: ''}}
+//  * @example tiem.O.defaultClockInfo() -> {singleDay: [0..23].map(0), 0, clockState: {out: ''}}
 //  */
-// Tiem.O.defaultClockInfo = function () {
-//    var singleDay = Tiem.O.createSingleDay('')
-//    return Tiem.O.createClockInfo(singleDay, Tiem.O.createTotal(singleDay), Tiem.O.outState())
+// tiem.O.defaultClockInfo = function () {
+//    var singleDay = tiem.O.createSingleDay('')
+//    return tiem.O.createClockInfo(singleDay, tiem.O.createTotal(singleDay), tiem.O.outState())
 // }
 // 
 // /*
 //  * Converts the JobInfo object to a view compatible object.
-//  * @example Tiem.O.defaultJobInfo() => {jobID: 0, jobName: 'jobName', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out: ''}}
+//  * @example tiem.O.defaultJobInfo() => {jobID: 0, jobName: 'jobName', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out: ''}}
 //  * @returns Default object containing job information. {jobID: 0, jobName: 'jobName', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out: ''}}
 //  */
-// Tiem.O.defaultJobInfo = function () {
+// tiem.O.defaultJobInfo = function () {
 // 
-//    var clockInfo = Tiem.O.defaultClockInfo()
-//    return Tiem.O.createJobInfo(
+//    var clockInfo = tiem.O.defaultClockInfo()
+//    return tiem.O.createJobInfo(
 //       clockInfo,
-//       Tiem.O.createJobId(0),
-//       Tiem.O.createJobName(Tiem.k.jobName()),
-//       Tiem.O.createComment(''))
+//       tiem.O.createJobId(0),
+//       tiem.O.createJobName(k.jobName()),
+//       tiem.O.createComment(''))
 // 
 // }
 // 
@@ -756,17 +756,17 @@ Tiem.O = function () {
 //  * Settings
 //  *****************************/
 // 
-// Tiem.Settings.createJobActive = function (active) {
-//    Tiem.O.validateActiveJob(active)
+// tiem.Settings.createJobActive = function (active) {
+//    tiem.O.validateActiveJob(active)
 //    return _.zipObject(
-//         [Tiem.k.jobActive()], [active])
+//         [k.jobActive()], [active])
 // }
 // 
-// Tiem.Settings.jobs = function () {
+// tiem.Settings.jobs = function () {
 //    // Need to get this data from where it is stored.
 // 
-//    return [_.assign(Tiem.Settings.createJobActive(true), Tiem.Settings.createJobId(0), Tiem.Settings.createJobName('Job1')),
-//       _.assign(Tiem.Settings.createJobActive(true), Tiem.Settings.createJobId(1), Tiem.Settings.createJobName('Job2')),
-//       _.assign(Tiem.Settings.createJobActive(false), Tiem.Settings.createJobId(2), Tiem.Settings.createJobName('Not a Job'))
+//    return [_.assign(tiem.Settings.createJobActive(true), tiem.Settings.createJobId(0), tiem.Settings.createJobName('Job1')),
+//       _.assign(tiem.Settings.createJobActive(true), tiem.Settings.createJobId(1), tiem.Settings.createJobName('Job2')),
+//       _.assign(tiem.Settings.createJobActive(false), tiem.Settings.createJobId(2), tiem.Settings.createJobName('Not a Job'))
 //       ]
 // }
