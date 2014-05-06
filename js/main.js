@@ -3,11 +3,8 @@
  */
 
 /* jslint asi: true */
-/* global window, ui */
+/* global window, ui, tiem, jobList */
 
 window.onload = function () {
     ui.header()
-    //var jobAutoComplete = Tiem.UI.addNewJob()
-    //Tiem.Observe.addJob.enter(jobAutoComplete.input)
-    //Tiem.React.addJob.focus(jobAutoComplete)
 }

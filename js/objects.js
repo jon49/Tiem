@@ -267,7 +267,10 @@ var toList = function(){return this.list}
 
 var toObject = function(){return this.current}
    
-tiem.JobSettings = bilby.environment() 
+tiem = 
+   tiem.property(
+   'JobSettings',
+   bilby.environment() 
       .property(
          'new',
          function(){return new JobSettings()}
@@ -317,10 +320,14 @@ tiem.JobSettings = bilby.environment()
             return this
          }
       )
+)
    
 var isJobs = bilby.isInstanceOf(Jobs)
 
-tiem.Jobs = bilby.environment()
+tiem = 
+   tiem.property(
+   'Jobs',
+   bilby.environment()
       .property(
          'new',
          function(){return new Jobs()}
@@ -365,6 +372,7 @@ tiem.Jobs = bilby.environment()
          function(d){return isJobs && _.isDate(d)},
          updateDate
       )
+)
       
 
 var extendObject = function(object, extensions){

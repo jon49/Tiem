@@ -3,6 +3,7 @@
  */
 
 /*jslint asi: true*/
+/*jshint indent:3, curly:false, laxbreak:true */
 /* global _ */
 
 /**
@@ -19,11 +20,11 @@ var tiem = bilby.environment()
  * @returns {String} New string which has been trimmed and resized.
  */
 var stringSize = function (string, size) {
-    "use strict";
-    if (!_.isNumber(size)) {
-        throw new Error("stringSize : Not a number!")
-    }
-    return String(string).trim().slice(0, size)
+   "use strict";
+   if (!_.isNumber(size)) {
+      throw new Error("stringSize : Not a number!")
+   }
+   return String(string).trim().slice(0, size)
 }
 
 /**
@@ -32,11 +33,11 @@ var stringSize = function (string, size) {
  * @returns {Boolean} True if whole number otherwise false.
  */
 var isWholeNumber = function (number) {
-    "use strict";
-    if (_.isNumber(number) && (number > -1) && (Math.floor(number) === number)) {
-        return true
-    }
-    return false
+   "use strict";
+   if (_.isNumber(number) && (number > -1) && (Math.floor(number) === number)) {
+      return true
+   }
+   return false
 }
 
 /**
@@ -47,11 +48,11 @@ var isWholeNumber = function (number) {
  * @returns {Boolean} True if between upper & lower bounds, otherwise false.
  */
 var isBetween = function (lower, upper, value) {
-    "use strict";
-    if ((lower <= value) && (value <= upper)) {
-        return true
-    }
-    return false
+   "use strict";
+   if ((lower <= value) && (value <= upper)) {
+      return true
+   }
+   return false
 }
 
 /**
@@ -61,12 +62,12 @@ var isBetween = function (lower, upper, value) {
  * @returns {Boolean} True if unique, otherwise false.
  */
 var areUnique = function (objects, property) {
-    'use strict';
-    if (_.isEmpty(objects)) {
-        return false
-    }
-    var objectProperties = _.map(objects, property)
-    return _.isEqual(_.uniq(objectProperties).length, objects.length)
+   'use strict';
+   if (_.isEmpty(objects)) {
+      return false
+   }
+   var objectProperties = _.map(objects, property)
+   return _.isEqual(_.uniq(objectProperties).length, objects.length)
 }
 
 /**
@@ -76,7 +77,7 @@ var areUnique = function (objects, property) {
  * @returns {Function} Function which takes an array of objects.
  */
 var areUniqueValues = function (key) {
-    return _.partialRight(areUnique, key)
+   return _.partialRight(areUnique, key)
 }
 
 /**
@@ -93,9 +94,9 @@ var toFlatArray = _.compose(_.flatten, _.toArray)
  * @author Michael Fogus see: https://github.com/funjs/book-source
  */
 var complement = function (predicate) {
-    return function () {
-        return !predicate.apply(null, _.toArray(arguments))
-    }
+   return function () {
+      return !predicate.apply(null, _.toArray(arguments))
+   }
 }
 
 /**
@@ -108,21 +109,21 @@ var complement = function (predicate) {
  * @returns {Array<Number>} a new array with added values.
  */
 var addRollingArray = function (array, start, end, fraction) {
-    return _.map(array, function (value, index) {
-        if (Math.floor(start) === Math.floor(end) && index === Math.floor(start)) {
-            return fraction * (end - start) + value
-        } else if (Math.floor(start) <= index && index <= Math.floor(end)) {
-            if (Math.floor(start) === index) {
-                return fraction * (1 + index - start) + value
-            } else if (Math.floor(end) === index) {
-                return fraction * (end - index) + value
-            } else {
-                return fraction + value
-            }
-        } else {
-            return value
-        }
-    })
+   return _.map(array, function (value, index) {
+      if (Math.floor(start) === Math.floor(end) && index === Math.floor(start)) {
+         return fraction * (end - start) + value
+      } else if (Math.floor(start) <= index && index <= Math.floor(end)) {
+         if (Math.floor(start) === index) {
+            return fraction * (1 + index - start) + value
+         } else if (Math.floor(end) === index) {
+            return fraction * (end - index) + value
+         } else {
+            return fraction + value
+         }
+      } else {
+         return value
+      }
+   })
 }
 
 /**
@@ -130,11 +131,11 @@ var addRollingArray = function (array, start, end, fraction) {
  * @returns {Number} Fractional representation of hours.
  */
 var fractionalHours = function (date) {
-    return date.getHours() + (date.getMinutes() + date.getSeconds() / 60) / 60
+   return date.getHours() + (date.getMinutes() + date.getSeconds() / 60) / 60
 }
 
 var isLikeNumber = function (num) {
-    return !isNaN(parseFloat(num)) && isFinite(num)
+   return !isNaN(parseFloat(num)) && isFinite(num)
 }
 
 /**
@@ -144,9 +145,9 @@ var isLikeNumber = function (num) {
  * @returns {Number} Sum.
  */
 var sum = function (array) {
-    return _.reduce(array, function (sum, num) {
-        return sum + (isLikeNumber(num) ? +num : 0)
-    })
+   return _.reduce(array, function (sum, num) {
+      return sum + (isLikeNumber(num) ? +num : 0)
+   })
 }
 
 /**
@@ -158,7 +159,7 @@ var sum = function (array) {
  * @returns {<Object>} Returns an object.
  */
 var zipObjectT = _.curry(function (funcKey, funcValue, array) {
-    return _.zipObject(_.map(array, funcKey), _.map(array, funcValue))
+   return _.zipObject(_.map(array, funcKey), _.map(array, funcValue))
 })
 
 /**
@@ -182,8 +183,13 @@ var have =
         _.all,
         _.partialRight(
             _.map, function (a) {
-                return _.has(_.first(a), _.last(a))
+               return _.has(_.first(a), _.last(a))
             }))
+//https://github.com/antris/js-polymorphism/blob/master/feed/feed.js
+var hasAll = _.curry(function(attrs, o){
+   var has = _.curry(_.has)
+   return _.every(attrs, has(o))
+})
 
 tiem = tiem
    .property('stringSize', stringSize)
@@ -200,3 +206,4 @@ tiem = tiem
    .property('zipObjectT', zipObjectT)
    .property('constants', constants)
    .property('have', have)
+   .property('hasAll', hasAll)

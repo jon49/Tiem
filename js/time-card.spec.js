@@ -1,7 +1,7 @@
 /* brackets-xunit: jasmine */
-/* brackets-xunit: includes=../bower_components/lodash/dist/lodash.min.js,../bower_components/bilby.js/bilby-min.js,utilities.js,constraints.js,objects.js,engine.js */
+/* brackets-xunit: includes=../bower_components/lodash/dist/lodash.min.js,../bower_components/bilby.js/bilby-min.js,utilities.js,objects.js,templates.js,ui.js */
 
-/* global describe, it, expect, tiem, _ */
+/* global describe, it, expect, tiem, _, bilby */
 /*jslint asi: true*/
 /*jshint indent:3, curly:false, laxbreak:true */
 
@@ -46,15 +46,15 @@ describe("How the utilities are used in project", function () {
          dogName: 'Lassie',
          color: 'multi'
       }, {
-       dogName: 'Hassie',
-       color: 'brown'
+         dogName: 'Hassie',
+         color: 'brown'
       }]
       var notUniqueObjects = [{
-       dogName: 'Lassie',
-       color: 'multi'
+         dogName: 'Lassie',
+         color: 'multi'
       }, {
-       dogName: 'Lassie',
-       color: 'brown'
+         dogName: 'Lassie',
+         color: 'brown'
       }]
 
       expect(tiem.areUnique(uniqueObject, 'dogName')).toBe(true)
@@ -63,7 +63,7 @@ describe("How the utilities are used in project", function () {
    })
    it('should convert arguments to array and flatten array', function () {
       var test = function () {
-       return tiem.toFlatArray(arguments)
+         return tiem.toFlatArray(arguments)
       }
       expect(test(1, [2])).toEqual([1, 2])
    })
@@ -132,6 +132,15 @@ describe("How the utilities are used in project", function () {
       it("should return a function of constant value", function () {
          var keys = tiem.constants([['yep', 'yay!'], ['nope']])
          expect(keys.yep()).toEqual('yay!')
+      })
+   })
+   describe('The function hasAll', function(){
+      var o = {id:0,key1:'some value'}
+      it('should be true when all specified keys are true', function(){
+         expect(tiem.hasAll(['id','key1'])(o)).toBe(true)
+      })
+      it('should be false when all specified keys are not in object', function(){
+         expect(tiem.hasAll(['id','key1','key2'])(o)).toBe(false)
       })
    })
 })
@@ -260,6 +269,10 @@ describe('Job object manipulation and creation', function(){
       })
    })
 })
+
+// describe('Templates', function(){
+//    describe()
+// })
 
 // describe("Core validation methods", function () {
 //    describe("The function areUniqueIds", function () {

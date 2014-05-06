@@ -31,33 +31,33 @@
 // }
 
 var controller = {
-   // Eventually I'll need to get the data from a source, if that day has jobs already added.
+//    Eventually I'll need to get the data from a source, if that day has jobs already added.
    jobList: function(){
       var j = tiem.JobSettings.new()
       j.add(j.create(0, 'My new job', true)).add(j.create(0, 'Next Job', true))
       return j
    }(),
-   // Eventually I'll need to get the data from a source, if that day has jobs already added.
+//   // Eventually I'll need to get the data from a source, if that day has jobs already added.
    jobs: function(){return tiem.Jobs.new()}()
 }
 
 var ui = {
 
    header: function () {
-       var headerObject = _.zipObject([k.day()], [new Date()])
-       $('header').append(tiem.header(headerObject))
+      var headerObject = _.zipObject([k.day()], [new Date()])
+      $('header').append(tiem.header(headerObject))
 
-       var funWithHeader = function () {
-           var $te = $('#tiem-e'), $tm = $('#tiem-m'), $card = $('#card'), positionE = $te.offset().left, positionM = $tm.offset().left
-           $tm.delay(2000).animate({
-               left: (positionE - positionM - ($tm.width() - $te.width()))
-           }, 1000)
-           $te.delay(2000).animate({
-               left: (positionM - positionE)
-           }, 1000)
-           $card.delay(1000).fadeOut('slow')
-       }
-       funWithHeader()
+      var funWithHeader = function () {
+         var $te = $('#tiem-e'), $tm = $('#tiem-m'), $card = $('#card'), positionE = $te.offset().left, positionM = $tm.offset().left
+         $tm.delay(2000).animate({
+            left: (positionE - positionM - ($tm.width() - $te.width()))
+         }, 1000)
+         $te.delay(2000).animate({
+            left: (positionM - positionE)
+         }, 1000)
+         $card.delay(1000).fadeOut('slow')
+      }
+      funWithHeader()
    },
 
    jobInput: function(){
@@ -77,8 +77,7 @@ var ui = {
          searchField: k.jobName(),
          soreField: k.jobName(),
          onChange: function(value){
-            alert(value)
-            selectize.removeOption(value)
+            //selectize.removeOption(value)
             //selectize.clear()
          }
       } 
@@ -88,7 +87,7 @@ var ui = {
    }(),
 
    addJob: function(value){
-      var i = 1
+//      var i = 1
       //*****validate job here**********
 //       var jobName = String(value[k.jobName()]).trim()
 //       var job = jobList.name(jobName).toObject()
