@@ -307,6 +307,16 @@ tiem.JobSettings = bilby.environment()
          _.isBoolean,
          change(k.jobActive())
       )
+      .method(
+         'name',
+         _.isString,
+         function(name){
+            this.current = _.first(_.filter(this.list, function(setting){
+               return _.isEqual(setting[k.jobName()], name)
+            }))
+            return this
+         }
+      )
    
 var isJobs = bilby.isInstanceOf(Jobs)
 

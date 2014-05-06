@@ -45,17 +45,17 @@ div.stamp > button.comment {
 .text-left {
     text-align: left;
 }
-#jobs {
-   height: 2em;
-   line-height: 2em;
-   cursor: text;
+/* Selectize apparence */
+.selectize-input {
    border: 1px solid DarkSeaGreen;
-   padding-left: 1em;
-   padding-right: 1em;
-   color: #777;
    background-color: #F2F8FF;
-   text-align: left;
-   width: 100%;
+   font-size: 1.0em;
+}
+.selectize-control.multi .selectize-input [data-value] {
+   background-color: DarkSeaGreen;
+}
+.selectize-dropdown .active{
+   background-color: DarkSeaGreen;
 }
 
 /*http://stackoverflow.com/a/5108401/632495*/
