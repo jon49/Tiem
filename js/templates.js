@@ -19,8 +19,8 @@ var header = _.template(
       )
 
 var stamp = _.template(
-         '<div class="stamp pure-g" id="<%= ' + k.jobId() + ' %>" style="display: none;" >' +
-         '  <button class="pure-button pure-u-14-24 jobButton" title="<%-' + k.jobName() + '%>"> <%- ' + k.jobName() + ' %> </button>' +
+         '<div class="stamp pure-g" id="<%= ' + k.id() + ' %>" style="display: none;" >' +
+         '  <button class="pure-button pure-u-14-24 jobButton" title="<%-' + k.name() + '%>"> <%- ' + k.name() + ' %> </button>' +
          '  <button class="pure-button time pure-u-5-24" title="<%-' + k.state() + '.' + k['in']() + '%>"> <%= ' + k.state() + '.' + k['in']() + '.toLocaleTimeString() %></button>' +
          '  <button class="pure-button hours pure-u-3-24"> <%= Number(' + k.total() + ').toFixed(2) %> </button>' +
          '  <button class="pure-button notes pure-u-2-24" title="<%- ' + k.comment() + ' %>"> <i class="fa fa-pencil"></i> </button>' +
@@ -31,7 +31,7 @@ var stamp = _.template(
 tiem = tiem
    .method(
       'stamp',
-      tiem.hasAll([k.jobId(), k.jobName(), k.state(), k.total(), k.comment()]),
+      tiem.hasAll([k.id(), k.name(), k.state(), k.total(), k.comment()]),
       stamp
    )
    .method(

@@ -11,7 +11,8 @@
  **Utilities**
  */
 
-var tiem = bilby.environment()
+var b = bilby
+var tiem = b.environment()
 
 /**
  * Takes an object and returns a string of specified length or less, trimmed.

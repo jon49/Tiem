@@ -147,7 +147,7 @@ describe("How the utilities are used in project", function () {
 
 describe("Core constants", function () {
    it("should return the string 'id'", function () {
-      expect(tiem.k.jobId()).toEqual("jobId")
+      expect(tiem.k.id()).toEqual("id")
    })
    it("should return the string 'singleDay'", function () {
       expect(tiem.k.singleDay()).toEqual("singleDay")
@@ -170,8 +170,8 @@ describe("Core constants", function () {
    it("should return the string 'clockedState'", function () {
       expect(tiem.k.clockedState()).toEqual('clockedState')
    })
-   it("should return the string 'jobName'", function () {
-      expect(tiem.k.jobName()).toEqual('jobName')
+   it("should return the string 'name'", function () {
+      expect(tiem.k.name()).toEqual('name')
    })
    it("should return the string 'clocked'", function () {
       expect(tiem.k.comment()).toEqual('comment')
@@ -188,31 +188,31 @@ describe('JobSettings object manipulation and creation', function(){
    var job2 = settings.create(1, 'tiem', true)
 
    describe('the function create', function(){
-      //[tiem.k.jobId(), tiem.k.jobName(), tiem.k.jobActive()]
+      //[tiem.k.id(), tiem.k.name(), tiem.k.jobActive()]
       it('should be able to create a new job setting', function(){
-         expect(newJobSetting[tiem.k.jobId()]).toBe(0)
-         expect(newJobSetting[tiem.k.jobName()]).toBe('My lovely job')
+         expect(newJobSetting[tiem.k.id()]).toBe(0)
+         expect(newJobSetting[tiem.k.name()]).toBe('My lovely job')
          expect(newJobSetting[tiem.k.jobActive()]).toBe(true)
       })
    })
    describe('the function add', function(){
       it('should add a new job setting to the job setting list', function(){
-         expect(settings.add(newJobSetting).toList()).toEqual([newJobSetting])
+         expect(settings.add(newJobSetting).toArray()).toEqual([newJobSetting])
       })
    })
    describe('the function id', function(){
       it('should select the object with selected id', function(){
          settings.add(newJobSetting).add(job2)
-         expect(settings.id(0).toObject()).toEqual(newJobSetting)
-         expect(settings.id(1).toObject()).toEqual(job2)
+         expect(settings.id(0).toObject().getOrElse(undefined)).toEqual(newJobSetting)
+         expect(settings.id(1).toObject().getOrElse(undefined)).toEqual(job2)
       })
    })
    describe('the function update', function(){
       it('should be able to update the job name', function(){
-         expect(settings.id(0).update('New Job Name').toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: true})
+         expect(settings.id(0).update('New Job Name').toObject().getOrElse(undefined)).toEqual({id:0, name:'New Job Name', jobActive: true})
       })
       it('should be able to update the job active status', function(){
-         expect(settings.id(0).update(false).toObject()).toEqual({jobId:0, jobName:'New Job Name', jobActive: false})
+         expect(settings.id(0).update(false).toObject().getOrElse(undefined)).toEqual({id:0, name:'New Job Name', jobActive: false})
       })
    })
 })
@@ -231,41 +231,41 @@ describe('Job object manipulation and creation', function(){
 
    describe('the function create', function(){
       it('should be able to create a valid job', function(){
-         expect(job1[tiem.k.jobId()]).toBe(0)
-         expect(job2[tiem.k.jobId()]).toBe(1)
-         expect(job1[tiem.k.jobName()]).toBe('My lovely job')
+         expect(job1[tiem.k.id()]).toBe(0)
+         expect(job2[tiem.k.id()]).toBe(1)
+         expect(job1[tiem.k.name()]).toBe('My lovely job')
       })
    })
    describe('the function add', function(){
       it('should add a new job to the job list', function(){
-         expect(jobs.add(job1).add(job2).toList()).toEqual([job1, job2])
+         expect(jobs.add(job1).add(job2).toArray()).toEqual([job1, job2])
       })
    })
    describe('the function id', function(){
       it('should select the job with selected id', function(){
          jobs.add(job1).add(job2)
-         expect(jobs.id(0).toObject()).toEqual(job1)
-         expect(jobs.id(1).toObject()).toEqual(job2)
+         expect(jobs.id(0).toObject().getOrElse(undefined)).toEqual(job1)
+         expect(jobs.id(1).toObject().getOrElse(undefined)).toEqual(job2)
       })
    })
    describe('the function update', function(){
       it('should be able to update the comment', function(){
-         var j1 = _.cloneDeep(jobs.id(0).toObject())
+         var j1 = _.cloneDeep(jobs.id(0).toObject().getOrElse(undefined))
          var j1_ = _.assign(j1, {comment: 'New comment.'})
-         expect(jobs.id(0).update('New comment.').toObject()).toEqual(j1_)
-         expect(jobs.toList()[1]).toEqual(j1_)
+         expect(jobs.id(0).update('New comment.').toObject().getOrElse(undefined)).toEqual(j1_)
+         expect(jobs.toArray()[1]).toEqual(j1_)
       })
       it('should be able to toggle clocked in/out status', function(){
-         var j1 = _.cloneDeep(jobs.id(0).toObject())
+         var j1 = _.cloneDeep(jobs.id(0).toObject().getOrElse(undefined))
          var newDate = new Date(2014, 4, 2, 10)
          var dateOut = new Date(2014, 4, 2, 10, 30)
          var j1_ = _.assign(j1, {clockState: {'in': newDate}})
-         expect(jobs.id(0).update(newDate).toObject()).toEqual(j1_)
+         expect(jobs.id(0).update(newDate).toObject().getOrElse(undefined)).toEqual(j1_)
          var singleDay_ = _.range(24).map(function(){return 0})
          singleDay_[10] = 0.5
          var j1$ = _.assign(j1_, {clockState: {'out': dateOut}}, {total: 0.5}, {singleDay: singleDay_})
-         expect(jobs.id(0).update(dateOut).toObject()).toEqual(j1$)
-         expect(jobs.toList()[1]).toEqual(j1$)
+         expect(jobs.id(0).update(dateOut).toObject().getOrElse(undefined)).toEqual(j1$)
+         expect(jobs.toArray()[1]).toEqual(j1$)
       })
    })
 })
@@ -276,8 +276,8 @@ describe('Job object manipulation and creation', function(){
 
 // describe("Core validation methods", function () {
 //    describe("The function areUniqueIds", function () {
-//       it("should determine if an array of objects with key 'jobId' is unique", function () {
-//          var id = tiem.k.jobId()
+//       it("should determine if an array of objects with key 'id' is unique", function () {
+//          var id = tiem.k.id()
 //          var uniqueIds = [_.zipObject([id], [0]), _.zipObject([id], [1])]
 //          var notUniqueIds = [_.zipObject([id], [0]), _.zipObject([id], [0])]
 //          expect(tiem.O.areUniqueIds(uniqueIds)).toBe(true)
@@ -285,8 +285,8 @@ describe('Job object manipulation and creation', function(){
 //       })
 //    })
 //    describe("The function areUniqueNames", function () {
-//       it("should determine if an array of objects with key 'jobName' is unique", function () {
-//             var name = tiem.k.jobName()
+//       it("should determine if an array of objects with key 'name' is unique", function () {
+//             var name = tiem.k.name()
 //             var uniqueNames = [_.zipObject([name], ['my job']), _.zipObject([name], ['my next job'])]
 //             var notUniqueNames = [_.zipObject([name], ['same old job']), _.zipObject([name], ['same old job'])]
 //             expect(tiem.O.areUniqueNames(uniqueNames)).toBe(true)
@@ -316,7 +316,7 @@ describe('Job object manipulation and creation', function(){
 //           }).toThrow(new Error('Job Name: must be string, Job Name: must have a length greater zero'))
 //       })
 //       describe("The function validateJobList", function () {
-//           var jobValues = _.curry(_.zipObject)([tiem.k.jobId(), tiem.k.jobName(), tiem.k.jobActive()])
+//           var jobValues = _.curry(_.zipObject)([tiem.k.id(), tiem.k.name(), tiem.k.jobActive()])
 //           var listOfJobs = [jobValues([0, 'My job', true]), jobValues([1, 'My Awesome Job', true])]
 //           it("should validate a valid list of jobs setting and return the list", function () {
 //             expect(tiem.O.validateJobList(listOfJobs)).toEqual(listOfJobs)
@@ -324,14 +324,14 @@ describe('Job object manipulation and creation', function(){
 //           it("should throw the exception 'Jobs must have unique IDs' when IDs are not unique", function () {
 //             expect(function () {
 //                 tiem.O.validateJobList(_.map(_.cloneDeep(listOfJobs), function (job) {
-//                     return _.assign(job, _.zipObject([tiem.k.jobId()], [0]))
+//                     return _.assign(job, _.zipObject([tiem.k.id()], [0]))
 //                 }))
 //             }).toThrow(new Error('Jobs must have unique IDs'))
 //           })
 //           it("should throw the exception 'Jobs must have unique names' when names are not unique", function () {
 //             expect(function () {
 //                 tiem.O.validateJobList(_.map(_.cloneDeep(listOfJobs), function (job) {
-//                     return _.assign(job, _.zipObject([tiem.k.jobName()], [0]))
+//                     return _.assign(job, _.zipObject([tiem.k.name()], [0]))
 //                 }))
 //             }).toThrow(new Error('Jobs must have unique names'))
 //           })
@@ -406,7 +406,7 @@ describe('Job object manipulation and creation', function(){
 //           return validClockInfo(notClockInfo)
 //       }).toThrow(new Error('Clock Info: Must be an object of Clock State, Total, and Single Day'))
 //     })
-//     it('should validate the job information object as an array of clockInfo, jobId, jobName, and comment', function () {
+//     it('should validate the job information object as an array of clockInfo, id, name, and comment', function () {
 //       var jobInfo = [tiem.O.defaultClockInfo(),
 //                  tiem.O.createJobId(0),
 //                  tiem.O.createJobName('Name'),
@@ -421,7 +421,7 @@ describe('Job object manipulation and creation', function(){
 //       }).toThrow(new Error('Job Info: Must have objects Clock Info, Job ID/Name, and comment'))
 //     })
 //     it('should validate the day array as a date and job information object', function () {
-//       var dayArray = [new Date(), [_.zipObject([tiem.k.jobId()], [0]), _.zipObject([tiem.k.jobId()], [1])]]
+//       var dayArray = [new Date(), [_.zipObject([tiem.k.id()], [0]), _.zipObject([tiem.k.id()], [1])]]
 //       var notDayArray = _.clone(dayArray);
 //       delete notDayArray[1]
 //       var validDay = tiem.O.validateDay
@@ -434,7 +434,7 @@ describe('Job object manipulation and creation', function(){
 // 
 // describe("Core object creation", function () {
 //     it("should create a job ID object as whole number", function () {
-//       expect(tiem.O.createJobId(0)).toEqual(_.zipObject([tiem.k.jobId()], [0]))
+//       expect(tiem.O.createJobId(0)).toEqual(_.zipObject([tiem.k.id()], [0]))
 //       expect(function () {
 //           tiem.O.createJobId(1.5)
 //       }).toThrow(new Error('Job ID: must be a whole number'))
@@ -510,7 +510,7 @@ describe('Job object manipulation and creation', function(){
 //           })
 //         }).toThrow(new Error('Clock Info: Must be an object of Clock State, Total, and Single Day'))
 //     })
-//     it('should create job information object from clockInfo, jobId, job name, and comment objects', function () {
+//     it('should create job information object from clockInfo, id, job name, and comment objects', function () {
 //         var jobInfo = [tiem.O.defaultClockInfo(),
 //                    tiem.O.createJobId(0),
 //                    tiem.O.createJobName('Name'),
@@ -528,7 +528,7 @@ describe('Job object manipulation and creation', function(){
 //     it('should create the day object as a date and list of job information objects', function () {
 //         var newDate = new Date()
 //         var jobInfo = tiem.O.defaultJobInfo()
-//         var jobInfo2 = _.assign(_.clone(jobInfo), _.zipObject([tiem.k.jobId()], [1]))
+//         var jobInfo2 = _.assign(_.clone(jobInfo), _.zipObject([tiem.k.id()], [1]))
 //         var listOfJobInfo = [jobInfo, jobInfo2]
 //         expect(tiem.O.createDay(newDate, listOfJobInfo)).toEqual(_.zipObject([tiem.k.day(), tiem.k.jobList()], [newDate, [jobInfo, jobInfo2]]))
 //         expect(function () {

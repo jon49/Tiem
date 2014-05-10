@@ -20,24 +20,16 @@
 //             return e.keyCode === Number(enterKey())
 //         })
 //     },
-//     stampView: function (id, jobInfo) {
-//         if (_.isNumber(id)) {
-//             $('#' + String(id)).after(templates.stamp(jobInfo)).show()
-//         } else {
-//             $(id).append(templates.stamp(jobInfo))
-//             $('#' + String(jobInfo[tiem.k.jobId()])).fadeIn()
-//         }
-//     }
 // }
 
-var controller = {
+var state = {
 //    Eventually I'll need to get the data from a source, if that day has jobs already added.
    jobList: function(){
       var j = tiem.JobSettings.new()
-      j.add(j.create(0, 'My new job', true)).add(j.create(0, 'Next Job', true))
+      j.add(j.create(0, 'My new job', true)).add(j.create(1, 'Next Job', true))
       return j
    }(),
-//   // Eventually I'll need to get the data from a source, if that day has jobs already added.
+//    Eventually I'll need to get the data from a source, if that day has jobs already added.
    jobs: function(){return tiem.Jobs.new()}()
 }
 
@@ -60,46 +52,72 @@ var ui = {
       funWithHeader()
    },
 
-   jobInput: function(){
+   jobInput: (function(){
       var $jobs = $('#' + k.jobs())
-      //$jobs.val('My first job,My favorite job')
-      var options = {
+      var options$ = _.reject(state.jobList.toArray(), function(job){
+            return _.contains(state.jobs.toArray(), job.name)
+         })
+      var options_ = {
          persist: false,
          selectOnTab: false, // Tab loses focus along with selecting. Will have to wait until this is fixed, or take care of it myself.
          maxItems: 1,
          create: true,
          hideSelected: true,
-         options: _.reject(controller.jobList.toList(), function(job){
-            return _.contains(controller.jobs.toList(), job[k.jobName()])
-         }),
-         labelField: k.jobName(),
-         valueField: k.jobId(),
-         searchField: k.jobName(),
-         soreField: k.jobName(),
+         options: options$,
+         labelField: k.name(),
+         valueField: k.id(),
+         searchField: k.name(),
+         sortField: k.name(),
          onChange: function(value){
-            //selectize.removeOption(value)
-            //selectize.clear()
+            if (!_.isEmpty(value)){
+               ui.addJob(value)
+               selectize.removeOption(value)
+               selectize.clear()
+            }
          }
       } 
-      var $select = $jobs.selectize(options)
+      var $select = $jobs.selectize(options_)
       var selectize = $select[0].selectize
 
-   }(),
-
+   })(),
    addJob: function(value){
-//      var i = 1
       //*****validate job here**********
-//       var jobName = String(value[k.jobName()]).trim()
-//       var job = jobList.name(jobName).toObject()
-//       i++
-//       stampView('#stamps-in', _.assign(tiem.O.defaultJobInfo(), tiem.O.createJobName(jobName), tiem.O.createClockState(tiem.O.createIn(new Date())), tiem.O.createJobId(i)))
-//       if (_.contains(newJob.options, jobName)) {
-//           // Remove used job names
-//           newJob.options = _.difference(newJob.options, [jobName])
-//       } else {
-//           // See if user would like to add a new job.
-//       }
-//       $(newJob.input).blur()
+      var job 
+      
+      state.jobList.validSelection(value).cata({
+         success: function(value){
+            job = value
+         },
+         failure: function(errors){
+            state.jobList.validName(value).cata({
+               success: function(name){
+                  if (name && confirm('Create a new job with name: "' + name + '"?')){
+                     job = state.jobList.create(state.jobList.newId(), name, true)
+                     state.jobList.add(job)
+                  }
+               },
+               failure: function(errors){
+                  //show errors to user
+               }
+            })
+         }
+      })
+      if (_.isEmpty(job))
+         return undefined
+      // jobSettings, id, comment, singleDay, inOut, date
+      var job_ = state.jobs.create(state.jobList, job.id, '', b.none, k.in(), new Date())
+      state.jobs.add(job_)
+
+      var stampView = function (id, job) {
+          if (_.isNumber(id)) {
+              $('#' + String(id)).after(tiem.stamp(job)).show()
+          } else {
+              $(id).append(tiem.stamp(job))
+              $('#' + String(job[tiem.k.id()])).fadeIn()
+          }
+      }
+
+      stampView('#stamps-in', job_)
    }
 }
 
@@ -123,20 +141,20 @@ var ui = {
 //                 $('#' + String(id)).after(stampTemplate(jobInfo)).show()
 //             } else {
 //                 $(id).append(stampTemplate(jobInfo))
-//                 $('#' + String(jobInfo[tiem.k.jobId()])).fadeIn()
+//                 $('#' + String(jobInfo[tiem.k.id()])).fadeIn()
 //             }
 //         }*/
 // 
-//         /*newJob.options = _.pluck(_.filter(jobs, tiem.k.jobActive()), tiem.k.jobName())
+//         /*newJob.options = _.pluck(_.filter(jobs, tiem.k.jobActive()), tiem.k.name())
 // 
 // 
 //         /*return newJob*/
 // 
 //     },
 // 
-//     addJob: function (jobName) {
+//     addJob: function (name) {
 //         var oldJob = _.filter(tiem.Settings.jobs(), function (job) {
-//             return _.isEqual(job[tiem.k.jobName()], jobName)
+//             return _.isEqual(job[tiem.k.name()], name)
 //         })
 //         // Add job to form
 //         if (!_.isEmpty(oldJob)) {
@@ -145,8 +163,8 @@ var ui = {
 //         }
 //         // Add job to form and to model if new job accepted.
 //         else {
-//             tiem.UI.jobView(jobName)
-//             return jobName
+//             tiem.UI.jobView(name)
+//             return name
 //         }
 //     },
 // 
