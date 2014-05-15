@@ -3,13 +3,13 @@
  */
 
 /* jslint asi: true */
-/* global k, tiem, _ */
+/* global k, t, _ */
 /*jshint indent:3, curly:false, laxbreak:true */
 
 // var createTemplates = zipObjectT(_.first, _.compose(_.template, _.last))
 
 var header = _.template(
-         '<h1 class="title pure-u-1-2"><div id="tiem-ti">Ti</div><div id="tiem-m">m</div><div id="tiem-e">e</div><div id="card">card</div></h1>' +
+         '<h1 class="title pure-u-1-2"><div id="t-ti">Ti</div><div id="t-m">m</div><div id="t-e">e</div><div id="card">card</div></h1>' +
          '<div class="stamp date pure-u-1-2">' +
          '  <button class="pure-button options">' +
          '    <i class="fa fa-gear"></i>' +
@@ -28,10 +28,10 @@ var stamp = _.template(
          '</div>'
       )
 
-tiem = tiem
+t = t
    .method(
       'stamp',
-      tiem.hasAll([k.id(), k.name(), k.state(), k.total(), k.comment()]),
+      t.hasAll([k.id(), k.name(), k.state(), k.total(), k.comment()]),
       stamp
    )
    .method(

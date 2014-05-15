@@ -12,7 +12,7 @@
  */
 
 var b = bilby
-var tiem = b.environment()
+var t = b.environment()
 
 /**
  * Takes an object and returns a string of specified length or less, trimmed.
@@ -192,7 +192,10 @@ var hasAll = _.curry(function(attrs, o){
    return _.every(attrs, has(o))
 })
 
-tiem = tiem
+
+var isEqual = _.curry(_.isEqual)
+
+t = t
    .property('stringSize', stringSize)
    .property('isWholeNumber', isWholeNumber)
    .property('isBetween', isBetween)
@@ -208,3 +211,4 @@ tiem = tiem
    .property('constants', constants)
    .property('have', have)
    .property('hasAll', hasAll)
+   .property('isEqual', isEqual)

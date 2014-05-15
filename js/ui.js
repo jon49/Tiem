@@ -4,16 +4,16 @@
 
 /* jslint asi: true */
 /*jshint indent:3, curly:false, laxbreak:true */
-/* global tiem, document, $, _, k */
+/* global t, document, $, _, k */
 
 // textarea
 
-//tiem.$ = {
+//t.$ = {
 //    addJob: $('#jobs'),
 //    addJobTxt: undefined
 //}
 
-// tiem.Bacon = {
+// t.Bacon = {
 //     enterKey: function (element) {
 //         var enterKey = _.constant(13)
 //         return element.asEventStream('keyup').filter(function (e) {
@@ -22,25 +22,81 @@
 //     },
 // }
 
-var state = {
-//    Eventually I'll need to get the data from a source, if that day has jobs already added.
-   jobList: function(){
-      var j = tiem.JobSettings.new()
-      j.add(j.create(0, 'My new job', true)).add(j.create(1, 'Next Job', true))
+// Eventually I'll need to get the data from a source, if that day has jobs already added.
+var jobList =  (function(){
+      var j = t.JobSettings.new()
+      j.addNew(0, 'My new job', true).addNew(1, 'Next Job', true)
       return j
-   }(),
+   })()
 //    Eventually I'll need to get the data from a source, if that day has jobs already added.
-   jobs: function(){return tiem.Jobs.new()}()
+var jobs = t.Jobs.new()
+
+var Tuple2 = b.tagged('Tuple2', ['_1', '_2'])
+
+var removeJobDOM = function(jobs){
+   var option = jobs.toObject()
+   option.flatMap(function(job){
+      $('#' + job.id).fadeOut().remove()
+   })
+   return jobs
 }
+
+var jobToHTML = function(jobs){
+   var html = jobs.toObject().map(function(job){
+      return t.stamp(job)
+   })
+   return Tuple2(jobs, html)
+}
+
+var addJobToDOM = function(tuple){
+   var html = tuple._2
+   var job = tuple._1.toObject().getOrElse({})
+   html.flatMap(function(h){
+      var isIn = isClockedIn(job)
+      var sameClockState = _.compose(isEqual(isIn), isClockedIn)
+      var $state = isIn ? $('#' + k.stampsIn()) : $('#', k.stampsOut())
+      // get location to output to DOM
+      // filter all ins/outs (depending on which job type it is) then sort them by name, place after or before
+      var position = _.sortBy(_.filter(tuple._1.toArray(), function(job){ 
+         return sameClockState(job)
+      }), k.name())
+      if (isEqual(0, position)){
+         $state.prepend(h).fadeIn()
+      } else {
+         $state.find('div:nth-child(' + String(position)  + ')').after(h).fadeIn()
+      }
+   })
+}
+
+t = t
+   .method(
+      'showStamp',
+      b.isInstanceOf(Jobs),
+      _.compose(addJobToDOM, jobToHTML, removeJobDOM)
+   )
+
+// var stampInput = function(id, job){
+//    var input = tagged('StampInput', ['id', 'job', 'html'])
+// 
+// }
+// 
+// var showStampAfter = function (id, job) {
+//    $('#' + String(id)).after(t.stamp(job)).show()
+// }
+// 
+// var showStampAppend = function (id, job){
+//    $(id).append(t.stamp(job))
+//    $('#' + String(job[k.id()])).fadeIn()
+// }
 
 var ui = {
 
    header: function () {
       var headerObject = _.zipObject([k.day()], [new Date()])
-      $('header').append(tiem.header(headerObject))
+      $('header').append(t.header(headerObject))
 
       var funWithHeader = function () {
-         var $te = $('#tiem-e'), $tm = $('#tiem-m'), $card = $('#card'), positionE = $te.offset().left, positionM = $tm.offset().left
+         var $te = $('#t-e'), $tm = $('#t-m'), $card = $('#card'), positionE = $te.offset().left, positionM = $tm.offset().left
          $tm.delay(2000).animate({
             left: (positionE - positionM - ($tm.width() - $te.width()))
          }, 1000)
@@ -54,8 +110,8 @@ var ui = {
 
    jobInput: (function(){
       var $jobs = $('#' + k.jobs())
-      var options$ = _.reject(state.jobList.toArray(), function(job){
-            return _.contains(state.jobs.toArray(), job.name)
+      var options$ = _.reject(jobList.toArray(), function(job){
+            return _.contains(jobs.toArray(), job.name)
          })
       var options_ = {
          persist: false,
@@ -84,56 +140,45 @@ var ui = {
       //*****validate job here**********
       var job 
       
-      state.jobList.validSelection(value).cata({
+      jobList.validSelection(value).cata({
          success: function(value){
             job = value
          },
          failure: function(errors){
-            state.jobList.validName(value).cata({
+            jobList.validName(value).cata({
                success: function(name){
                   if (name && confirm('Create a new job with name: "' + name + '"?')){
-                     job = state.jobList.create(state.jobList.newId(), name, true)
-                     state.jobList.add(job)
-                  }
+                     job = jobList.create(jobList.newId(), name, true)
+                     jobList.add(job)
+                  } else return undefined
                },
                failure: function(errors){
                   //show errors to user
+                  return undefined
                }
             })
          }
       })
-      if (_.isEmpty(job))
-         return undefined
+      
       // jobSettings, id, comment, singleDay, inOut, date
-      var job_ = state.jobs.create(state.jobList, job.id, '', b.none, k.in(), new Date())
-      state.jobs.add(job_)
-
-      var stampView = function (id, job) {
-          if (_.isNumber(id)) {
-              $('#' + String(id)).after(tiem.stamp(job)).show()
-          } else {
-              $(id).append(tiem.stamp(job))
-              $('#' + String(job[tiem.k.id()])).fadeIn()
-          }
-      }
-
-      stampView('#stamps-in', job_)
+      jobs.addNew(jobList, job.id, '', b.none, k.in(), new Date())
+      t.showStamp(jobs)
    }
 }
 
-// tiem.UI = {
+// t.UI = {
 // 
 // 
 //     addNewJob: function () {
 // 
-//         /*var jobs = tiem.Settings.jobs()
+//         /*var jobs = t.Settings.jobs()
 // 
-//         /*var newJob = completely(document.getElementById(tiem.k.jobs()), {
+//         /*var newJob = completely(document.getElementById(t.k.jobs()), {
 //             backgroundColor: '#F2F8FF',
 //             color: '#777'
 //         })
 // 
-//         tiem.$.addJobTxt = $(newJob.input)
+//         t.$.addJobTxt = $(newJob.input)
 // 
 //         /*var stampTemplate = _.template(templates.stamp())
 //         var stampView = function (id, jobInfo) {
@@ -141,11 +186,11 @@ var ui = {
 //                 $('#' + String(id)).after(stampTemplate(jobInfo)).show()
 //             } else {
 //                 $(id).append(stampTemplate(jobInfo))
-//                 $('#' + String(jobInfo[tiem.k.id()])).fadeIn()
+//                 $('#' + String(jobInfo[t.k.id()])).fadeIn()
 //             }
 //         }*/
 // 
-//         /*newJob.options = _.pluck(_.filter(jobs, tiem.k.jobActive()), tiem.k.name())
+//         /*newJob.options = _.pluck(_.filter(jobs, t.k.jobActive()), t.k.name())
 // 
 // 
 //         /*return newJob*/
@@ -153,29 +198,29 @@ var ui = {
 //     },
 // 
 //     addJob: function (name) {
-//         var oldJob = _.filter(tiem.Settings.jobs(), function (job) {
-//             return _.isEqual(job[tiem.k.name()], name)
+//         var oldJob = _.filter(t.Settings.jobs(), function (job) {
+//             return _.isEqual(job[t.k.name()], name)
 //         })
 //         // Add job to form
 //         if (!_.isEmpty(oldJob)) {
-//             tiem.UI.jobView(oldJob)
+//             t.UI.jobView(oldJob)
 //             return oldJob
 //         }
 //         // Add job to form and to model if new job accepted.
 //         else {
-//             tiem.UI.jobView(name)
+//             t.UI.jobView(name)
 //             return name
 //         }
 //     },
 // 
 //     events: function () {
-//         tiem.Observe.addJob.focus.map(function () {
+//         t.Observe.addJob.focus.map(function () {
 // 
 //         })
 //     }
 // }
 // 
-// tiem.Observe = {
+// t.Observe = {
 //     addJob: {
 //         // -- enter -- //
 //         enter: function (input) {
@@ -183,26 +228,26 @@ var ui = {
 //             /*var clean = function (text) {
 //                 return String(text).trim()
 //             }
-//             var isntEmpty = tiem.complement(_.isEmpty)*/
-//             return tiem.Bacon.enterKey($input)
+//             var isntEmpty = t.complement(_.isEmpty)*/
+//             return t.Bacon.enterKey($input)
 //         }(),
 //         // -- focus -- //
 //         focus: function () {
-//             var $job = tiem.$.addJob
+//             var $job = t.$.addJob
 //             return $job.focusoutE().merge($job.focusinE()).toProperty()
 //         }()
 //     }
 // }
 // 
-// tiem.React = {
+// t.React = {
 // 
 //     addJob: {
 //         focus: '',
 //         /*function (addJob) {
-//             var $input = tiem.$.addJobTxt
-//             var placeHolder = tiem.k.jobPlaceHolder()
+//             var $input = t.$.addJobTxt
+//             var placeHolder = t.k.jobPlaceHolder()
 //             $input.val(placeHolder)
-//             tiem.Observe.addJob.focus.onValue(function () {
+//             t.Observe.addJob.focus.onValue(function () {
 //                 $input.val((_.isEqual($input.val(), placeHolder)) ? '' : placeHolder)
 //                 addJob.repaint()
 //             })
@@ -210,14 +255,14 @@ var ui = {
 // 
 //         enter: ''
 //         /*function () {
-//             var $input = tiem.$.addJobTxt
+//             var $input = t.$.addJobTxt
 //             var uniqueID = function () {
 //                 var id = -1
 //                 return function () {
 //                     return id++
 //                 }
 //             }()
-//             var newJobInfo = Bacon.combineTemplate(_.assign(tiem.O.defaultJobInfo(), tiem.O.createJobName(Bacon.UI.textFieldValue($input).map('.trim')), tiem.O.createClockState(tiem.O.createIn(new Date())), tiem.O.createJobId(uniqueID()))).sampledBy(tiem.Observe.addJob.enter)
+//             var newJobInfo = Bacon.combineTemplate(_.assign(t.O.defaultJobInfo(), t.O.createJobName(Bacon.UI.textFieldValue($input).map('.trim')), t.O.createClockState(t.O.createIn(new Date())), t.O.createJobId(uniqueID()))).sampledBy(t.Observe.addJob.enter)
 //             newJobInfo.onValue(function () {
 //                 $input.blur()
 //                 alert('it worked!')
