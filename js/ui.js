@@ -13,30 +13,27 @@
       if (!isInit) $(e).delay(1000).fadeOut('slow')
    }
    
-   var pm = 0, $tm = undefined
+   var $tm = undefined
    
-   var moveM = function(e, isInit){
-      if (!isInit) {
-         $tm = $(e)
-         pm = $tm.offset().left
-      }
-   }
+   var define$tm = function(e, isInit){if (!isInit) $tm = $(e)}
    
    var moveE = function(e, isInit){
       if(!isInit){
          var $te = $(e)
-         $tm.delay(1200).fadeOut(400).delay(1000, function(){
-            $tm.append($te).show('slow')
-         }).fadeIn()
-         $te.delay(1200).fadeOut(400).fadeIn()
+         $tm.delay(1050).fadeOut(500, function(){
+            $te.insertAfter($('#ti')).fadeIn(1500)
+         })
+         $te.delay(1050).fadeOut(500, function(){
+            $tm.insertAfter($te).fadeIn(1500)
+         })
       }
    }
    
    var header = function(){
       return m('header', {class: 'pure-g'}, [
          m('h1', {class: 'title pure-u-1-2'}, [
-            m('div', 'Ti'),
-            m('#t-m', {config: moveM}, 'm'),
+            m('#ti', 'Ti'),
+            m('#t-m', {config: define$tm}, 'm'),
             m('#t-e', {config: moveE}, 'e'),
             m('div', {config: fadeOut}, 'card')
          ]),
