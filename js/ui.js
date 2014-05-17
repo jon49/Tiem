@@ -13,50 +13,31 @@
       if (!isInit) $(e).delay(1000).fadeOut('slow')
    }
    
-   function SwitchME(){
-      this.$tm = undefined
-      this.isInitM = false
-      this.$te = undefined
-      this.isInitE = false
+   var pm = 0, $tm = undefined
+   
+   var moveM = function(e, isInit){
+      if (!isInit) {
+         $tm = $(e)
+         pm = $tm.offset().left
+      }
    }
    
-   
-   
-   SwitchME.prototype.add = function(e, isInit){
-      if (_.isEqual(e.id, 't-m')){
-         this.$tm = m.prop($(e))
-         this.isInitM = m.prop(isInit)
-      }
-      if (_.isEqual(e.id, 't-e')){
-         this.$te = m.prop($(e))
-         this.isInitE = m.prop(isInit)
-      }
-      return this
-   }
-   SwitchME.prototype.switch = function(){
-      var sm = !_.isEmpty(this.$tm)
-      var se = !_.isEmpty(this.$te)
-      var im = !this.isInitM
-      var ie = !this.isInitE
-      
-      if (sm && se && im && ie) {
-         var pe = this.$te.offset().left, pm = this.$tm.offset().left
-         this.$tm.delay(2000).animate({
-            left: (pe - pm - (this.$tm.width() - this.$te.width()))
-         }, 1000)
-         this.$te.delay(2000).animate({
-            left: (pm - pe)
-         }, 1000)
+   var moveE = function(e, isInit){
+      if(!isInit){
+         var $te = $(e)
+         $tm.delay(1200).fadeOut(400).delay(1000, function(){
+            $tm.append($te).show('slow')
+         }).fadeIn()
+         $te.delay(1200).fadeOut(400).fadeIn()
       }
    }
    
    var header = function(){
-      var s = new SwitchME()
       return m('header', {class: 'pure-g'}, [
          m('h1', {class: 'title pure-u-1-2'}, [
             m('div', 'Ti'),
-            m('#t-m', {config: m.withAttr(s.add)}, 'm'),
-            m('#t-e', {config: m.withAttr(_.compose(s.switch, s.add))}, 'e'),
+            m('#t-m', {config: moveM}, 'm'),
+            m('#t-e', {config: moveE}, 'e'),
             m('div', {config: fadeOut}, 'card')
          ]),
          m('div', {class: 'stamp date pure-u-1-2'}, [
