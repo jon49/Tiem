@@ -195,6 +195,24 @@ var hasAll = _.curry(function(attrs, o){
 
 var isEqual = _.curry(_.isEqual)
 
+//Came from bilby, modified for mithril
+var mTagged = function(name, fields) {
+    function wrapped() {
+        var self = getInstance(this, wrapped),
+            i
+        if(arguments.length != fields.length) {
+            throw new TypeError("Expected " + fields.length + " arguments, got " + arguments.length)
+        }
+        for(i = 0; i < fields.length; i++) {
+            self[fields[i]] = m.prop(arguments[i])
+        }
+        return self
+    }
+    wrapped._name = name
+    wrapped._length = fields.length
+    return wrapped
+}
+
 t = t
    .property('stringSize', stringSize)
    .property('isWholeNumber', isWholeNumber)
@@ -212,3 +230,4 @@ t = t
    .property('have', have)
    .property('hasAll', hasAll)
    .property('isEqual', isEqual)
+   .property('tagged', mTagged)

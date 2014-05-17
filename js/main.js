@@ -6,5 +6,5 @@
 /* global window, ui, t, jobList */
 
 window.onload = function () {
-    ui.header()
+    
 }
