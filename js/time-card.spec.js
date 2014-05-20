@@ -1,5 +1,5 @@
 /* brackets-xunit: jasmine */
-/* brackets-xunit: includes=../bower_components/lodash/dist/lodash.min.js,../bower_components/bilby.js/bilby-min.js,utilities.js,objects.js,templates.js,ui.js */
+/* brackets-xunit: includes=../bower_components/lodash/dist/lodash.js,../bower_components/bilby.js/bilby.js,../bower_components/mithril/mithril.js,utilities.js,objects.js,templates.js,ui.js */
 
 /* global describe, it, expect, t, _, bilby */
 /*jslint asi: true*/
@@ -143,6 +143,66 @@ describe("How the utilities are used in project", function () {
          expect(t.hasAll(['id','key1','key2'])(o)).toBe(false)
       })
    })
+   describe('The function singleTagged', function(){
+      it('should create an object with a single key', function(){
+         expect(t.singleTagged('id')(1)).toEqual({id: 1})
+      })
+   })
+   describe('The function zipOverObject', function(){
+      var o1 = {id:1, name: 'jon', last:'nyman'}
+      var o2 = {id:2, name: 'laura', book:'I love'}
+      var o = t.zipOverObject(o1, o2)
+      it('should combine two objects without changing the originals', function(){
+         expect(o1).toEqual({id:1, name: 'jon', last:'nyman'})
+         expect(o2).toEqual({id:2, name: 'laura', book:'I love'})
+      })
+      it('should combine the two object making any repetitive object into an array', function(){
+         expect(o).toEqual({id:[1, 2], name:['jon', 'laura'], last:'nyman', book:'I love'})
+      })
+   })
+   describe('The function zipOverObjects', function(){
+      var o1 = {id:1, name: 'jon', last:'nyman'}
+      var o2 = {id:2, name: 'laura', book:'I love'}
+      var o = t.zipOverObjects([o1, o2])
+      it('should combine two objects without changing the originals', function(){
+         expect(o1).toEqual({id:1, name: 'jon', last:'nyman'})
+         expect(o2).toEqual({id:2, name: 'laura', book:'I love'})
+      })
+      it('should combine the two object making any repetitive object into an array', function(){
+         expect(o).toEqual({id:[1, 2], name:['jon', 'laura'], last:'nyman', book:'I love'})
+      })
+   })
+   describe('The function isNonEmpty', function(){
+      it('should return true when it has a value', function(){
+         expect(t.isSomething('a')).toBe(true)
+      })
+      it('should return false when it is empty', function(){
+         expect(t.isSomething('')).toBe(false)
+      })
+   })
+   describe('The function isSomeString', function(){
+      it('should return true when there is a string of length greater than 0', function(){
+         expect(t.isSomeString('1')).toBe(true)
+      })
+      it("should return false when there isn't a string of length greater than 0", function(){
+         expect(t.isSomeString('')).toBe(false)
+      })
+   })
+})
+
+describe('Core mithril extensions', function(){
+   describe('The function parseM', function(){
+      it('should create a mithril virtual element', function(){
+         var el = mm.element('#id'),
+             cls = mm.class('color'),
+             cls2 = mm.class('other-class'),
+             val = mm.value('laura'),
+             combined = zipOverObjects([el, cls, cls2, val])
+         var m_ = mm.parse(combined)
+         expect(combined).toEqual({ element : '#id', class : [ 'color', 'other-class' ], value : 'laura' })
+         expect(m_).toEqual({tag:'div', attrs:{id:'id', 'class':' color other-class'}, children:'laura'})
+      })
+   })
 })
 
 describe("Core constants", function () {
@@ -269,334 +329,3 @@ describe('Job object manipulation and creation', function(){
       })
    })
 })
-
-// describe('Templates', function(){
-//    describe()
-// })
-
-// describe("Core validation methods", function () {
-//    describe("The function areUniqueIds", function () {
-//       it("should determine if an array of objects with key 'id' is unique", function () {
-//          var id = t.k.id()
-//          var uniqueIds = [_.zipObject([id], [0]), _.zipObject([id], [1])]
-//          var notUniqueIds = [_.zipObject([id], [0]), _.zipObject([id], [0])]
-//          expect(t.O.areUniqueIds(uniqueIds)).toBe(true)
-//          expect(t.O.areUniqueIds(notUniqueIds)).toBe(false)
-//       })
-//    })
-//    describe("The function areUniqueNames", function () {
-//       it("should determine if an array of objects with key 'name' is unique", function () {
-//             var name = t.k.name()
-//             var uniqueNames = [_.zipObject([name], ['my job']), _.zipObject([name], ['my next job'])]
-//             var notUniqueNames = [_.zipObject([name], ['same old job']), _.zipObject([name], ['same old job'])]
-//             expect(t.O.areUniqueNames(uniqueNames)).toBe(true)
-//             expect(t.O.areUniqueNames(notUniqueNames)).toBe(false)
-//          })
-//    })
-//       it("should validate the job ID as whole number", function () {
-//           expect(t.O.validateJobId(0)).toEqual(0)
-//           expect(function () {
-//             t.O.validateJobId(1.5)
-//           }).toThrow(new Error('Job ID: must be a whole number'))
-//           expect(function () {
-//             t.O.validateJobId('0')
-//           }).toThrow(new Error('Job ID: must be a whole number'))
-//       })
-//       it("should validate the job name as a string with length greater than 0", function () {
-//           var validJobName = t.O.validateJobName
-//           expect(validJobName('0')).toEqual('0')
-//           expect(function () {
-//             return validJobName([1])
-//           }).toThrow(new Error('Job Name: must be string'))
-//           expect(function () {
-//             validJobName('')
-//           }).toThrow(new Error('Job Name: must have a length greater zero'))
-//           expect(function () {
-//             validJobName(0)
-//           }).toThrow(new Error('Job Name: must be string, Job Name: must have a length greater zero'))
-//       })
-//       describe("The function validateJobList", function () {
-//           var jobValues = _.curry(_.zipObject)([t.k.id(), t.k.name(), t.k.jobActive()])
-//           var listOfJobs = [jobValues([0, 'My job', true]), jobValues([1, 'My Awesome Job', true])]
-//           it("should validate a valid list of jobs setting and return the list", function () {
-//             expect(t.O.validateJobList(listOfJobs)).toEqual(listOfJobs)
-//           })
-//           it("should throw the exception 'Jobs must have unique IDs' when IDs are not unique", function () {
-//             expect(function () {
-//                 t.O.validateJobList(_.map(_.cloneDeep(listOfJobs), function (job) {
-//                     return _.assign(job, _.zipObject([t.k.id()], [0]))
-//                 }))
-//             }).toThrow(new Error('Jobs must have unique IDs'))
-//           })
-//           it("should throw the exception 'Jobs must have unique names' when names are not unique", function () {
-//             expect(function () {
-//                 t.O.validateJobList(_.map(_.cloneDeep(listOfJobs), function (job) {
-//                     return _.assign(job, _.zipObject([t.k.name()], [0]))
-//                 }))
-//             }).toThrow(new Error('Jobs must have unique names'))
-//           })
-//       })
-//       it('should validate the active job setting as a boolean', function () {
-//           var validActiveJob = t.O.validateActiveJob
-//           expect(validActiveJob(true)).toBe(true)
-//           expect(validActiveJob(false)).toBe(false)
-//           expect(function () {
-//             return validActiveJob(0)
-//           }).toThrow(new Error('Job Active: value must be a boolean'))
-//       })
-//       var singleDay = _.range(24).map(function () {
-//         return 0
-//     })
-//     it('should validate the Single Day object as an array of numbers between -1 and 1 (inclusive) with length 24', function () {
-//       var validSingleDay = t.O.validateSingleDay
-//       var alternatingSingleDay = _.range(24).map(function (index) {
-//           return (index % 2) ? 1 : -1
-//       })
-//       //length of 24
-//       expect(validSingleDay(singleDay)).toEqual(singleDay)
-//       expect(function () {
-//           return validSingleDay(_.take(singleDay, 20))
-//       }).toThrow(new Error('Single Day: Must be array of size 24'))
-//       expect(function () {
-//           var temp = _.clone(singleDay);
-//           temp.push(0)
-//           return validSingleDay(temp)
-//       }).toThrow(new Error('Single Day: Must be array of size 24'))
-//       //all numbers
-//       expect(function () {
-//           var notAllNumbers = _.clone(singleDay)
-//           notAllNumbers[23] = 's'
-//           return validSingleDay(notAllNumbers)
-//       }).toThrow(new Error('Single Day: Must be all numbers, Single Day: Value must be between -1 and 1'))
-//       //between -1 and 1 inclusive
-//       expect(validSingleDay(alternatingSingleDay)).toEqual(alternatingSingleDay)
-//       expect(function () {
-//           return validSingleDay(alternatingSingleDay)
-//       })
-//     })
-//     it('should validate the date object as a date', function () {
-//       var newDate = new Date()
-//       var validDate = t.O.validateDate
-//       expect(validDate(newDate)).toEqual(newDate)
-//       expect(function () {
-//           return validDate('not a date')
-//       }).toThrow(new Error('In: Must have valid date'))
-//     })
-//     var in_ = _.zipObject([t.k. in ()], [new Date()])
-//     it('should validate the in/out objects', function () {
-//       var out_ = _.zipObject([t.k.out()], [])
-//       var notInOut = {
-//           inOut: new Date()
-//       }
-//       var validInOut = t.O.validateClockState
-//       expect(validInOut(in_)).toEqual(in_)
-//       expect(validInOut(out_)).toEqual(out_)
-//       expect(function () {
-//           return validInOut(notInOut)
-//       }).toThrow('Clock State: Must be an object type In or Out')
-//     })
-//     it('should validate the clock information object as an array of single day, total, and clock state', function () {
-//       var singleDay = t.O.createSingleDay('')
-//       var clockInfo = [singleDay, t.O.createTotal(singleDay), t.O.defaultClockInfo()]
-//       var notClockInfo = _.clone(clockInfo)
-//       delete notClockInfo[0]
-//       var validClockInfo = t.O.validateClockInfo
-//       expect(validClockInfo(clockInfo)).toEqual(clockInfo)
-//       expect(function () {
-//           return validClockInfo(notClockInfo)
-//       }).toThrow(new Error('Clock Info: Must be an object of Clock State, Total, and Single Day'))
-//     })
-//     it('should validate the job information object as an array of clockInfo, id, name, and comment', function () {
-//       var jobInfo = [t.O.defaultClockInfo(),
-//                  t.O.createJobId(0),
-//                  t.O.createJobName('Name'),
-//                  t.O.createComment('')
-//                 ]
-//       var notJobInfo = _.clone(jobInfo)
-//       delete notJobInfo[0]
-//       var validJobInfo = t.O.validateJobInfo
-//       expect(validJobInfo(jobInfo)).toEqual(jobInfo)
-//       expect(function () {
-//           return validJobInfo(notJobInfo)
-//       }).toThrow(new Error('Job Info: Must have objects Clock Info, Job ID/Name, and comment'))
-//     })
-//     it('should validate the day array as a date and job information object', function () {
-//       var dayArray = [new Date(), [_.zipObject([t.k.id()], [0]), _.zipObject([t.k.id()], [1])]]
-//       var notDayArray = _.clone(dayArray);
-//       delete notDayArray[1]
-//       var validDay = t.O.validateDay
-//       expect(validDay(dayArray)).toEqual(dayArray)
-//       expect(function () {
-//           return validDay(notDayArray)
-//       }).toThrow(new Error('Day: Must have unique IDs, Day: Must have date and job list'))
-//     })
-// })
-// 
-// describe("Core object creation", function () {
-//     it("should create a job ID object as whole number", function () {
-//       expect(t.O.createJobId(0)).toEqual(_.zipObject([t.k.id()], [0]))
-//       expect(function () {
-//           t.O.createJobId(1.5)
-//       }).toThrow(new Error('Job ID: must be a whole number'))
-//       expect(function () {
-//           t.O.createJobId('0')
-//       }).toThrow(new Error('Job ID: must be a whole number'))
-//     })
-//     it('should create the Single Day object ({singleDay: [0..23]}) as an array of numbers between -1 and 1 (inclusive) with length 24', function () {
-//       var alternatingSingleDay = _.range(24).map(function (index) {
-//           return (index % 2) ? 1 : -1
-//       })
-//       //length of 24
-//       expect(t.O.createSingleDay(alternatingSingleDay)).toEqual(_.zipObject([t.k.singleDay()], [alternatingSingleDay]))
-//       expect(t.O.createSingleDay([])).toEqual(_.zipObject([t.k.singleDay()], [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
-//       expect(function () {
-//           return t.O.createSingleDay(_.take(alternatingSingleDay, 20))
-//       }).toThrow(new Error('Single Day: Must be array of size 24'))
-//       expect(function () {
-//           var temp = _.clone(alternatingSingleDay);
-//           temp.push(0)
-//           return t.O.createSingleDay(temp)
-//       }).toThrow(new Error('Single Day: Must be array of size 24'))
-//       //all numbers
-//       expect(function () {
-//           var notAllNumbers = _.clone(alternatingSingleDay);
-//           notAllNumbers[23] = 's'
-//           return t.O.createSingleDay(notAllNumbers)
-//       }).toThrow(new Error('Single Day: Must be all numbers, Single Day: Value must be between -1 and 1'))
-//     })
-//     describe('The function createTotal', function () {
-//       it('should create a total object from the single day object', function () {
-//           var singleDay = t.O.createSingleDay(_.range(24).map(function () {
-//           return 1
-//           }))
-//           expect(t.O.createTotal(singleDay)).toEqual({
-//           total: 24
-//           })
-//       })
-//     })
-//     it('should create an "in" object with a date', function () {
-//       var newDate = new Date()
-//       expect(t.O.createIn(newDate)).toEqual(_.zipObject([t.k. in ()], [newDate]))
-//       expect(function () {
-//           return t.O.createIn('not a date')
-//       }).toThrow(new Error('In: Must have valid date'))
-//     })
-//     it('should create an "out" object with an empty value', function () {
-//       expect(t.O.createOut()).toEqual(_.zipObject([t.k.out()], ['']))
-//     })
-//     it('should create clock state object containing an in or out object', function () {
-//       var newDate = new Date()
-//       var in_ = _.zipObject([t.k. in ()], [newDate])
-//       var out_ = _.zipObject([t.k.out()], [''])
-//       expect(t.O.createClockState(in_)).toEqual(_.zipObject([t.k.state()], [in_]))
-//       expect(t.O.createClockState(out_)).toEqual(_.zipObject([t.k.state()], [out_]))
-//       expect(function () {
-//           return t.O.createClockState({
-//             notInOut: ''
-//           })
-//         }).toThrow('Clock State: Must be an object type In or Out')
-//     })
-//     it('should validate the clock information object as an array of single day, total, and clock state', function () {
-//         var state = t.O.createClockState(t.O.createOut())
-//         var singleDay = t.O.createSingleDay('')
-//         var total = t.O.createTotal(singleDay)
-//         var clockInfo = _.assign(singleDay, total, state)
-//         expect(t.O.createClockInfo(singleDay, total, state)).toEqual(clockInfo)
-//         expect(function () {
-//           return t.O.createClockInfo({
-//               notSingleDay: ''
-//           }, {
-//               notInOut: ''
-//           })
-//         }).toThrow(new Error('Clock Info: Must be an object of Clock State, Total, and Single Day'))
-//     })
-//     it('should create job information object from clockInfo, id, job name, and comment objects', function () {
-//         var jobInfo = [t.O.defaultClockInfo(),
-//                    t.O.createJobId(0),
-//                    t.O.createJobName('Name'),
-//                    t.O.createComment('')
-//                   ]
-//         expect(t.O.createJobInfo(jobInfo[0], jobInfo[1], jobInfo[2], jobInfo[3])).toEqual(_.assign.apply(null, jobInfo))
-//         expect(function () {
-//           return t.O.createJobInfo({
-//               notClock: ''
-//           }, {
-//               notJobId: ''
-//           })
-//         }).toThrow(new Error('Job Info: Must have objects Clock Info, Job ID/Name, and comment'))
-//     })
-//     it('should create the day object as a date and list of job information objects', function () {
-//         var newDate = new Date()
-//         var jobInfo = t.O.defaultJobInfo()
-//         var jobInfo2 = _.assign(_.clone(jobInfo), _.zipObject([t.k.id()], [1]))
-//         var listOfJobInfo = [jobInfo, jobInfo2]
-//         expect(t.O.createDay(newDate, listOfJobInfo)).toEqual(_.zipObject([t.k.day(), t.k.jobList()], [newDate, [jobInfo, jobInfo2]]))
-//         expect(function () {
-//           return t.O.createDay('s', listOfJobInfo)
-//         }).toThrow(new Error('Day: Must have date and job list'))
-//         expect(function () {
-//           return t.O.createDay(newDate, [jobInfo, jobInfo])
-//         }).toThrow(new Error('Day: Must have unique IDs'))
-//     })
-// })
-// 
-// describe('Main engine for time card', function () {
-//     var newDate = new Date(2014, 2, 6, 16, 15, 0)
-//     var outDate = new Date(2014, 2, 6, 18, 15, 0)
-//     var clockedInState = t.O.createClockState(t.O.createIn(newDate))
-//     var clockedOutState_ = t.O.createClockState(t.O.createOut())
-//     var singleDay = t.O.createSingleDay('')
-//     var clockInfoOut = t.O.defaultClockInfo()
-//     var clockInfoIn = t.O.createClockInfo(singleDay, t.O.createTotal(singleDay), clockedInState)
-//     var singleDayOut = t.O.createSingleDay([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.75, 1.0, 0.25, 0, 0, 0, 0, 0])
-//     var result = _.assign(t.O.defaultClockInfo(), singleDayOut, t.O.createTotal(singleDayOut))
-//     describe('createClockedInState: Create clocked in state', function () {
-//         it('should create designated time at stated time', function () {
-//           expect(t.O.inState(newDate)).toEqual(clockedInState)
-//         })
-//     })
-//     describe('clockedOutState:', function () {
-//         it('should create clockState object with out object', function () {
-//           expect(t.O.outState()).toEqual(clockedOutState_)
-//         })
-//     })
-//     describe('defaultClockInfo:', function () {
-//         it('should create a default clock information object which is clocked out', function () {
-//           var singleDay = t.O.createSingleDay('')
-//           expect(t.O.defaultClockInfo()).toEqual(t.O.createClockInfo(singleDay, t.O.createTotal(singleDay), clockedOutState_))
-//         })
-//     })
-//     describe('isClockedIn:', function () {
-//         it('should determine if clock state is clocked in ', function () {
-//           expect(t.Clock.isClockedIn(clockedInState)).toBe(true)
-//         })
-//         it('should determine if clock state is clocked out', function () {
-//           expect(t.Clock.isClockedIn(t.O.outState())).toBe(false)
-//         })
-//     })
-//     describe('clockIn:', function () {
-//         it('should clock in clock information which is clocked out', function () {
-//           expect(t.Clock. in (clockInfoOut, newDate)).toEqual(clockInfoIn)
-//         })
-//         it('should create a new clock information object if one is not provided', function () {
-//           expect(t.Clock. in ('', newDate)).toEqual(clockInfoIn)
-//         })
-//     })
-//     describe('clockOut:', function () {
-//         it('should return a "clock information" object with added time which clock state\'s is out', function () {
-//           expect(t.Clock.out(clockInfoIn, outDate)).toEqual(result)
-//         })
-//         it('should return the correct time when clocking in and out during the same hour', function () {
-//           var singleDay = t.O.createSingleDay([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0])
-//           expect(t.Clock.out(clockInfoIn, new Date(2014, 2, 6, 16, 45, 0))).toEqual(_.assign(t.O.defaultClockInfo(), singleDay, t.O.createTotal(singleDay)))
-//         })
-//     })
-//     describe('toggleClock:', function () {
-//         it('should return a clocked in clock information when toggling from out', function () {
-//           expect(t.Clock.toggle(t.O.defaultClockInfo(), newDate)).toEqual(_.assign(t.O.defaultClockInfo(), t.O.inState(newDate)))
-//         })
-//         it('should return a clocked out clock information with updated hours when toggling from in', function () {
-//           expect(t.Clock.toggle(clockInfoIn, outDate)).toEqual(result)
-//         })
-//     })
-// })

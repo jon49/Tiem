@@ -63,9 +63,31 @@ var addItems = _.partialRight(_.map, function(a){
 var jobSettings =  (function(){
       var j = new JobSettings()
       var n = addNew(j)
-      addItems([[0, 'My new job', true],[1, 'Next Job', true]])
+      
       return j
    })()
-//    Eventually I'll need to get the data from a source, if that day has jobs already added.
-var jobs = new Jobs()
+
+var controller = function(){
+   this.day = new Date()
+   this.jobSettings = new JobSettings()
+   addItems([[0, 'My new job', true],[1, 'Next Job', true]])
+   
+   this.jobs = new Jobs()
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

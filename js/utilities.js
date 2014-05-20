@@ -195,6 +195,11 @@ var hasAll = _.curry(function(attrs, o){
 
 var isEqual = _.curry(_.isEqual)
 
+// taken from bilby for mTagged
+function getInstance(self, constructor) {
+    return self instanceof constructor ? self : b.create(constructor.prototype);
+}
+
 //Came from bilby, modified for mithril
 var mTagged = function(name, fields) {
     function wrapped() {
@@ -211,6 +216,38 @@ var mTagged = function(name, fields) {
     wrapped._name = name
     wrapped._length = fields.length
     return wrapped
+}
+
+var singleTagged = function(type){
+   return b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type]))
+}
+
+// combine objects together into new object. any keys which are the same will have an array of values.
+var zipOverObject = _.curry(function(object1, object2){
+   var o1 = _.cloneDeep(object1)
+      o2 = _.cloneDeep(object2),
+      a1 = _.keys(o1), a2 = _.keys(o2),
+      diff = _.difference(a2, a1),
+      inter = _.intersection(a1, a2),
+      c1 = _.cloneDeep(o1)
+   _.forEach(diff, function(key){
+      c1[key] = o2[key]
+   })
+   _.forEach(inter, function(key){
+      c1[key] = (_.isArray(c1[key])) ? c1[key] : [c1[key]]
+      c1[key] = c1[key].concat(o2[key])
+   })
+   return c1
+})
+
+var zipOverObjects = _.partialRight(_.reduce, function(acc, o){
+   return zipOverObject(acc, o)
+})
+
+var isSomething = complement(_.isEmpty)
+
+var isSomeString = function(s){
+   return isSomething(s) && _.isString(s)
 }
 
 t = t
@@ -230,4 +267,48 @@ t = t
    .property('have', have)
    .property('hasAll', hasAll)
    .property('isEqual', isEqual)
-   .property('tagged', mTagged)
+   .property('mtagged', mTagged)
+   .method('singleTagged', isSomeString, singleTagged)
+   .method('zipOverObject', function(a, b){return _.isPlainObject(a) && _.isPlainObject(b)}, zipOverObject)
+   .method('zipOverObjects', _.isArray, zipOverObjects)
+   .property('isSomething', isSomething)
+   .property('isSomeString', isSomeString)
+
+//mithril extensions
+
+var mm = b.environment()
+
+var class_ = singleTagged('class')
+var el = singleTagged('element')
+var config = singleTagged('config')
+var value = singleTagged('value')
+//combine object into mithril m object
+var parseM = function(object){
+   var joined = {}
+   //combine arrays into strings where applicable
+   _.forIn(object, function(value, key){
+      if (_.isArray(value)){
+         if (_.isEqual(key, 'class'))
+            joined[key] = value.join(' ')
+         else if (_.isEqual(key, 'element'))
+            joined[key] = value.join('')
+      } else
+         joined[key] = value
+   })
+   //place into mithril m function
+   if(hasAll(['element', 'class', 'config', 'value'], joined))
+      return m(joined.element, _.pick(joined, 'class', 'config'), joined.value)
+   else if (hasAll(['element', 'class', 'value'], joined))
+      return m(joined.element, _.pick(joined, 'class'), joined.value)
+   else if (hasAll(['element', 'config', 'value'], joined))
+      return m(joined.element, joined.config, joined.value)
+   else if (hasAll(['element', 'value'], joined))
+      return m(joined.element, joined.value)
+}
+
+mm = mm
+   .method('class', isSomeString, class_)
+   .method('element', isSomeString, el)
+   .method('config', isSomething, config)
+   .method('value', isSomething, value)
+   .method('parse', isSomething, parseM)
