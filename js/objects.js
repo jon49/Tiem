@@ -1,18 +1,3 @@
-/**
- * Created by jon on 2/11/14.
- */
-
-/*jslint asi: true*/
-/*jshint indent:3, curly:false, laxbreak:true */
-/*global t, _, b */
- 
-/**
- **Objects**
- */
-
-/**
- * Object constants
- */
 var k = constants([['id'],
                    ['singleDay'],
                    ['in'],
@@ -47,34 +32,67 @@ var JobSettings = function(){
 
 // #Object Definitions
 // {jobID: 0, name: 'name', jobActive: true|false}
-var JobSetting = _.curry(t.tagged('JobSetting', [k.id(), k.name(), k.jobActive()]))
+var JobSetting = b.tagged('JobSetting', [k.id(), k.name(), k.jobActive()])
+//var jobSetting = _.curry(JobSetting)
 // {jobID: 0, name: 'name', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out|in: ''}}
-var ClockedIn = _.curry(t.tagged('ClockedIn', [k.in()]))
-var ClockedOut = _.curry(t.tagged('ClockedOut', [k.out()]))
+var ClockedIn = b.tagged('ClockedIn', [k.in()])
+var ClockedOut = b.tagged('ClockedOut', [k.out()])
 //var JobSkeleton = b.tagged('JobSkeleton', [k.id(), k.comment(), k.singleDay(), k.state()])
 //var jobSkeleton = _.curry(JobSkeleton)
-var Job = _.curry(t.tagged('Job', [k.id(), k.name(), k.comment(), k.singleDay(), k.total(), k.state()]))
-
-t = t
-   .property(
-      'JobSetting',
-      JobSetting
-   )
-   .property(
-      'ClockedIn',
-      ClockedIn
-   )
-   .property(
-      'ClockedOut',
-      ClockedOut
-   )
-   .property(
-      'Job',
-      Job
-   )
-
-// #Controller
-
+var Job = b.tagged('Job', [k.id(), k.name(), k.comment(), k.singleDay(), k.total(), k.state()])
+//var job = _.curry(Job)
+var Objects = b.tagged('Objects', ['Jobs', 'JobSettings'])
+   
+//var CurrentJob = b.tagged('CurrentJob', ['jobList', 'currentJob'])
+//var currentJob = _.curry(CurrentJob)
+   
+   // Validation
+//var validId = function (id) {
+//      return t.isWholeNumber(id) ? b.success(id) : b.failure(['ID must be a whole number'])
+//   }
+//   
+//var validJobName = function (name) {
+//   var name_ = String(name).trim()
+//      return _.isEmpty(name_) ? b.failure(['Name must not be empty']) : b.success(name_)
+//   }
+//   
+//var validJobActive = function (activeJob) {
+//      return _.isBoolean(activeJob) ? b.success(activeJob) : b.failure(['Active job must be of type Boolean'])
+//   }
+//   
+//var validSingleDay = function (singleDay) {
+//   var countNot24 = function (dayArray) {
+//         return !_.isEqual(dayArray.length, 24)
+//      }
+//   var areNumbers = _.compose(_.all, _.partialRight(_.map, _.isNumber))
+//   var isBetweenAbs1 = _.partial(t.isBetween, -1, 1)
+//   var allBetweenAbs1 = _.compose(_.all, _.partialRight(_.map, isBetweenAbs1))
+//
+//      return   !_.isArray(singleDay) 
+//                  ? b.failure(['Single day must be an array']) 
+//               : countNot24(singleDay) 
+//                  ? b.failure(['Single day must have array size of twenty-four']) 
+//               : !areNumbers(singleDay) 
+//                  ? b.failure(['Single day must only have numbers in array']) 
+//               : !allBetweenAbs1(singleDay) 
+//                  ? b.failure(['Single day must only have numbers between -1 and 1']) 
+//               : b.success(singleDay)
+//   }
+   
+//var validDate = function(date){
+//   var date_ = _.isString(date) ? Date.parse(date) : date
+//      return _.isDate(date_) ? b.success(date_) : b.failure(['Is not a date'])
+//   }
+//var validInOut = function(inOut){
+//      return (_.isEqual(inOut, k.in()) || _.isEqual(inOut, k.out())) ? b.success(inOut) : b.failure(["Clock state must be 'in' or 'out'"])
+//   }
+//   
+//var validComment = function(comment){
+//      return String(comment).trim()
+//   }
+//   
+//var createSingleDay = function(){return _.range(24).map(function(){return 0})}
+   
 var getJobById = function(id){
    var id_ = _.zipObject([k.id()], [id])
    var current = _.find(this.list, id_)
@@ -82,6 +100,13 @@ var getJobById = function(id){
    return this
 }
 
+var addCurrentJob = function(theseJobs){
+   var job = theseJobs.current.getOrElse({})
+   theseJobs.list = _.reject(theseJobs.list, function(item){
+      return _.isEqual(item.id, job.id)
+   }).concat(job)
+   return theseJobs
+}
    
 var addJob = function(){ 
    var job = _.first(arguments),
@@ -94,6 +119,8 @@ var addJob = function(){
    this.current = b.some(job)
    return addCurrentJob(this)
 }
+
+var addNew = _.compose(addJob, JobSetting)
 
 var validJobId = function(list, id){
    var id_ = parseInt(id)
@@ -192,6 +219,19 @@ var updateDate = function(date){
    return addCurrentJob(this)
 }
 
+var isCreateJobSetting = function(id, name, active){
+   return isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
+}
+
+var isCreateJob = function(jobSettings, id, comment, singleDay, inOut, date){
+   return isWholeNumber(id)
+      && _.isString(comment)
+      && (b.isOption(singleDay) && singleDay.fold(function(a){return _.isArray(a) && a.length === 24}, function(){return true}))
+      && (_.isEqual(inOut, k.in()) || _.isEqual(inOut, k.out()))
+      && _.isDate(date)
+      && b.isInstanceOf(JobSettings, jobSettings)
+}
+
 //id, comment, singleDay, inOut, date
 //k.id(), k.name(), k.comment(), k.singleDay(), k.total(), ClockState
 var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
@@ -209,3 +249,132 @@ var toArray = function(){return this.list}
 
 var toObject = function(){return this.current}
    
+t = 
+   t.property(
+   'JobSettings',
+   b.environment() 
+      .property(
+         'new',
+         function(){return new JobSettings()}
+      )
+      .property(
+         'toArray',
+         toArray
+      )
+      .property(
+         'toObject',
+         toObject
+      )
+      .method(
+         'create',
+         isCreateJobSetting,
+         JobSetting
+      )
+      .method(
+         'add',
+         b.isInstanceOf(JobSetting),
+         addJob
+      )
+      .method(
+         'addNew',
+         isCreateJobSetting,
+         addNew
+      )
+      .method(
+         'id',
+         isWholeNumber,
+         getJobById
+      )
+      .property(
+         'newId',
+         function(){return (new Date()).getTime()}
+      )
+      .method(
+         'update',
+         _.isString,
+         change(k.name())
+      )
+      .method(
+         'update',
+         _.isBoolean,
+         change(k.jobActive())
+      )
+      .method(
+         'name',
+         _.isString,
+         function(name){
+            this.current = _.first(_.filter(this.list, function(setting){
+               return _.isEqual(setting[k.name()], name)
+            }))
+            return this
+         }
+      )
+      .method(
+         'validSelection',
+         function(v){return _.isString(v) || _.isNumber(v)},
+         validJobSelection
+      ) 
+      .method(
+         'validName',
+         _.isString,
+         validJobName_
+      )
+)
+   
+t = 
+   t.property(
+   'Jobs',
+   b.environment()
+      .property(
+         'new',
+         function(){return new Jobs()}
+      )
+      .property(
+         'toArray',
+         toArray
+      )
+      .property(
+         'toObject',
+         toObject
+      )
+      .method(
+         'create',
+         isCreateJob,
+         createJob
+      )
+      .method(
+         'add',
+         b.isInstanceOf(Job),
+         addJob
+      )
+      .method(
+         'id',
+         isWholeNumber,
+         getJobById
+      )
+      .method(
+         'update',
+         _.isString,
+         change(k.comment())
+      )
+      .method(
+         'update',
+         _.isDate,
+         updateDate
+      )
+      .method(
+         'addNew',
+         isCreateJob,
+         _.compose(addJob, createJob)
+      )
+)
+      
+
+var extendObject = function(object, extensions){
+      _(extensions).forIn(function(value, key){
+         object.prototype[key] = value 
+      })
+}
+
+extendObject(JobSettings, t.JobSettings)
+extendObject(Jobs, t.Jobs)

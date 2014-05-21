@@ -151,6 +151,8 @@ var sum = function (array) {
    })
 }
 
+var createObject = _.curry(function(key, value){return _.zipObject([key], [value])})
+
 /**
  * Zips array of objects with functions.
  * @example tiem.zipObjectT(['Hello'], _.identity, function(){return ', world!'}) => {Hello: ', world!'}
@@ -171,7 +173,6 @@ var zipObjectT = _.curry(function (funcKey, funcValue, array) {
  */
 var constants = zipObjectT(_.first, _.compose(_.constant, _.last))
 
-//tiem.zipObjectFunction(_.constant)
 
 /**
  * Determine if pairs (object, string) has object key name.
@@ -197,7 +198,7 @@ var isEqual = _.curry(_.isEqual)
 
 // taken from bilby for mTagged
 function getInstance(self, constructor) {
-    return self instanceof constructor ? self : b.create(constructor.prototype);
+    return self instanceof constructor ? self : b.create(constructor.prototype)
 }
 
 //Came from bilby, modified for mithril
@@ -250,6 +251,14 @@ var isSomeString = function(s){
    return isSomething(s) && _.isString(s)
 }
 
+var formatDate = function(date, format){
+   return date.toLocaleDateString(undefined, format)
+}
+
+var map = function(func){
+   return _.partialRight(_.map, func)
+}
+
 t = t
    .property('stringSize', stringSize)
    .property('isWholeNumber', isWholeNumber)
@@ -267,48 +276,11 @@ t = t
    .property('have', have)
    .property('hasAll', hasAll)
    .property('isEqual', isEqual)
+   .property('createObject', createObject)
    .property('mtagged', mTagged)
    .method('singleTagged', isSomeString, singleTagged)
    .method('zipOverObject', function(a, b){return _.isPlainObject(a) && _.isPlainObject(b)}, zipOverObject)
    .method('zipOverObjects', _.isArray, zipOverObjects)
    .property('isSomething', isSomething)
    .property('isSomeString', isSomeString)
-
-//mithril extensions
-
-var mm = b.environment()
-
-var class_ = singleTagged('class')
-var el = singleTagged('element')
-var config = singleTagged('config')
-var value = singleTagged('value')
-//combine object into mithril m object
-var parseM = function(object){
-   var joined = {}
-   //combine arrays into strings where applicable
-   _.forIn(object, function(value, key){
-      if (_.isArray(value)){
-         if (_.isEqual(key, 'class'))
-            joined[key] = value.join(' ')
-         else if (_.isEqual(key, 'element'))
-            joined[key] = value.join('')
-      } else
-         joined[key] = value
-   })
-   //place into mithril m function
-   if(hasAll(['element', 'class', 'config', 'value'], joined))
-      return m(joined.element, _.pick(joined, 'class', 'config'), joined.value)
-   else if (hasAll(['element', 'class', 'value'], joined))
-      return m(joined.element, _.pick(joined, 'class'), joined.value)
-   else if (hasAll(['element', 'config', 'value'], joined))
-      return m(joined.element, joined.config, joined.value)
-   else if (hasAll(['element', 'value'], joined))
-      return m(joined.element, joined.value)
-}
-
-mm = mm
-   .method('class', isSomeString, class_)
-   .method('element', isSomeString, el)
-   .method('config', isSomething, config)
-   .method('value', isSomething, value)
-   .method('parse', isSomething, parseM)
+   .property('formatDate', formatDate)
