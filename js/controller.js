@@ -65,6 +65,10 @@ function controller() {
    //addItems([[0, 'My new job', true],[1, 'Next Job', true]])
    
    this.jobs = t.Jobs.new()
+
+   this.inColor = {style: {color: 'DarkSeaGreen'}}
+   this.inBackgroundColor = {style: {'background-color': 'DarkSeaGreen'}}
+   this.borderColor = {style: {border: '1px solid DarkSeaGreen;'}}
 }
 
 

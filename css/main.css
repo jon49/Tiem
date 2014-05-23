@@ -4,9 +4,6 @@ body {
     margin: 0 auto;
     margin-bottom: 100px;
 }
-h1.title {
-    color: DarkSeaGreen;
-}
 h1 div {
     position: relative;
     float: left;
@@ -24,30 +21,17 @@ div.stamp {
     margin: 0 auto;
     margin-top: 15px;
 }
-div.stamp > button {
-    -webkit-box-shadow: 0px 3px 5px #888888;
-    box-shadow: 0px 3px 5px #888888;
-}
 div.stamp > button:hover {
     opacity: 0.75;
 }
 div.stamp > button.comment {
     opacity: 0.5;
 }
-#stamps-in button,
-.date button {
-    background: DarkSeaGreen;
-}
-#stamps-out button {
-    color: white;
-    background: FireBrick;
-}
 .text-left {
     text-align: left;
 }
 /* Selectize apparence */
 .selectize-input {
-   border: 1px solid DarkSeaGreen;
    background-color: #F2F8FF;
    font-size: 1.0em;
 }
@@ -74,6 +58,10 @@ div.stamp > button.comment {
     /* Internet Explorer 5.5+ */
     word-break: break-all;
     white-space: normal;
+}
+
+.hidden {
+   display: none;
 }
 
 /* Events */

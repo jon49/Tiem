@@ -6,8 +6,12 @@
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k, m */
 
+var fadeIn = function(e, isInit){
+   if (!isInit) $(e).delay(500).fadeIn(1000)
+}
+
 var fadeOut = function(e, isInit){
-   if (!isInit) $(e).delay(1000).fadeOut('slow')
+   if (!isInit) $(e).delay(500).fadeOut(1000)
 }
 
 var $tm = undefined
@@ -17,12 +21,14 @@ var define$tm = function(e, isInit){if (!isInit) $tm = $(e)}
 var moveE = function(e, isInit){
    if(!isInit){
       var $te = $(e)
-      $tm.delay(1050).fadeOut(500, function(){
-         $te.insertAfter($('#ti')).fadeIn(1500)
-      })
-      $te.delay(1050).fadeOut(500, function(){
-         $tm.insertAfter($te).fadeIn(1500)
-      })
+      // position and widths of `Time` divs
+      var pTi = 0, wTi = 29, pm = 29, pe = 57, wm = 28, we = 18
+      $tm.delay(2000).animate({
+         left: (pe - pm - (wm - we))
+      }, 1000)
+      $te.delay(2000).animate({
+         left: (pm - pe)
+      }, 1000)
    }
 }
 

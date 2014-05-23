@@ -251,10 +251,6 @@ var isSomeString = function(s){
    return isSomething(s) && _.isString(s)
 }
 
-var formatDate = function(date, format){
-   return date.toLocaleDateString(undefined, format)
-}
-
 var map = function(func){
    return _.partialRight(_.map, func)
 }
@@ -283,4 +279,3 @@ t = t
    .method('zipOverObjects', _.isArray, zipOverObjects)
    .property('isSomething', isSomething)
    .property('isSomeString', isSomeString)
-   .property('formatDate', formatDate)

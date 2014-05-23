@@ -213,7 +213,7 @@ describe("Core constants", function () {
       expect(t.k.singleDay()).toEqual("singleDay")
    })
    it("should return the string 'in'", function () {
-      expect(t.k. in ()).toEqual("in")
+      expect(t.k.in()).toEqual("in")
    })
    it("should return the string 'out'", function () {
       expect(t.k.out()).toEqual("out")
@@ -326,6 +326,19 @@ describe('Job object manipulation and creation', function(){
          var j1$ = _.assign(j1_, {clockState: {'out': dateOut}}, {total: 0.5}, {singleDay: singleDay_})
          expect(jobs.id(0).update(dateOut).toObject().getOrElse(undefined)).toEqual(j1$)
          expect(jobs.toArray()[1]).toEqual(j1$)
+      })
+   })
+})
+
+describe('Object helpers', function(){
+   describe('the function isClockedIn', function(){
+      var stateIn = {name: 'good', clockState: {'in': new Date()}}
+      var stateOut = {name: 'good', clockState: {'out': new Date()}}
+      it('should return true when object is clocked in', function(){
+         expect(isClockedIn(stateIn)).toBe(true)
+      })
+      it('should return false when object is clocked out', function(){
+         expect(isClockedIn(stateOut)).toBe(false)
       })
    })
 })

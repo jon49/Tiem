@@ -188,7 +188,6 @@ var change = _.curry(function(property, value){
       return addCurrentJob(this)
    }
 })
-
    
 //Determine if the job is clocked in or out.
 var isClockedIn = function (job) {
