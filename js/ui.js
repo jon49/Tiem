@@ -28,11 +28,16 @@
 
    var autoComplete = function(ctrl){
       //<select id="jobs" placeholder="Enter job name"></select>
-      return m('select#jobs', {placeholder: 'Enter job name', config: selectize.config(ctrl)})
+      return m('div', [
+         m('select#jobs', {placeholder: 'Enter job name', config: selectize.config(ctrl)})
+      ])
    }
 
-   var tiemStamp = function(job){
-      return m('div', {class: 'stamp pure-g', id: job.id, style: {display: 'none'}, config: fadeIn}, [
+   var tiemStamp = function(job, hideMe){
+      var displayNone = (hideMe) ? {display: 'none'} : {}
+      var fadeMeIn = hideMe ? fadeIn : {}
+      
+      return m('div', {class: 'stamp pure-g', id: job.id, style: displayNone, config: fadeMeIn}, [
                m('button', {class: 'pure-button pure-u-14-24 jobButton', title: job.name}, job.name),
                m('button', {class: 'pure-button pure-u-5-24 time', title: job.clockState.in}, job.clockState.in.toLocaleTimeString()),
                m('button', {class: 'pure-button pure-u-3-24 hours'}, job.total.toFixed(2)),
@@ -44,12 +49,16 @@
    }
 
    var clockedInStamps = function(ctrl){
+      var jobs = ctrl.jobs.toArray()
+      var recentlyAdded = _.last(jobs)
       return m('.stamps-in', 
-               _(ctrl.jobs.toArray())
+               _(jobs)
                .filter(function(job){ return isClockedIn(job) })
-               .sortBy(k.name())
+               .sortBy(function(job){
+                  return job.name.toLowerCase()
+               })
                .map(function(job){
-                  return tiemStamp(job)
+                  return tiemStamp(job, _.isEqual(recentlyAdded.id, job.id))
                })
                .value()
               )
