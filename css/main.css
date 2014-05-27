@@ -17,23 +17,31 @@ h1 div {
     border-radius: 6px 6px 6px 6px;
     margin-left: 5px;
 }
-div.stamp {
+.stamp {
     margin: 0 auto;
     margin-top: 15px;
 }
-div.stamp > button:hover {
+.stamp > button:hover {
     opacity: 0.75;
 }
-div.stamp > button.comment {
+.stamp > button.comment {
     opacity: 0.5;
+}
+.stamp > button {
+   border-radius: 0px;
 }
 .text-left {
     text-align: left;
 }
 /* Selectize apparence */
+
 .selectize-input {
+   border-width: 1px;
+   border-style: solid;
    background-color: #F2F8FF;
    font-size: 1.0em;
+   border-radius: 0px;
+   height: 37px;
 }
 .selectize-control.multi .selectize-input [data-value] {
    background-color: DarkSeaGreen;

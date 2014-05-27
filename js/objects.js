@@ -133,11 +133,11 @@ var validJobId = function(list, id){
 
 var validJobName = function(list, name){
    var name_ = name.trim()
-   return _.isEmpty(name_)
-      ? b.failure(['Job name must contain characters'])
-      : _.any(list, _.zipObject([k.name()], [name_]))
-      ? b.failure(['Job name already exists'])
-      : b.success(name_)
+   return _.isEmpty(name_) ? b.failure(['Job name must contain characters'])
+          : _.any(list, function(j){
+             return _.isEqual(name_.toLowerCase(), j.name.toLowerCase())
+          }) ? b.failure(['Job name already exists'])
+          : b.success(name_)
 }
 
 var validateSingle = function(type, validation, success, failure){

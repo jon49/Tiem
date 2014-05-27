@@ -7,11 +7,11 @@
 /* global t, document, $, _, k, m */
 
 var fadeIn = function(e, isInit){
-   if (!isInit) $(e).delay(500).fadeIn(1000)
+   if (!isInit) $(e).delay(250).fadeIn(1000)
 }
 
 var fadeOut = function(e, isInit){
-   if (!isInit) $(e).delay(500).fadeOut(1000)
+   if (!isInit) $(e).delay(250).fadeOut(1000)
 }
 
 var $tm = undefined
@@ -36,30 +36,32 @@ var moveE = function(e, isInit){
 
 var addJob = function(ctrl, value){
    //*****validate job here**********
-   var job 
+   var job = b.none
    var jobList = ctrl.jobSettings
 
    jobList.validSelection(value).cata({
       success: function(value){
-         job = value
+         job = b.some(value)
       },
       failure: function(errors){
          jobList.validName(value).cata({
             success: function(name){
                if (name && confirm('Create a new job with name: "' + name + '"?')){
-                  job = jobList.create(jobList.newId(), name, true)
-                  jobList.add(job)
-               } else return undefined
+                  var job_ = jobList.create(jobList.newId(), name, true)
+                  job = b.some(job_)
+                  jobList.add(job_)
+               }
             },
             failure: function(errors){
                //show errors to user
-               return undefined
             }
          })
       }
    })
-   // jobSettings, id, comment, singleDay, inOut, date
-   ctrl.jobs.addNew(jobList, job.id, '', b.none, k.in(), new Date())
+   job.map(function(j){
+      // jobSettings, id, comment, singleDay, inOut, date
+      ctrl.jobs.addNew(jobList, j.id, '', b.none, k.in(), new Date())
+   })
 }
 
 var selectize = {}
@@ -82,12 +84,14 @@ selectize.config = function(ctrl){
             valueField: k.id(),
             searchField: k.name(),
             sortField: k.name(),
+            borderColor: ctrl.settings.inColor,
             onChange: function(value){
                m.startComputation()
                if (!_.isEmpty(value)){
                   addJob(ctrl, value)
                   selectize.removeOption(value)
-                  selectize.clear()
+                  selectize.refreshItems()
+                  selectize.showInput()
                }
                m.endComputation()
             }
