@@ -2,7 +2,7 @@ Mithril = m = new function app(window) {
 	var selectorCache = {}
 	var type = {}.toString
 	var parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[.+?\])/g, attrParser = /\[(.+?)(?:=("|'|)(.+?)\2)?\]/
-	
+
 	function m() {
 		var args = arguments
 		var hasAttrs = type.call(args[1]) == "[object Object]" && !("tag" in args[1]) && !("subtree" in args[1])
@@ -35,14 +35,14 @@ Mithril = m = new function app(window) {
 	function build(parentElement, parentTag, data, cached, shouldReattach, index, editable, namespace) {
 		if (data === null || data === undefined) data = ""
 		if (data.subtree === "retain") return
-		
+
 		var cachedType = type.call(cached), dataType = type.call(data)
 		if (cachedType != dataType) {
 			if (cached !== null && cached !== undefined) clear(cached.nodes)
 			cached = new data.constructor
 			cached.nodes = []
 		}
-		
+
 		if (dataType == "[object Array]") {
 			var nodes = [], intact = cached.length === data.length, subArrayCount = 0
 			for (var i = 0, cacheCount = 0; i < data.length; i++) {
@@ -53,9 +53,10 @@ Mithril = m = new function app(window) {
 				cached[cacheCount++] = item
 			}
 			if (!intact) {
-				if (nodes.length < cached.nodes.length) cached.nodes = cached.nodes.filter(function(node) {return node.parentNode !== null})
 				for (var i = 0; i < data.length; i++) if (cached[i] !== undefined) nodes = nodes.concat(cached[i].nodes)
-				for (var i = nodes.length, node; node = cached.nodes[i]; i++) if (node.parentNode !== null) node.parentNode.removeChild(node)
+				for (var i = nodes.length, node; node = cached.nodes[i]; i++) {
+					if (node.parentNode !== null && node.parentNode.childNodes.length != nodes.length) node.parentNode.removeChild(node)
+				}
 				for (var i = cached.nodes.length, node; node = nodes[i]; i++) if (node.parentNode === null) parentElement.appendChild(node)
 				if (data.length < cached.length) cached.length = data.length
 				cached.nodes = nodes
@@ -64,15 +65,16 @@ Mithril = m = new function app(window) {
 		else if (dataType == "[object Object]") {
 			if (data.tag != cached.tag || Object.keys(data.attrs).join() != Object.keys(cached.attrs).join() || data.attrs.id != cached.attrs.id) clear(cached.nodes)
 			if (typeof data.tag != "string") return
-			
+
 			var node, isNew = cached.nodes.length === 0
-			if (data.tag === "svg") namespace = "http://www.w3.org/2000/svg"
+			if (data.attrs.xmlns) namespace = data.attrs.xmlns
+			else if (data.tag === "svg") namespace = "http://www.w3.org/2000/svg"
 			if (isNew) {
 				node = namespace === undefined ? window.document.createElement(data.tag) : window.document.createElementNS(namespace, data.tag)
 				cached = {
 					tag: data.tag,
 					attrs: setAttributes(node, data.tag, data.attrs, {}, namespace),
-					children: build(node, data.tag, data.children, cached.children, true, 0, data.attrs.contenteditable ? node : editable, namespace),
+					children: data.children !== undefined ? build(node, data.tag, data.children, cached.children, true, 0, data.attrs.contenteditable ? node : editable, namespace) : undefined,
 					nodes: [node]
 				}
 				parentElement.insertBefore(node, parentElement.childNodes[index] || null)
@@ -125,7 +127,7 @@ Mithril = m = new function app(window) {
 			}
 			else cached.nodes.intact = true
 		}
-		
+
 		return cached
 	}
 	function setAttributes(node, tag, dataAttrs, cachedAttrs, namespace) {
@@ -154,14 +156,16 @@ Mithril = m = new function app(window) {
 				else if (attrName === "value" && tag === "input") {
 					if (node.value !== dataAttr) node.value = dataAttr
 				}
-				else if (attrName in node && !(attrName == "list" || attrName == "style")) node[attrName] = dataAttr
+				else if (attrName in node && !(attrName == "list" || attrName == "style")) {
+					node[attrName] = dataAttr
+				}
 				else node.setAttribute(attrName, dataAttr)
 			}
 		}
 		return cachedAttrs
 	}
 	function clear(nodes) {
-		for (var i = nodes.length - 1; i > -1; i--) nodes[i].parentNode.removeChild(nodes[i])
+		for (var i = nodes.length - 1; i > -1; i--) if (nodes[i]) nodes[i].parentNode.removeChild(nodes[i])
 		nodes.length = 0
 	}
 	function injectHTML(parentElement, index, data) {
@@ -183,7 +187,7 @@ Mithril = m = new function app(window) {
 			finally {m.endComputation()}
 		}
 	}
-	
+
 	var html
 	var documentNode = {
 		insertAdjacentHTML: function(_, data) {
@@ -205,18 +209,19 @@ Mithril = m = new function app(window) {
 	}
 	var nodeCache = [], cellCache = {}
 	m.render = function(root, cell) {
+		if (!root) throw new Error("Please ensure the DOM element exists before rendering a template into it.")
 		var index = nodeCache.indexOf(root)
 		var id = index < 0 ? nodeCache.push(root) - 1 : index
 		var node = root == window.document || root == window.document.documentElement ? documentNode : root
 		cellCache[id] = build(node, null, cell, cellCache[id], false, 0, null, undefined)
 	}
-	
+
 	m.trust = function(value) {
 		value = new String(value)
 		value.$trusted = true
 		return value
 	}
-	
+
 	var roots = [], modules = [], controllers = [], now = 0, lastRedraw = 0, lastRedrawId = 0, computePostRedrawHook = null
 	m.module = function(root, module) {
 		m.startComputation()
@@ -248,21 +253,21 @@ Mithril = m = new function app(window) {
 		}
 		lastRedraw = now
 	}
-	
+
 	var pendingRequests = 0
 	m.startComputation = function() {pendingRequests++}
 	m.endComputation = function() {
 		pendingRequests = Math.max(pendingRequests - 1, 0)
 		if (pendingRequests == 0) m.redraw()
 	}
-	
+
 	m.withAttr = function(prop, withAttrCallback) {
 		return function(e) {
 			e = e || event
 			withAttrCallback(prop in e.currentTarget ? e.currentTarget[prop] : e.currentTarget.getAttribute(prop))
 		}
 	}
-	
+
 	//routing
 	var modes = {pathname: "", hash: "#", search: "?"}
 	var redirect = function() {}, routeParams = {}, currentRoute
@@ -272,7 +277,7 @@ Mithril = m = new function app(window) {
 			currentRoute = window.location[m.route.mode].slice(modes[m.route.mode].length)
 			var root = arguments[0], defaultRoute = arguments[1], router = arguments[2]
 			redirect = function(source) {
-				var path = source.slice(modes[m.route.mode].length)
+				var path = currentRoute = source.slice(modes[m.route.mode].length)
 				if (!routeByValue(root, router, path)) {
 					m.route(defaultRoute, true)
 				}
@@ -297,7 +302,11 @@ Mithril = m = new function app(window) {
 		}
 		else if (typeof arguments[0] == "string") {
 			currentRoute = arguments[0]
-			var shouldReplaceHistoryEntry = arguments[1] === true
+			var querystring = typeof arguments[1] == "object" ? buildQueryString(arguments[1]) : null
+			if (querystring) currentRoute += (currentRoute.indexOf("?") === -1 ? "?" : "&") + querystring
+
+			var shouldReplaceHistoryEntry = (arguments.length == 3 ? arguments[2] : arguments[1]) === true
+
 			if (window.history.pushState) {
 				computePostRedrawHook = function() {
 					window.history[shouldReplaceHistoryEntry ? "replaceState" : "pushState"](null, window.document.title, modes[m.route.mode] + currentRoute)
@@ -312,16 +321,23 @@ Mithril = m = new function app(window) {
 	m.route.mode = "search"
 	function routeByValue(root, router, path) {
 		routeParams = {}
+
+		var queryStart = path.indexOf("?")
+		if (queryStart !== -1) {
+			routeParams = parseQueryString(path.substr(queryStart + 1, path.length))
+			path = path.substr(0, queryStart)
+		}
+
 		for (var route in router) {
 			if (route == path) return !void m.module(root, router[route])
-			
-			var matcher = new RegExp("^" + route.replace(/:[^\/]+?\.{3}/g, "(.*?)").replace(/:[^\/]+/g, "([^\\/]+)") + "$")
-			
+
+			var matcher = new RegExp("^" + route.replace(/:[^\/]+?\.{3}/g, "(.*?)").replace(/:[^\/]+/g, "([^\\/]+)") + "\/?$")
+
 			if (matcher.test(path)) {
 				return !void path.replace(matcher, function() {
-					var keys = route.match(/:[^\/]+/g)
+					var keys = route.match(/:[^\/]+/g) || []
 					var values = [].slice.call(arguments, 1, -2)
-					for (var i = 0; i < keys.length; i++) routeParams[keys[i].replace(/:|\./g, "")] = decodeURIComponent(values[i])
+					for (var i = 0; i < keys.length; i++) routeParams[keys[i].replace(/:|\./g, "")] = decodeSpace(values[i])
 					m.module(root, router[route])
 				})
 			}
@@ -336,7 +352,26 @@ Mithril = m = new function app(window) {
 	function scrollToHash() {
 		if (m.route.mode != "hash" && window.location.hash) window.location.hash = window.location.hash
 	}
-	
+	function buildQueryString(object, prefix) {
+		var str = []
+		for(var prop in object) {
+			var key = prefix ? prefix + "[" + prop + "]" : prop, value = object[prop]
+			str.push(typeof value == "object" ? buildQueryString(value, key) : encodeURIComponent(key) + "=" + encodeURIComponent(value))
+		}
+		return str.join("&")
+	}
+	function parseQueryString(str) {
+		var pairs = str.split("&"), params = {}
+		for (var i = 0; i < pairs.length; i++) {
+			var pair = pairs[i].split("=")
+			params[decodeSpace(pair[0])] = pair[1] ? decodeSpace(pair[1]) : (pair.length === 1 ? true : "")
+		}
+		return params
+	}
+	function decodeSpace(string) {
+		return decodeURIComponent(string.replace(/\+/g, " "))
+	}
+
 	//model
 	m.prop = function(store) {
 		var prop = function() {
@@ -395,22 +430,23 @@ Mithril = m = new function app(window) {
 	}
 	m.sync = function(args) {
 		var method = "resolve"
-		function synchronizer(resolved) {
+		function synchronizer(pos, resolved) {
 			return function(value) {
-				results.push(value)
+				results[pos] = value
 				if (!resolved) method = "reject"
-				if (results.length == args.length) {
+				if (--outstanding == 0) {
 					deferred.promise(results)
 					deferred[method](results)
 				}
 				return value
 			}
 		}
-		
+
 		var deferred = m.deferred()
-		var results = []
+		var outstanding = args.length
+		var results = new Array(outstanding)
 		for (var i = 0; i < args.length; i++) {
-			args[i].then(synchronizer(true), synchronizer(false))
+			args[i].then(synchronizer(i, true), synchronizer(i, false))
 		}
 		return deferred.promise
 	}
@@ -419,29 +455,20 @@ Mithril = m = new function app(window) {
 	function ajax(options) {
 		var xhr = window.XDomainRequest ? new window.XDomainRequest : new window.XMLHttpRequest
 		xhr.open(options.method, options.url, true, options.user, options.password)
-		xhr.onload = typeof options.onload == "function" ? options.onload : function() {}
-		xhr.onerror = typeof options.onerror == "function" ? options.onerror : function() {}
 		xhr.onreadystatechange = function() {
-			if (xhr.readyState === 4 && xhr.status === 0) {
-				xhr.onerror({type: "error", target: xhr})
+			if (xhr.readyState === 4) {
+				if (xhr.status >= 200 && xhr.status < 300) options.onload({type: "load", target: xhr})
+				else options.onerror({type: "error", target: xhr})
 			}
 		}
 		if (typeof options.config == "function") options.config(xhr, options)
 		xhr.send(options.data)
 		return xhr
 	}
-	function querystring(object, prefix) {
-		var str = []
-		for(var prop in object) {
-			var key = prefix ? prefix + "[" + prop + "]" : prop, value = object[prop]
-			str.push(typeof value == "object" ? querystring(value, key) : encodeURIComponent(key) + "=" + encodeURIComponent(value))
-		}
-		return str.join("&")
-	}
 	function bindData(xhrOptions, data, serialize) {
 		if (data && Object.keys(data).length > 0) {
 			if (xhrOptions.method == "GET") {
-				xhrOptions.url = xhrOptions.url + (xhrOptions.url.indexOf("?") < 0 ? "?" : "&") + querystring(data)
+				xhrOptions.url = xhrOptions.url + (xhrOptions.url.indexOf("?") < 0 ? "?" : "&") + buildQueryString(data)
 			}
 			else xhrOptions.data = serialize(data)
 		}
@@ -489,12 +516,12 @@ Mithril = m = new function app(window) {
 		ajax(xhrOptions)
 		return deferred.promise
 	}
-	
+
 	//testing API
 	m.deps = function(mock) {return window = mock}
 	//for internal testing only, do not use `m.deps.factory`
 	m.deps.factory = app
-	
+
 	return m
 }(this)
 

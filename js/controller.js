@@ -15,7 +15,9 @@ function controller() {
 
    this.settings = {
       inColor: 'DarkSeaGreen',
-      outColor: 'FireBrick'
+      outColor: 'FireBrick',
+      inTextColor: 'black',
+      outTextColor: 'white'
    }
       
 }

@@ -8,12 +8,23 @@
 
 (function(){
    'use strict';
+   
+   var cssDeclaration = function(property, value){
+      return property + ': ' + value + ';'
+   }
 
-   var styles = function(ctrl){
+   var styles = function(settings){
       return m('style', 
-               '.inBackgroundColor {background-color: ' + ctrl.settings.inColor + ';}' +
-               '.inColor {color: ' + ctrl.settings.inColor + ';}' +
-               '.selectize-input {border-color: ' + ctrl.settings.inColor + ';}'
+               '.stamps-in button, .inBackgroundColor {' +
+                  cssDeclaration('background-color', settings.inColor) +
+                  cssDeclaration('color', settings.inTextColor) +
+               '}' +
+               '.stamps-out button {' +
+                  cssDeclaration('background-color', settings.outColor) +
+                  cssDeclaration('color', settings.outTextColor) +
+               '}' +
+               '.inColor {color: ' + settings.inColor + ';}' +
+               '.selectize-input {border-color: ' + settings.inColor + ';}'
               )
    }
 
@@ -41,42 +52,54 @@
       ])
    }
 
-   var tiemStamp = _.curry(function(hideMe, job){
+   var tiemStamp = _.curry(function(hideMe, jobs){
       var displayNone = (hideMe) ? {display: 'none'} : {}
       var fadeMeIn = hideMe ? fadeIn : {}
-      
-      return m('.stamp.pure-g', {id: job.id, style: displayNone, config: fadeMeIn}, [
-               m('button.pure-button.pure-u-14-24.jobButton.inBackgroundColor', {title: job.name}, job.name),
-               m('button.pure-button.pure-u-5-24.time.inBackgroundColor', {title: job.clockState.in}, job.clockState.in.toLocaleTimeString()),
-               m('button.pure-button.pure-u-3-24.hours.inBackgroundColor', job.total.toFixed(2)),
-               m('button.pure-button.pure-u-2-24.notes.inBackgroundColor', {title: job.comment}, [
-                  m('i.fa.fa-pencil')
-               ]),
-               m('button.pure-button.pure-u-1-1.text-left.wrap-word.hidden.comment.inBackgroundColor', job.comment)
-              ])
+      return jobs.toObject().map(function(job){
+         var clockState = job.clockState[(isClockedIn(job) ? k.in() : k.out())]
+         return m('.stamp.pure-g', {id: job.id, style: displayNone, config: fadeMeIn}, [
+                  m('button.pure-button.pure-u-14-24.jobButton', {title: job.name, onclick: toggleButton.bind(jobs, job.id)}, job.name),
+                  m('button.pure-button.pure-u-5-24.time', {title: clockState}, clockState.toLocaleTimeString()),
+                  m('button.pure-button.pure-u-3-24.hours', job.total.toFixed(2)),
+                  m('button.pure-button.pure-u-2-24.notes', {title: job.comment}, [
+                     m('i.fa.fa-pencil')
+                  ]),
+                  m('button.pure-button.pure-u-1-1.text-left.wrap-word.hidden.comment', job.comment)
+                 ])
+      }).getOrElse('')
    })
 
    var hiddenTiemStamp = tiemStamp(true)
    var visibleTiemStamp = tiemStamp(false)
 
-   var clockedInStamps = function(ctrl){
+   var stamps = function(ctrl, clockType){
       var jobs = ctrl.jobs.toArray()
       var recentlyAdded = _.last(jobs)
-      return m('.stamps-in', 
+      var stampClass = _.isEqual(clockType, isClockedIn) ? '.stamps-in' : '.stamps-out'
+      return m(stampClass, 
                _(jobs)
-               .filter(isClockedIn)
+               .filter(clockType)
                .sortBy(function(j){
                   return j.name.toLowerCase()
                })
                .map(function(j){
-                  return (_.isEqual(recentlyAdded.id, j.id) ? hiddenTiemStamp : visibleTiemStamp)(j)
+                  return (_.isEqual(recentlyAdded.id, j.id) ? hiddenTiemStamp : visibleTiemStamp)(ctrl.jobs.id(j.id))
                })
                .value()
               )
    }
 
+   var clockedInStamps = function(ctrl){
+      return stamps(ctrl, isClockedIn)
+   }
+
+   var clockedOutStamps = function(ctrl){
+      return stamps(ctrl, complement(isClockedIn))
+   }
+
    var main = function(ctrl){
-      return [styles(ctrl), header(ctrl), autoComplete(ctrl), clockedInStamps(ctrl)]
+      var result = [styles(ctrl.settings), header(ctrl), autoComplete(ctrl), clockedInStamps(ctrl), clockedOutStamps(ctrl)]
+      return result
    }
 
    m.module(document.body, {view: main, controller: controller})

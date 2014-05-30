@@ -64,6 +64,15 @@ var addJob = function(ctrl, value){
    })
 }
 
+var toggleButton = _.curry(function(id, e){
+   var that = this
+   $(e.currentTarget.parentNode).delay(10).fadeOut(500, function(){
+      m.startComputation()
+      that.id(id).update(new Date())
+      m.endComputation()
+   })
+})
+
 var selectize = {}
 
 selectize.config = function(ctrl){
