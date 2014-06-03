@@ -1,5 +1,5 @@
 /* brackets-xunit: jasmine */
-/* brackets-xunit: includes=../bower_components/lodash/dist/lodash.js,../bower_components/bilby.js/bilby.js,../bower_components/mithril/mithril.js,utilities.js,objects.js,controller.js,events.js,ui.js */
+/* brackets-xunit: includes=../bower_components/lodash/dist/lodash.js,../bower_components/bilby.js/bilby.js,../bower_components/mithril/mithril.js,utilities.js,engine.js,objects.js,controller.js,events.js,ui.js */
 
 /* global describe, it, expect, t, _, bilby */
 /*jslint asi: true*/
@@ -186,6 +186,26 @@ describe("How the utilities are used in project", function () {
       })
       it("should return false when there isn't a string of length greater than 0", function(){
          expect(t.isSomeString('')).toBe(false)
+      })
+   })
+   describe('The function not', function(){
+      it('should return false when given true', function(){
+         expect(t.not(true)).toBe(false)
+      })
+      it('should return true when given false', function(){
+         expect(t.not(false)).toBe(true)
+      })
+   })
+   describe('The function hasDeep', function(){
+      var o = {otheKey: 'my', state: {in: 'some data'}}
+      it('should return true when layered object has key', function(){
+         expect(t.hasDeep('in')(o)).toBe(true)
+      })
+      it('should return false when layered object does not have the key', function(){
+         expect(t.hasDeep('out')(o)).toBe(false)
+      })
+      it('should not disturb the original object', function(){
+         expect(o).toEqual({otheKey: 'my', state: {in: 'some data'}})
       })
    })
 })

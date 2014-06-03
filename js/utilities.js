@@ -255,6 +255,11 @@ var map = function(func){
    return _.partialRight(_.map, func)
 }
 
+var not = function(bool){ return !bool }
+
+var hasDeep = b.flip(_.compose(not, _.isEmpty, _.curry(_.findKey, 2)))
+//var hasDeep = _.compose(not, _.isEmpty, _.rcurry2(_.findKey))
+
 t = t
    .property('stringSize', stringSize)
    .property('isWholeNumber', isWholeNumber)
@@ -279,3 +284,5 @@ t = t
    .method('zipOverObjects', _.isArray, zipOverObjects)
    .property('isSomething', isSomething)
    .property('isSomeString', isSomeString)
+   .method('not', _.isBoolean, not)
+   .property('hasDeep', hasDeep)

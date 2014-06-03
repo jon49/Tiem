@@ -1,3 +1,11 @@
+/**
+ * Contains functions for view.
+ */
+
+/* jslint asi: true */
+/*jshint indent:3, curly:false, laxbreak:true */
+/* global t, document, $, _, k, m, b */
+
 var k = constants([['id'],
                    ['singleDay'],
                    ['in'],
@@ -23,11 +31,11 @@ t = t.property('k', k)
 
 var Jobs = function(){
    this.list = []
-   this.current = b.none
+   this.target = b.none
 }
 var JobSettings = function(){
    this.list = []
-   this.current = b.none
+   this.target = b.none
 }
 
 // #Object Definitions
@@ -41,12 +49,8 @@ var ClockedOut = b.tagged('ClockedOut', [k.out()])
 //var jobSkeleton = _.curry(JobSkeleton)
 var Job = b.tagged('Job', [k.id(), k.name(), k.comment(), k.singleDay(), k.total(), k.state()])
 //var job = _.curry(Job)
-var Objects = b.tagged('Objects', ['Jobs', 'JobSettings'])
-   
-//var CurrentJob = b.tagged('CurrentJob', ['jobList', 'currentJob'])
-//var currentJob = _.curry(CurrentJob)
-   
-   // Validation
+
+// Validation
 //var validId = function (id) {
 //      return t.isWholeNumber(id) ? b.success(id) : b.failure(['ID must be a whole number'])
 //   }
@@ -93,31 +97,20 @@ var Objects = b.tagged('Objects', ['Jobs', 'JobSettings'])
 //   
 //var createSingleDay = function(){return _.range(24).map(function(){return 0})}
    
-var getJobById = function(id){
-   var id_ = _.zipObject([k.id()], [id])
-   var current = _.find(this.list, id_)
-   this.current = _.isEmpty(current) ? b.none : b.some(current)
-   return this
-}
+var getJobById = getTargetBy(k.id())
 
-var addCurrentJob = function(theseJobs){
-   var job = theseJobs.current.getOrElse({})
-   theseJobs.list = _.reject(theseJobs.list, function(item){
-      return _.isEqual(item.id, job.id)
-   }).concat(job)
-   return theseJobs
-}
+var addTargetJob = xAddToList(k.id())
    
 var addJob = function(){ 
    var job = _.first(arguments),
       ow = _.last(arguments),
       overwrite = _.isBoolean(ow) ? ow : false
    if (_.contains(this.list, job[k.id()]) && !overwrite){
-      this.current = b.none
+      this.target = b.none
       return this
    }
-   this.current = b.some(job)
-   return addCurrentJob(this)
+   this.target = b.some(job)
+   return addTargetJob(this)
 }
 
 var addNew = _.compose(addJob, JobSetting)
@@ -155,11 +148,11 @@ var validJobName_ = function(name){
    validateSingle(k.name(),
                   validJobName(that.list, name), 
                   function(value){
-                     that.current = b.none
+                     that.target = b.none
                      v = b.success(value.name)
                   },
                   function(errors){
-                     that.current = b.none
+                     that.target = b.none
                      v = b.failure(errors)
                   })
    return b.Do()(v)
@@ -171,28 +164,26 @@ var validJobSelection = function(object){
                   validJobId(that.list, object), 
                   function(value){
                      getJobById.apply(that, [value.id])
-                     v = b.success(that.current.getOrElse(''))
+                     v = b.success(that.target.getOrElse(''))
                   },
                   function(errors){
-                     that.current = b.none 
+                     that.target = b.none 
                      v = b.failure(errors)
                   })
    return b.Do()(v)
 }
 
 var change = _.curry(function(property, value){
-   if (this.current.isSome){
-      var job = this.current.getOrElse({})
+   if (this.target.isSome){
+      var job = this.target.getOrElse({})
       job[property] = value
-      this.current = b.some(job)
-      return addCurrentJob(this)
+      this.target = b.some(job)
+      return addTargetJob(this)
    }
 })
    
 //Determine if the job is clocked in or out.
-var isClockedIn = function (job) {
-    return _.has(job[k.state()], k.in())
-}
+var isClockedIn = hasDeep('in') 
 
 //Change job state to clocked in.
 var clockIn = function (job, date) {
@@ -213,9 +204,9 @@ var clockOut = function (job, date) {
 
 var updateDate = function(date){
    //Toggle clock
-   var job = this.current.getOrElse({})
-   this.current = b.some((isClockedIn(job)) ? clockOut(job, date) : clockIn(job, date))
-   return addCurrentJob(this)
+   var job = this.target.getOrElse({})
+   this.target = b.some((isClockedIn(job)) ? clockOut(job, date) : clockIn(job, date))
+   return addTargetJob(this)
 }
 
 var isCreateJobSetting = function(id, name, active){
@@ -244,10 +235,10 @@ var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
    return Job(id, jobSetting[k.name()], comment, singleDay_, sum(singleDay_), inOut_)
 }
 
-var toArray = function(){return this.list}
+var toArray = function(){return this.list} // _.cloneDeep(this.list)}
 
-var toObject = function(){return this.current}
-   
+var toObject = function(){return this.target} // _.cloneDeep(this.target)}
+
 t = 
    t.property(
    'JobSettings',
@@ -302,7 +293,7 @@ t =
          'name',
          _.isString,
          function(name){
-            this.current = _.first(_.filter(this.list, function(setting){
+            this.target = _.first(_.filter(this.list, function(setting){
                return _.isEqual(setting[k.name()], name)
             }))
             return this

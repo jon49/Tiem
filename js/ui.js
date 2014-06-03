@@ -72,29 +72,41 @@
    var hiddenTiemStamp = tiemStamp(true)
    var visibleTiemStamp = tiemStamp(false)
 
-   var stamps = function(ctrl, clockType){
-      var jobs = ctrl.jobs.toArray()
-      var recentlyAdded = _.last(jobs)
-      var stampClass = _.isEqual(clockType, isClockedIn) ? '.stamps-in' : '.stamps-out'
+   var stamps = function(jobs, stampClass){
+      var jobList = jobs.toArray()
+      var recentlyAdded = _.last(jobList)
+      var clockType = _.isEqual(stampClass, '.stamps-in') ? isClockedIn : _.compose(not, isClockedIn)
       return m(stampClass, 
-               _(jobs)
+               _(jobList)
+               .tap(function(a){
+                  var b = a
+               })
                .filter(clockType)
+               .tap(function(a){
+                  var b = a
+               })
                .sortBy(function(j){
                   return j.name.toLowerCase()
                })
+               .tap(function(a){
+                  var b = a
+               })
                .map(function(j){
-                  return (_.isEqual(recentlyAdded.id, j.id) ? hiddenTiemStamp : visibleTiemStamp)(ctrl.jobs.id(j.id))
+                  return (_.isEqual(recentlyAdded.id, j.id) ? hiddenTiemStamp : visibleTiemStamp)(jobs.id(j.id))
+               })
+               .tap(function(a){
+                  var b = a
                })
                .value()
               )
    }
 
    var clockedInStamps = function(ctrl){
-      return stamps(ctrl, isClockedIn)
+      return stamps(ctrl.jobs, '.stamps-in')
    }
 
    var clockedOutStamps = function(ctrl){
-      return stamps(ctrl, complement(isClockedIn))
+      return stamps(ctrl.jobs, '.stamps-out')
    }
 
    var main = function(ctrl){
