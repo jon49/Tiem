@@ -27,6 +27,15 @@ var k = constants([['id'],
 
 t = t.property('k', k)
 
+var jobSettingKeys = [k.id(), k.name(), k.jobActive()]
+var clockInKeys = [k.in()]
+var clockOutKeys = [k.out()]
+var jobKeys = [k.id(), k.name(), k.comment(), k.singleDay(), k.total(), k.state()]
+
+var l = lenses(_.union(jobSettingKeys, clockInKeys, clockOutKeys, jobKeys))
+
+t = t.property('l', l)
+
 // **Validate objects**
 
 var Jobs = function(){
@@ -40,14 +49,14 @@ var JobSettings = function(){
 
 // #Object Definitions
 // {jobID: 0, name: 'name', jobActive: true|false}
-var JobSetting = b.tagged('JobSetting', [k.id(), k.name(), k.jobActive()])
+var JobSetting = b.tagged('JobSetting', jobSettingKeys)
 //var jobSetting = _.curry(JobSetting)
 // {jobID: 0, name: 'name', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out|in: ''}}
-var ClockedIn = b.tagged('ClockedIn', [k.in()])
-var ClockedOut = b.tagged('ClockedOut', [k.out()])
+var ClockedIn = b.tagged('ClockedIn', clockInKeys)
+var ClockedOut = b.tagged('ClockedOut', clockOutKeys)
 //var JobSkeleton = b.tagged('JobSkeleton', [k.id(), k.comment(), k.singleDay(), k.state()])
 //var jobSkeleton = _.curry(JobSkeleton)
-var Job = b.tagged('Job', [k.id(), k.name(), k.comment(), k.singleDay(), k.total(), k.state()])
+var Job = b.tagged('Job', jobKeys)
 //var job = _.curry(Job)
 
 // Validation
@@ -96,43 +105,35 @@ var Job = b.tagged('Job', [k.id(), k.name(), k.comment(), k.singleDay(), k.total
 //   }
 //   
 //var createSingleDay = function(){return _.range(24).map(function(){return 0})}
-   
-var getJobById = getTargetBy(k.id())
 
-var addTargetJob = xAddToList(k.id())
-   
-var addJob = function(){ 
-   var job = _.first(arguments),
-      ow = _.last(arguments),
-      overwrite = _.isBoolean(ow) ? ow : false
-   if (_.contains(this.list, job[k.id()]) && !overwrite){
-      this.target = b.none
-      return this
-   }
-   this.target = b.some(job)
-   return addTargetJob(this)
-}
+// use id to get job from list
+var getJobById = _.partial(getTargetBy, l.id)
 
-var addNew = _.compose(addJob, JobSetting)
+// use id to get exclusively add updated job
+var xAddTargetJob = _.partial(xAddToList, l.id)
 
+// put a new job in target the exclusively update it
+var addJob = _.compose(xAddTargetJob, toTarget)
+
+// determine if the job id is valid
 var validJobId = function(list, id){
    var id_ = parseInt(id)
-   return isNaN(id_)
-      ? b.failure(['ID is not a number'])
-      : !_.any(list, _.zipObject([k.id()], [id_]))
-      ? b.failure(['No ID number exists'])
-      : b.success(id_)
+   return   isNaN(id_)                                ? b.failure(['ID is not a number'])
+            : !_.any(list, b.singleton(k.id(), id_))  ? b.failure(['No ID number exists'])
+            : b.success(id_)
 }
 
+// determine if the new job name is valid
 var validJobName = function(list, name){
    var name_ = name.trim()
-   return _.isEmpty(name_) ? b.failure(['Job name must contain characters'])
+   return _.isEmpty(name_)          ? b.failure(['Job name must contain characters'])
           : _.any(list, function(j){
              return _.isEqual(name_.toLowerCase(), j.name.toLowerCase())
-          }) ? b.failure(['Job name already exists'])
+          })                        ? b.failure(['Job name already exists'])
           : b.success(name_)
 }
 
+// validate a single item
 var validateSingle = function(type, validation, success, failure){
    var 
       type_ = b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type])),
@@ -143,6 +144,7 @@ var validateSingle = function(type, validation, success, failure){
    })
 }
 
+// validate the job name
 var validJobName_ = function(name){
    var that = this, v
    validateSingle(k.name(),
@@ -158,6 +160,7 @@ var validJobName_ = function(name){
    return b.Do()(v)
 }
 
+// validate the job selection (id or name)
 var validJobSelection = function(object){
    var that = this, v
    validateSingle(k.id(),
@@ -173,46 +176,42 @@ var validJobSelection = function(object){
    return b.Do()(v)
 }
 
+// set property of target to new value
 var change = _.curry(function(property, value){
-   if (this.target.isSome){
-      var job = this.target.getOrElse({})
-      job[property] = value
-      this.target = b.some(job)
-      return addTargetJob(this)
-   }
+   return xAddTargetJob(overTarget(l[property], b.constant(value), this))
 })
    
 //Determine if the job is clocked in or out.
 var isClockedIn = hasDeep('in') 
 
-//Change job state to clocked in.
-var clockIn = function (job, date) {
-   job[k.state()] = ClockedIn(date)
-   return job
-}
-
 //Job is clocked in. Clock it out and update number of hours worked.
 var clockOut = function (job, date) {
-    var start = fractionalHours(job[k.state()][k.in()])
+    var start = fractionalHours(get(l[k.in()].compose(l[k.state()]), job))
     var end = fractionalHours(date)
-    var newSingleDay = addRollingArray(job[k.singleDay()], start, end, 1)
-    job[k.state()] = ClockedOut(date)
-    job[k.singleDay()] = newSingleDay
-    job[k.total()] = sum(newSingleDay)
-    return job
+    var newSingleDay = addRollingArray(get(l[k.singleDay()], job), start, end, 1)
+    return _.reduce([[k.state(), ClockedOut(date)], [k.singleDay(), newSingleDay], [k.total(), sum(newSingleDay)]], 
+                    function(acc, value){
+                        return set(l[_.first(value)], acc, _.last(value))
+                    }, job)
 }
 
+// Toggle the clock on target.
 var updateDate = function(date){
    //Toggle clock
-   var job = this.target.getOrElse({})
-   this.target = b.some((isClockedIn(job)) ? clockOut(job, date) : clockIn(job, date))
-   return addTargetJob(this)
+   return xAddTargetJob(
+      this.target.map(function(job){
+         return   isClockedIn(job)
+                  ? clockOut(job, date)
+                  : set(l[k.state()], job, date) // clock in
+      }).getOrElse(this))
 }
 
+// validate inputs
 var isCreateJobSetting = function(id, name, active){
    return isWholeNumber(id) && _.isString(name) && _.isBoolean(active)
 }
 
+// validate inputs
 var isCreateJob = function(jobSettings, id, comment, singleDay, inOut, date){
    return isWholeNumber(id)
       && _.isString(comment)
@@ -222,6 +221,7 @@ var isCreateJob = function(jobSettings, id, comment, singleDay, inOut, date){
       && b.isInstanceOf(JobSettings, jobSettings)
 }
 
+//Start here!
 //id, comment, singleDay, inOut, date
 //k.id(), k.name(), k.comment(), k.singleDay(), k.total(), ClockState
 var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
@@ -268,7 +268,7 @@ t =
       .method(
          'addNew',
          isCreateJobSetting,
-         addNew
+         _.compose(addJob, JobSetting)
       )
       .method(
          'id',

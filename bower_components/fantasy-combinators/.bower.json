@@ -1,0 +1,15 @@
+{
+  "name": "fantasy-combinators",
+  "homepage": "https://github.com/fantasyland/fantasy-combinators",
+  "version": "0.0.1",
+  "_release": "0.0.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.0.1",
+    "commit": "65247dcd8ec9832d3bc7de8e09d60e6a0adcba28"
+  },
+  "_source": "https://github.com/fantasyland/fantasy-combinators.git",
+  "_target": "~0.0.1",
+  "_originalSource": "https://github.com/fantasyland/fantasy-combinators.git",
+  "_direct": true
+}

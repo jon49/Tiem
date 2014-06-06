@@ -111,21 +111,33 @@ var complement = function (predicate) {
  */
 var addRollingArray = function (array, start, end, fraction) {
    return _.map(array, function (value, index) {
-      if (Math.floor(start) === Math.floor(end) && index === Math.floor(start)) {
-         return fraction * (end - start) + value
-      } else if (Math.floor(start) <= index && index <= Math.floor(end)) {
-         if (Math.floor(start) === index) {
-            return fraction * (1 + index - start) + value
-         } else if (Math.floor(end) === index) {
-            return fraction * (end - index) + value
-         } else {
-            return fraction + value
-         }
-      } else {
-         return value
-      }
+      var floor = Math.floor
+      return   (floor(start) === floor(end) && index === floor(start))
+                  ? fraction * (end - start) + value
+               : (floor(start) <= index && index <= floor(end))
+                  ? 
+                     ((floor(start) === index) ? fraction * (1 + index - start) + value
+                     : (floor(end) === index) ? fraction * (end - index) + value
+                     : fraction + value)
+               : value
    })
 }
+//   return _.map(array, function (value, index) {
+//      if (Math.floor(start) === Math.floor(end) && index === Math.floor(start)) {
+//         return fraction * (end - start) + value
+//      } else if (Math.floor(start) <= index && index <= Math.floor(end)) {
+//         if (Math.floor(start) === index) {
+//            return fraction * (1 + index - start) + value
+//         } else if (Math.floor(end) === index) {
+//            return fraction * (end - index) + value
+//         } else {
+//            return fraction + value
+//         }
+//      } else {
+//         return value
+//      }
+//   })
+
 
 /**
  * @param {Date} date Date/Time to convert to fractions of hours.

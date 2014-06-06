@@ -20,6 +20,11 @@
     "lodash": "~2.4.1",
     "selectize": "~0.9.1",
     "purecss": "~0.4.2",
-    "mithril": "~0.1.13"
+    "mithril": "~0.1.13",
+    "requirejs": "~2.1.14",
+    "fantasy-lenses": "https://github.com/fantasyland/fantasy-lenses.git#~0.1.1",
+    "fantasy-stores": "https://github.com/fantasyland/fantasy-stores.git#~0.1.0",
+    "daggy": "https://github.com/puffnfresh/daggy.git#~0.0.1",
+    "fantasy-combinators": "https://github.com/fantasyland/fantasy-combinators.git#~0.0.1"
   }
 }
