@@ -14,6 +14,13 @@
 var b = bilby
 var t = b.environment()
 
+var f = function(func){
+   var funcArray = func.split('->')
+   return   (funcArray.length === 1)
+            ? new Function('x', 'return (' + funcArray[0].trim() + ')')
+            : new Function(funcArray[0].trim(), 'return (' + funcArray[1].trim() + ')')
+}
+
 /**
  * Takes an object and returns a string of specified length or less, trimmed.
  * @param {String} string String to clean and resize.
@@ -110,8 +117,8 @@ var complement = function (predicate) {
  * @returns {Array<Number>} a new array with added values.
  */
 var addRollingArray = function (array, start, end, fraction) {
+   var floor = Math.floor
    return _.map(array, function (value, index) {
-      var floor = Math.floor
       return   (floor(start) === floor(end) && index === floor(start))
                   ? fraction * (end - start) + value
                : (floor(start) <= index && index <= floor(end))
@@ -122,22 +129,6 @@ var addRollingArray = function (array, start, end, fraction) {
                : value
    })
 }
-//   return _.map(array, function (value, index) {
-//      if (Math.floor(start) === Math.floor(end) && index === Math.floor(start)) {
-//         return fraction * (end - start) + value
-//      } else if (Math.floor(start) <= index && index <= Math.floor(end)) {
-//         if (Math.floor(start) === index) {
-//            return fraction * (1 + index - start) + value
-//         } else if (Math.floor(end) === index) {
-//            return fraction * (end - index) + value
-//         } else {
-//            return fraction + value
-//         }
-//      } else {
-//         return value
-//      }
-//   })
-
 
 /**
  * @param {Date} date Date/Time to convert to fractions of hours.
@@ -208,29 +199,6 @@ var hasAll = _.curry(function(attrs, o){
 
 var isEqual = _.curry(_.isEqual)
 
-// taken from bilby for mTagged
-function getInstance(self, constructor) {
-    return self instanceof constructor ? self : b.create(constructor.prototype)
-}
-
-//Came from bilby, modified for mithril
-var mTagged = function(name, fields) {
-    function wrapped() {
-        var self = getInstance(this, wrapped),
-            i
-        if(arguments.length != fields.length) {
-            throw new TypeError("Expected " + fields.length + " arguments, got " + arguments.length)
-        }
-        for(i = 0; i < fields.length; i++) {
-            self[fields[i]] = m.prop(arguments[i])
-        }
-        return self
-    }
-    wrapped._name = name
-    wrapped._length = fields.length
-    return wrapped
-}
-
 var singleTagged = function(type){
    return b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type]))
 }
@@ -267,10 +235,15 @@ var map = function(func){
    return _.partialRight(_.map, func)
 }
 
-var not = function(bool){ return !bool }
+var not = complement(_.identity)
 
 var hasDeep = b.flip(_.compose(not, _.isEmpty, _.curry(_.findKey, 2)))
 //var hasDeep = _.compose(not, _.isEmpty, _.rcurry2(_.findKey))
+
+// Append/prepend to new array
+var concat = _.curry(function(a, b){
+   return _.isArray(a) ? a.concat(b) : b.concat(a)
+})
 
 t = t
    .property('stringSize', stringSize)
@@ -290,7 +263,6 @@ t = t
    .property('hasAll', hasAll)
    .property('isEqual', isEqual)
    .property('createObject', createObject)
-   .property('mtagged', mTagged)
    .method('singleTagged', isSomeString, singleTagged)
    .method('zipOverObject', function(a, b){return _.isPlainObject(a) && _.isPlainObject(b)}, zipOverObject)
    .method('zipOverObjects', _.isArray, zipOverObjects)

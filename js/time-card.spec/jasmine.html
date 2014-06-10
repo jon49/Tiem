@@ -8,23 +8,22 @@
   <script type="text/javascript" src="jasmine-html.js"></script>
   <script type="text/javascript" src="jasmineCompleteReporter.js"></script>
   <script src="jquery.js"></script>
-  <script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/lodash/dist/lodash.js?u=1402014057176"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/bilby.js/bilby.js?u=1402014057176"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/mithril/mithril.js?u=1402014057176"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/utilities.js?u=1402014057176"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/engine.js?u=1402014057176"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/objects.js?u=1402014057176"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/controller.js?u=1402014057176"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/events.js?u=1402014057176"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/ui.js?u=1402014057176"></script>
+  <script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/lodash/dist/lodash.js?u=1402362924407"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/bilby.js/bilby.js?u=1402362924407"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/mithril/mithril.js?u=1402362924407"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/utilities.js?u=1402362924407"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/engine.js?u=1402362924407"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/objects.js?u=1402362924407"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/controller.js?u=1402362924407"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/events.js?u=1402362924407"></script>
 
   
 </head>
 <body>
 <script type="text/javascript">
     /* brackets-xunit: jasmine */
-/* brackets-xunit: includes=../bower_components/lodash/dist/lodash.js,../bower_components/bilby.js/bilby.js,../bower_components/mithril/mithril.js,utilities.js,engine.js,objects.js,controller.js,events.js,ui.js */
-
+/* brackets-xunit: includes=../bower_components/lodash/dist/lodash.js,../bower_components/bilby.js/bilby.js,../bower_components/mithril/mithril.js,utilities.js,engine.js,objects.js,controller.js,events.js */
+//,ui.js
 /* global describe, it, expect, t, _, bilby */
 /*jslint asi: true*/
 /*jshint indent:3, curly:false, laxbreak:true */
@@ -285,107 +284,118 @@ describe("Core constants", function () {
    })
 })
 
-describe('JobSettings object manipulation and creation', function(){
-
-   var settings = t.JobSettings.new()
-   var newJobSetting = settings.create(0, 'My lovely job', true)
-   var job2 = settings.create(1, 't', true)
-
-   describe('the function create', function(){
-      //[t.k.id(), t.k.name(), t.k.jobActive()]
-      it('should be able to create a new job setting', function(){
-         expect(newJobSetting[t.k.id()]).toBe(0)
-         expect(newJobSetting[t.k.name()]).toBe('My lovely job')
+describe('Job Setting object manipulation', function(){
+   var id = t.JobSetting.newId()
+   var newJobSetting = t.JobSetting.create(id, 'I love my job', true)
+   describe('the method newId', function(){
+      // can't be unique because it is too fast. Need to have a create multiple ids function.
+      it('should create a ~~unique~~ new id', function(){
+         expect((id > 0)).toBe(true)
+      })
+   })
+   describe('the method create', function(){
+      it('should create a new instance of Job Setting', function(){
+         expect(b.isInstanceOf(JobSetting, newJobSetting)).toBe(true)
+         expect(newJobSetting[t.k.id()]).toBe(id)
+         expect(newJobSetting[t.k.name()]).toBe('I love my job')
          expect(newJobSetting[t.k.jobActive()]).toBe(true)
-      })
-   })
-   describe('the function add', function(){
-      it('should add a new job setting to the job setting list', function(){
-         expect(settings.add(newJobSetting).toArray()).toEqual([newJobSetting])
-      })
-   })
-   describe('the function id', function(){
-      it('should select the object with selected id', function(){
-         settings.add(newJobSetting).add(job2)
-         expect(settings.id(0).toObject().getOrElse(undefined)).toEqual(newJobSetting)
-         expect(settings.id(1).toObject().getOrElse(undefined)).toEqual(job2)
       })
    })
    describe('the function update', function(){
       it('should be able to update the job name', function(){
-         expect(settings.id(0).update('New Job Name').toObject().getOrElse(undefined)).toEqual({id:0, name:'New Job Name', jobActive: true})
+         expect(newJobSetting.update('New Job Name').getOrElse({})).toEqual({id:id, name:'New Job Name', jobActive: true})
       })
       it('should be able to update the job active status', function(){
          expect(settings.id(0).update(false).toObject().getOrElse(undefined)).toEqual({id:0, name:'New Job Name', jobActive: false})
       })
-   })
+   })   
 })
 
-describe('Job object manipulation and creation', function(){
-
-   var settings = t.JobSettings.new()
-   var jobSetting1 = settings.create(0, 'My lovely job', true)
-   var jobSetting2 = settings.create(1, 't', true)
-   settings.add(jobSetting1).add(jobSetting2)
-
-   var jobs = t.Jobs.new()
-   // (id, comment, singleDay, inOut, date)
-   var job1 = jobs.create(settings, 0, '', bilby.none, t.k.out(), new Date())
-   var job2 = jobs.create(settings, 1, 'My Comment', bilby.some(_.range(24).map(function(){return 1})), t.k.in(), new Date())
-
-   describe('the function create', function(){
-      it('should be able to create a valid job', function(){
-         expect(job1[t.k.id()]).toBe(0)
-         expect(job2[t.k.id()]).toBe(1)
-         expect(job1[t.k.name()]).toBe('My lovely job')
-      })
-   })
-   describe('the function add', function(){
-      it('should add a new job to the job list', function(){
-         expect(jobs.add(job1).add(job2).toArray()).toEqual([job1, job2])
-      })
-   })
-   describe('the function id', function(){
-      it('should select the job with selected id', function(){
-         jobs.add(job1).add(job2)
-         expect(jobs.id(0).toObject().getOrElse(undefined)).toEqual(job1)
-         expect(jobs.id(1).toObject().getOrElse(undefined)).toEqual(job2)
-      })
-   })
-   describe('the function update', function(){
-      it('should be able to update the comment', function(){
-         var j1 = _.cloneDeep(jobs.id(0).toObject().getOrElse(undefined))
-         var j1_ = _.assign(j1, {comment: 'New comment.'})
-         expect(jobs.id(0).update('New comment.').toObject().getOrElse(undefined)).toEqual(j1_)
-         expect(jobs.toArray()[1]).toEqual(j1_)
-      })
-      it('should be able to toggle clocked in/out status', function(){
-         var j1 = _.cloneDeep(jobs.id(0).toObject().getOrElse(undefined))
-         var newDate = new Date(2014, 4, 2, 10)
-         var dateOut = new Date(2014, 4, 2, 10, 30)
-         var j1_ = _.assign(j1, {clockState: {'in': newDate}})
-         expect(jobs.id(0).update(newDate).toObject().getOrElse(undefined)).toEqual(j1_)
-         var singleDay_ = _.range(24).map(function(){return 0})
-         singleDay_[10] = 0.5
-         var j1$ = _.assign(j1_, {clockState: {'out': dateOut}}, {total: 0.5}, {singleDay: singleDay_})
-         expect(jobs.id(0).update(dateOut).toObject().getOrElse(undefined)).toEqual(j1$)
-         expect(jobs.toArray()[1]).toEqual(j1$)
-      })
-   })
-})
-
-describe('Object helpers', function(){
-   describe('the function isClockedIn', function(){
-      var stateIn = {name: 'good', clockState: {'in': new Date()}}
-      var stateOut = {name: 'good', clockState: {'out': new Date()}}
-      it('should return true when object is clocked in', function(){
-         expect(isClockedIn(stateIn)).toBe(true)
-      })
-      it('should return false when object is clocked out', function(){
-         expect(isClockedIn(stateOut)).toBe(false)
-      })
-   })
-})
+//describe('JobSettings object manipulation and creation', function(){
+//
+//   var settings = t.JobSettings.new()
+//   var newJobSetting = settings.create(0, 'My lovely job', true)
+//   var job2 = settings.create(1, 't', true)
+//
+//   describe('the function add', function(){
+//      it('should add a new job setting to the job setting list', function(){
+//         expect(settings.add(newJobSetting).toArray()).toEqual([newJobSetting])
+//      })
+//   })
+//   describe('the function id', function(){
+//      it('should select the object with selected id', function(){
+//         settings = settings.add(newJobSetting).add(job2)
+//         expect(settings.id(0).toObject().getOrElse(undefined)).toEqual(newJobSetting)
+//         expect(settings.id(1).toObject().getOrElse(undefined)).toEqual(job2)
+//      })
+//   })
+//})
+//
+//describe('Job object manipulation and creation', function(){
+//
+//   var settings = t.JobSettings.new()
+//   var jobSetting1 = settings.create(0, 'My lovely job', true)
+//   var jobSetting2 = settings.create(1, 't', true)
+//   settings.add(jobSetting1).add(jobSetting2)
+//
+//   var jobs = t.Jobs.new()
+//   // (id, comment, singleDay, inOut, date)
+//   var job1 = jobs.create(settings, 0, '', bilby.none, t.k.out(), new Date())
+//   var job2 = jobs.create(settings, 1, 'My Comment', bilby.some(_.range(24).map(function(){return 1})), t.k.in(), new Date())
+//
+//   describe('the function create', function(){
+//      it('should be able to create a valid job', function(){
+//         expect(job1[t.k.id()]).toBe(0)
+//         expect(job2[t.k.id()]).toBe(1)
+//         expect(job1[t.k.name()]).toBe('My lovely job')
+//      })
+//   })
+//   describe('the function add', function(){
+//      it('should add a new job to the job list', function(){
+//         expect(jobs.add(job1).add(job2).toArray()).toEqual([job1, job2])
+//      })
+//   })
+//   describe('the function id', function(){
+//      it('should select the job with selected id', function(){
+//         jobs.add(job1).add(job2)
+//         expect(jobs.id(0).toObject().getOrElse(undefined)).toEqual(job1)
+//         expect(jobs.id(1).toObject().getOrElse(undefined)).toEqual(job2)
+//      })
+//   })
+//   describe('the function update', function(){
+//      it('should be able to update the comment', function(){
+//         var j1 = _.cloneDeep(jobs.id(0).toObject().getOrElse(undefined))
+//         var j1_ = _.assign(j1, {comment: 'New comment.'})
+//         expect(jobs.id(0).update('New comment.').toObject().getOrElse(undefined)).toEqual(j1_)
+//         expect(jobs.toArray()[1]).toEqual(j1_)
+//      })
+//      it('should be able to toggle clocked in/out status', function(){
+//         var j1 = _.cloneDeep(jobs.id(0).toObject().getOrElse(undefined))
+//         var newDate = new Date(2014, 4, 2, 10)
+//         var dateOut = new Date(2014, 4, 2, 10, 30)
+//         var j1_ = _.assign(j1, {clockState: {'in': newDate}})
+//         expect(jobs.id(0).update(newDate).toObject().getOrElse(undefined)).toEqual(j1_)
+//         var singleDay_ = _.range(24).map(function(){return 0})
+//         singleDay_[10] = 0.5
+//         var j1$ = _.assign(j1_, {clockState: {'out': dateOut}}, {total: 0.5}, {singleDay: singleDay_})
+//         expect(jobs.id(0).update(dateOut).toObject().getOrElse(undefined)).toEqual(j1$)
+//         expect(jobs.toArray()[1]).toEqual(j1$)
+//      })
+//   })
+//})
+//
+//describe('Object helpers', function(){
+//   describe('the function isClockedIn', function(){
+//      var stateIn = {name: 'good', clockState: {'in': new Date()}}
+//      var stateOut = {name: 'good', clockState: {'out': new Date()}}
+//      it('should return true when object is clocked in', function(){
+//         expect(isClockedIn(stateIn)).toBe(true)
+//      })
+//      it('should return false when object is clocked out', function(){
+//         expect(isClockedIn(stateOut)).toBe(false)
+//      })
+//   })
+//})
 
     
     

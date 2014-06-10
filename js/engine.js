@@ -6,59 +6,54 @@
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k, m, b */
 
-var TargetList = b.tagged('TargetList', ['target', 'list'])
-
 // create an object of lens objects
-var lenses = _.compose(zipObjectT(_.identity, b.objectLens), _.unique)
+var makeLenses = _.compose(zipObjectT(_.identity, b.objectLens), _.unique)
 
-var targetLens = b.objectLens('target')
-var listLens = b.objectLens('list')
-
-// Set the target key with a single object from the list key
-var setTargetBy = function(keyLens, value, thisArg){
-      var o = thisArg || this
-      var target = _.first(_.filter(o.list, function(o_){
-         return _.isEqual(keyLens.run(o_).getter, value)
-      }))
-      return targetLens.run(o).setter(_.isEmpty(target) ? b.none : b.some(target))
-}
-
-var toTarget = function(target, thisArg){
-   var o = thisArg || this
-   return targetLens.run(o).setter(_.isEmpty(target) ? b.none : b.some(target))
-}
-
-// Take the object from target and remove it from the list 
-// and then add it to the end of the list
-var xAddToList = function(keyLens, thisArg){
-      var o = thisArg || this
-      return o.target.map( //if target is something
-         function(t){
-            var targetKeyValue = keyLens.run(t).getter
-            return listLens.run(o).setter( // then set the list
-               _.reject(o.list, function(i){ // without the current target
-                  return _.isEqual(keyLens.run(i).getter, targetKeyValue)
-               }).concat(t)) // then add the target to the end
-         })
-      .getOrElse(o) // otherwise return the original object
-}
-
+// get value by lens
 var get = function(lens, thisArg){
-   return lens.run(thisArg).getter
+   return lens.run(thisArg || this).getter
 }
 
+// set key of object and return a 'new' object
 var set = _.curry(function(lens, thisArg, value){
    return lens.run(thisArg).setter(value)
 })
 
+// wrap an object in an `option`
+var toOption = function(thisArg){
+   var o = thisArg || this
+   return _.isEmpty(o) ? b.none : b.some(o)
+}
+
+// get an object from an array and wrap in `option`
+// example: getOption({id: 1}, list) => pluckedOption
+var filterToOption = function(lens, value, list){
+   var isSame = isEqual(get(lens, value))
+   return _.compose(toOption, _.first, _.filter)(list, function(o){
+      return isSame(get(lens, o))
+   })
+}
+
+// Exclusively add object (unwrapped) to list based on comparator
+// example: xAddToList(lensId, someNone, []) => [object] OR []
+var xAddToList = function(lens, option, list){
+      var l = list || this
+      return option.fold(function(opt){
+         var isSame = isEqual(get(lens, opt))
+         return _.reject(l, function(o){
+            return isSame(get(lens, o))
+         }).concat(opt)}
+      , l)
+}
+
+// set new value in option object
 // http://thisisafiller.ghoster.io/notes-on-functional-programming-patterns-for-the-non-mathematician-with-brian-lonsdorf/
-var overTarget = function(lens, func, thisArg){
-   var o = thisArg || thisArg
-   return o.target.map(
-      function(t){
-         var over_ = _.compose(set(targetLens, o), set(lens, t), _.partial(func.call, t))
-         return over_(get(lens, t))
+// example: over(numberLens, b.constant(2), b.some({number: 1})) => b.some({number: 2})
+var over = function(lens, fn, thisArg){
+   return (thisArg || this).map(
+      function(o){
+         var over_ = _.compose(set(lens, o), _.partial(fn.call, o))
+         return over_(get(lens, o))
       })
-   .getOrElse(o)
 }
 
