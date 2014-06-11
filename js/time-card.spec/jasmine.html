@@ -8,14 +8,14 @@
   <script type="text/javascript" src="jasmine-html.js"></script>
   <script type="text/javascript" src="jasmineCompleteReporter.js"></script>
   <script src="jquery.js"></script>
-  <script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/lodash/dist/lodash.js?u=1402362924407"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/bilby.js/bilby.js?u=1402362924407"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/mithril/mithril.js?u=1402362924407"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/utilities.js?u=1402362924407"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/engine.js?u=1402362924407"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/objects.js?u=1402362924407"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/controller.js?u=1402362924407"></script>
-<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/events.js?u=1402362924407"></script>
+  <script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/lodash/dist/lodash.js?u=1402472036645"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/bilby.js/bilby.js?u=1402472036645"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/../bower_components/mithril/mithril.js?u=1402472036645"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/utilities.js?u=1402472036645"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/engine.js?u=1402472036645"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/objects.js?u=1402472036645"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/controller.js?u=1402472036645"></script>
+<script src="/home/jon/Documents/Source/Repos/Websites/Tiem/js/events.js?u=1402472036645"></script>
 
   
 </head>
@@ -295,42 +295,49 @@ describe('Job Setting object manipulation', function(){
    })
    describe('the method create', function(){
       it('should create a new instance of Job Setting', function(){
-         expect(b.isInstanceOf(JobSetting, newJobSetting)).toBe(true)
-         expect(newJobSetting[t.k.id()]).toBe(id)
-         expect(newJobSetting[t.k.name()]).toBe('I love my job')
-         expect(newJobSetting[t.k.jobActive()]).toBe(true)
+         var setting = newJobSetting.toObject()
+         expect(b.isInstanceOf(JobSettingOption, newJobSetting)).toBe(true)
+         expect(setting[t.k.id()]).toBe(id)
+         expect(setting[t.k.name()]).toBe('I love my job')
+         expect(setting[t.k.jobActive()]).toBe(true)
       })
    })
    describe('the function update', function(){
-      it('should be able to update the job name', function(){
-         expect(newJobSetting.update('New Job Name').getOrElse({})).toEqual({id:id, name:'New Job Name', jobActive: true})
+      it('should be able to update the job name without changing original object', function(){
+         var newO = newJobSetting.update('New Job Name').toObject()
+         expect(newO).toEqual({id:id, name:'New Job Name', jobActive: true})
+         expect(newJobSetting.toObject()).not.toEqual(newO)
       })
-      it('should be able to update the job active status', function(){
-         expect(settings.id(0).update(false).toObject().getOrElse(undefined)).toEqual({id:0, name:'New Job Name', jobActive: false})
+      it('should be able to update the job active status without changing the original object', function(){
+         var newO = newJobSetting.update(false).toObject()
+         expect(newO).toEqual({id:id, name:'I love my job', jobActive: false})
+         expect(newJobSetting.toObject()).not.toEqual(newO)
       })
    })   
 })
 
-//describe('JobSettings object manipulation and creation', function(){
-//
-//   var settings = t.JobSettings.new()
-//   var newJobSetting = settings.create(0, 'My lovely job', true)
-//   var job2 = settings.create(1, 't', true)
-//
-//   describe('the function add', function(){
-//      it('should add a new job setting to the job setting list', function(){
-//         expect(settings.add(newJobSetting).toArray()).toEqual([newJobSetting])
-//      })
-//   })
-//   describe('the function id', function(){
-//      it('should select the object with selected id', function(){
-//         settings = settings.add(newJobSetting).add(job2)
-//         expect(settings.id(0).toObject().getOrElse(undefined)).toEqual(newJobSetting)
-//         expect(settings.id(1).toObject().getOrElse(undefined)).toEqual(job2)
-//      })
-//   })
-//})
-//
+describe('JobSettings object manipulation and creation', function(){
+
+   var settings = t.JobSettings.new()
+   var s0 = t.JobSetting.create(0, 'My lovely job', true)
+   var s1 = t.JobSetting.create(1, 'My second job', true)
+
+   describe('the function update', function(){
+      it('should add a new job setting to the job setting list, overwriting the old list', function(){
+         var newSettings = settings.update(s0)
+         expect(newSettings.toArray()).toEqual([s0.toObject()])
+         expect(settings.toArray()).toEqual([s0.toObject()])
+      })
+   })
+   describe('the function id', function(){
+      it('should select the object with selected id', function(){
+         settings.update(s0).update(s1)
+         expect(settings.id(0).toObject()).toEqual(get(L.target, s0).getOrElse(void 0))
+         expect(settings.id(1).toObject()).toEqual(get(L.target, s1).getOrElse(void 0))
+      })
+   })
+})
+
 //describe('Job object manipulation and creation', function(){
 //
 //   var settings = t.JobSettings.new()

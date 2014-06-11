@@ -10,50 +10,55 @@
 var makeLenses = _.compose(zipObjectT(_.identity, b.objectLens), _.unique)
 
 // get value by lens
-var get = function(lens, thisArg){
+var getNow = function(lens, thisArg){
    return lens.run(thisArg || this).getter
 }
 
+var get = _.curry(getNow)
+
 // set key of object and return a 'new' object
-var set = _.curry(function(lens, thisArg, value){
+var setNow = function(lens, thisArg, value){
    return lens.run(thisArg).setter(value)
-})
+}
+var set = _.curry(setNow)
 
 // wrap an object in an `option`
 var toOption = function(thisArg){
-   var o = thisArg || this
-   return _.isEmpty(o) ? b.none : b.some(o)
+   var self = thisArg || this
+   return _.isEmpty(self) || _.isEqual(self.self, window) ? b.none : b.some(self)
 }
 
 // get an object from an array and wrap in `option`
-// example: getOption({id: 1}, list) => pluckedOption
-var filterToOption = function(lens, value, list){
-   var isSame = isEqual(get(lens, value))
-   return _.compose(toOption, _.first, _.filter)(list, function(o){
-      return isSame(get(lens, o))
-   })
+// example: filterByLensNow(L.list, L.id, 0) => plucked object
+var filterByLensNow = function(thisLens, lens, value, thisArg){
+   var list = get(thisLens, (thisArg || this))
+   return _.first(_.filter(list, function(o){
+      return _.isEqual(get(lens, o), value)
+   }))
 }
+
+//var filterByLens = _.curry(filterByLensNow)
 
 // Exclusively add object (unwrapped) to list based on comparator
 // example: xAddToList(lensId, someNone, []) => [object] OR []
-var xAddToList = function(lens, option, list){
-      var l = list || this
+var xAddToList = function(lens, option, thisArg){
+      var self = thisArg || this
       return option.fold(function(opt){
          var isSame = isEqual(get(lens, opt))
-         return _.reject(l, function(o){
+         return _.reject(self, function(o){
             return isSame(get(lens, o))
-         }).concat(opt)}
-      , l)
+         }).concat(opt)
+         }
+      , self)
 }
 
 // set new value in option object
 // http://thisisafiller.ghoster.io/notes-on-functional-programming-patterns-for-the-non-mathematician-with-brian-lonsdorf/
 // example: over(numberLens, b.constant(2), b.some({number: 1})) => b.some({number: 2})
-var over = function(lens, fn, thisArg){
-   return (thisArg || this).map(
-      function(o){
-         var over_ = _.compose(set(lens, o), _.partial(fn.call, o))
-         return over_(get(lens, o))
-      })
+var overNow = function(lens, fn, thisArg){
+   var self = (thisArg || this)
+   return set(lens, self, fn.call(self))
 }
+
+var over = _.curry(overNow)
 

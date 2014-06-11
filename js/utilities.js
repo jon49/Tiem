@@ -197,7 +197,7 @@ var hasAll = _.curry(function(attrs, o){
 })
 
 
-var isEqual = _.curry(_.isEqual)
+var isEqual = _.curry(_.isEqual, 2)
 
 var singleTagged = function(type){
    return b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type]))
