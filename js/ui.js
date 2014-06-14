@@ -52,19 +52,19 @@
       ])
    }
 
-   var tiemStamp = _.curry(function(hideMe, jobs){
+   var tiemStamp = _.curry(function(hideMe, job){
       var displayNone = (hideMe) ? {display: 'none'} : {}
       var fadeMeIn = hideMe ? fadeIn : {}
-      return jobs.toObject().map(function(job){
-         var clockState = job.clockState[(isClockedIn(job) ? k.in() : k.out())]
-         return m('.stamp.pure-g', {id: job.id, style: displayNone, config: fadeMeIn}, [
-                  m('button.pure-button.pure-u-14-24.jobButton', {title: job.name, onclick: toggleButton.bind(jobs, job.id)}, job.name),
+      return job.map(function(j){
+         var clockState = j.clockState[(isClockedIn(j) ? k.in() : k.out())]
+         return m('.stamp.pure-g', {id: j.id, style: displayNone, config: fadeMeIn}, [
+                  m('button.pure-button.pure-u-14-24.jobButton', {title: j.name, onclick: toggleButton.bind(job, j.id)}, j.name),
                   m('button.pure-button.pure-u-5-24.time', {title: clockState}, clockState.toLocaleTimeString()),
-                  m('button.pure-button.pure-u-3-24.hours', job.total.toFixed(2)),
-                  m('button.pure-button.pure-u-2-24.notes', {title: job.comment}, [
+                  m('button.pure-button.pure-u-3-24.hours', j.total.toFixed(2)),
+                  m('button.pure-button.pure-u-2-24.notes', {title: j.comment}, [
                      m('i.fa.fa-pencil')
                   ]),
-                  m('button.pure-button.pure-u-1-1.text-left.wrap-word.hidden.comment', job.comment)
+                  m('button.pure-button.pure-u-1-1.text-left.wrap-word.hidden.comment', j.comment)
                  ])
       }).getOrElse('')
    })
@@ -72,10 +72,11 @@
    var hiddenTiemStamp = tiemStamp(true)
    var visibleTiemStamp = tiemStamp(false)
 
-   var stamps = function(jobs, stampClass){
-      var jobList = jobs.toArray()
-      var recentlyAdded = _.last(jobList)
-      var clockType = _.isEqual(stampClass, '.stamps-in') ? isClockedIn : _.compose(not, isClockedIn)
+   var stamps = _.curry(function(stampClass, ctrl){
+      var jobs = ctrl.jobs,
+          jobList = jobs.toArray(),
+          isRecentlyAdded = isEqual(_.last(jobList)),
+          clockType = _.isEqual(stampClass, '.stamps-in') ? isClockedIn : _.compose(not, isClockedIn)
       return m(stampClass, 
                _(jobList)
                .tap(function(a){
@@ -85,29 +86,24 @@
                .tap(function(a){
                   var b = a
                })
-               .sortBy(function(j){
-                  return j.name.toLowerCase()
-               })
+               .sortBy(_.compose(invoke('toLowerCase'), get(L.name)))
                .tap(function(a){
                   var b = a
                })
                .map(function(j){
-                  return (_.isEqual(recentlyAdded.id, j.id) ? hiddenTiemStamp : visibleTiemStamp)(jobs.id(j.id))
+                  var id = get(L.id, j)
+                  return (_.isRecentlyAdded(id) ? hiddenTiemStamp : visibleTiemStamp)(jobs.get(id))
                })
                .tap(function(a){
                   var b = a
                })
                .value()
               )
-   }
+   })
 
-   var clockedInStamps = function(ctrl){
-      return stamps(ctrl.jobs, '.stamps-in')
-   }
+   var clockedInStamps = stamps('.stamps-in')
 
-   var clockedOutStamps = function(ctrl){
-      return stamps(ctrl.jobs, '.stamps-out')
-   }
+   var clockedOutStamps = stamps('.stamps-out')
 
    var main = function(ctrl){
       var result = [styles(ctrl.settings), header(ctrl), autoComplete(ctrl), clockedInStamps(ctrl), clockedOutStamps(ctrl)]

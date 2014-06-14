@@ -245,6 +245,18 @@ var concat = _.curry(function(a, b){
    return _.isArray(a) ? a.concat(b) : b.concat(a)
 })
 
+//Lodash function changed for single item
+var invoke = _.curry(function(methodName, args, value){
+   var isFunc = typeof methodName == 'function'
+       func = isFunc ? methodName : (value != null && value[methodName])
+   return func ? func.apply(value, args) : void 0
+})
+
+// Determine if array contains a single object type
+var isArrayOf = _.curry(function(fn, a){
+   return _.isArray(a) && _.all(a, fn)
+})
+
 t = t
    .property('stringSize', stringSize)
    .property('isWholeNumber', isWholeNumber)
@@ -270,3 +282,5 @@ t = t
    .property('isSomeString', isSomeString)
    .method('not', _.isBoolean, not)
    .property('hasDeep', hasDeep)
+   .property('invoke', invoke)
+   .property('isArrayOf', isArrayOf)

@@ -31,41 +31,39 @@ var jobSettingKeys = [k.id(), k.name(), k.jobActive()]
 var clockInKeys = [k.in()]
 var clockOutKeys = [k.out()]
 var jobKeys = [k.id(), k.name(), k.comment(), k.singleDay(), k.total(), k.state()]
+var targetOption = ['target']
+var listObjects = ['list']
 
-var L = makeLenses(_.union(jobSettingKeys, clockInKeys, clockOutKeys, jobKeys, ['target', 'list']))
+var L = makeLenses(_.union(jobSettingKeys, clockInKeys, clockOutKeys, jobKeys, targetOption, listObjects))
 
 t = t.property('L', L)
 
 // **Validate objects**
 
-function Jobs(){
-   this.list = []
-}
-function JobSettings(){
-   this.list = []
-}
-
 // #Object Definitions
 // {jobID: 0, name: 'name', jobActive: true|false}
-var JobSetting = b.tagged('JobSetting', jobSettingKeys)
-var JobSettingOption = b.tagged('JobSettingOption', ['target'])
-//var jobSetting = _.curry(JobSetting)
+var JobSetting = b.tagged('JobSetting', jobSettingKeys),
 // {jobID: 0, name: 'name', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out|in: ''}}
-var ClockedIn = b.tagged('ClockedIn', clockInKeys)
-var ClockedOut = b.tagged('ClockedOut', clockOutKeys)
-//var JobSkeleton = b.tagged('JobSkeleton', [k.id(), k.comment(), k.singleDay(), k.state()])
-//var jobSkeleton = _.curry(JobSkeleton)
-var Job = b.tagged('Job', jobKeys)
-var JobOption = b.tagged('JobOption', ['target'])
-//var job = _.curry(Job)
+    ClockedIn = b.tagged('ClockedIn', clockInKeys),
+    ClockedOut = b.tagged('ClockedOut', clockOutKeys),
+    Job = b.tagged('Job', jobKeys),
+    JobSettingOption = b.tagged('JobSettingOption', targetOption),
+    JobOption = b.tagged('JobOption', targetOption),
+    JobSettings = b.tagged('JobSettings', listObjects),
+    Jobs = b.tagged('Jobs', listObjects)
 
 // use lens to get job from list
-var getJobBy = _.curry(function(lens, value){
-   return JobSettingOption(toOption(filterByLensNow(L.list, lens, value, this)))
-})
+var getJobByNow = function(lens, value, list){
+   var list_ = list || this
+   return JobSettingOption(toOption(filterByLensNow(L.list, lens, value, list_)))
+}
+
+var getJobBy = _.curry(getJobByNow, 2)
 
 // use id key to get exclusively add updated job
-var xAddJob = _.compose(_.partial(xAddToList, L.id), get(L.target))
+var xAddJob = function(option, listWrapped){
+   return xAddToList(L.id, getNow(L.target, option), getNow(L.list, listWrapped || this))
+}
 
 // replace the old list with updated list
 var replaceList = function(fn, object, thisArg){
@@ -83,55 +81,30 @@ var validJobId = function(list, id){
 }
 
 // determine if the new job name is valid
-var validJobName = function(list, name){
-   var name_ = name.trim()
+var validJobName = function(name, list){
+   var name_ = name.trim(), isSameName = isEqual(name_.toLowerCase())
    return _.isEmpty(name_)          ? b.failure(['Job name must contain characters'])
-          : _.any(list, function(j){
-             return _.isEqual(name_.toLowerCase(), j.name.toLowerCase())
-          })                        ? b.failure(['Job name already exists'])
+          : _.any(_.pluck(list, 'name'), _.compose(isSameName, invoke('toLowerCase', void 0)))
+                                    ? b.failure(['Job name already exists'])
           : b.success(name_)
 }
 
 // validate a single item
-var validateSingle = function(type, validation, success, failure){
-   var 
-      type_ = b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type])),
-      result = b.Do()(b.Do()(validation < type_))
-   result.cata({
-      success: success,
-      failure: failure
-   })
+var validateSingle = function(type, validation){
+   var type_ = b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type]))
+   return b.Do()(b.Do()(validation < type_))
 }
 
 // validate the job name
-var validJobName_ = function(name){
-   var that = this, v
-   validateSingle(k.name(),
-                  validJobName(that.list, name), 
-                  function(value){
-                     that.target = b.none
-                     v = b.success(value.name)
-                  },
-                  function(errors){
-                     that.target = b.none
-                     v = b.failure(errors)
-                  })
-   return b.Do()(v)
+var validJobName_ = function(name, thisArg){
+   var list = get(L.list, (thisArg || this))
+   return validateSingle(k.name(), validJobName(name, list))
 }
 
 // validate the job selection (id or name)
-var validJobSelection = function(object){
-   var v
-   validateSingle(k.id(),
-                  validJobId(get(L.list, this), object), 
-                  function(value){
-                     v = b.success(getJobBy(L.id, value, get(L.list, this)))
-                  },
-                  function(errors){
-                     that.target = b.none 
-                     v = b.failure(errors)
-                  })
-   return b.Do()(v)
+var validId = function(object, thisArg){
+   var self = (thisArg || this), list = get(L.list, self)
+   return validateSingle(k.id(), validJobId(list, object))
 }
 
 // set property of target to new value
@@ -145,23 +118,27 @@ var isClockedIn = hasDeep('in')
 
 //Job is clocked in. Clock it out and update number of hours worked.
 var clockOut = function (job, date) {
-    var start = fractionalHours(get(l[k.in()].compose(l[k.state()]), job)),
+    var start = fractionalHours(get(L.in.compose(L.clockState), job)),
         end = fractionalHours(date),
-        newSingleDay = addRollingArray(get(l[k.singleDay()], job), start, end, 1)
-    return _.reduce([[k.state(), ClockedOut(date)], [k.singleDay(), newSingleDay], [k.total(), sum(newSingleDay)]], 
+        newSingleDay = addRollingArray(get(L.singleDay, job), start, end, 1)
+    return _.reduce([[L.clockState, ClockedOut(date)], [L.singleDay, newSingleDay], [L.total, sum(newSingleDay)]], 
                     function(acc, value){
-                        return set(l[_.first(value)], acc, _.last(value))
+                       var temp = set(_.first(value), acc, _.last(value))
+                       return set(_.first(value), acc, _.last(value))
                     }, job)
 }
 
 // Toggle the clock in object.
-var updateDate = function(date){
-   return this.map(function(job){
-      return isClockedIn(job)
-             ? clockOut(job, date)
-             : set(l[k.state()], job, date) // clock in
-      })
-}
+var updateDate = function(date, thisArg){
+   var self = thisArg || this,
+       job = get(L.target, self),
+       result = job.map(function(j){
+         return isClockedIn(j)
+                ? clockOut(j, date)
+                : set(L.clockState, j, ClockedIn(date)) // clock in
+         })
+   return set(L.target, self, result)
+} //set(L.target, this, target.map(over(lens, b.constant(value))))
 
 // validate inputs
 var isCreateJobSetting = function(id, name, active){
@@ -187,6 +164,8 @@ var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
    var inOut_ = _.isEqual(inOut, k.out()) ? ClockedOut(date) : ClockedIn(date)
    return Job(id, jobSetting[k.name()], comment, singleDay_, t.sum(singleDay_), inOut_)
 }
+
+var toObject = function(){return get(L.target, this).getOrElse({})}
 
 t = 
    t.property(
@@ -214,7 +193,32 @@ t =
       .method(
          'toObject',
          b.isInstanceOf(JobSettingOption),
-         function(){return get(L.target, this).getOrElse({})}
+         toObject
+      )
+)
+
+t = t.property(
+    'Job',
+    b.environment()
+       .method(
+          'create',
+          isCreateJob,
+           _.compose(JobOption, toOption, createJob)
+       )
+       .method(
+          'update',
+          _.isString,
+          change(L.comment)
+       )
+       .method(
+          'update',
+          _.isDate,
+          updateDate
+       )
+      .method(
+         'toObject',
+         b.isInstanceOf(JobOption),
+         toObject
       )
 )
 
@@ -222,32 +226,33 @@ t =
    t.property(
    'JobSettings',
    b.environment() 
-      .property(
-         'new',
-         function(){return new JobSettings()}
+      .method(
+         'create',
+         isArrayOf(b.isInstanceOf(JobSetting)),
+         JobSettings
       )
       .method(
-         'validSelection',
-         function(v){return _.isString(v) || _.isNumber(v)},
-         validJobSelection
+         'valid',
+         _.isNumber,
+         validId
       ) 
       .method(
-         'validName',
+         'valid',
          _.isString,
          validJobName_
       )
       .method(
          'update',
          b.isInstanceOf(JobSettingOption),
-         _.partial(replaceList, xAddJob)
+         function(x){ return JobSettings(xAddJob(x, this) ) }
       )
       .method(
-         'id',
+         'get',
          isWholeNumber,
          getJobBy(L.id)
       )
       .method(
-         'name',
+         'get',
          _.isString,
          getJobBy(L.name)
       )
@@ -256,56 +261,31 @@ t =
          _.partial(getNow, L.list)
       )
 )
-   
-// t = 
-//    t.property(
-//    'Jobs',
-//    b.environment()
-//       .property(
-//          'new',
-//          function(){return new Jobs()}
-//       )
-//       .method(
-//          'update',
-//          b.isInstanceOf(JobSetting),
-//          xAddJob 
-//       )
-// )
-// 
-// t = t.property(
-//    'Job',
-//    b.environment()
-//       .method(
-//          'create',
-//          isCreateJob,
-//          createJob
-//       )
-//       .method(
-//          'add',
-//          b.isInstanceOf(Job),
-//          addJob
-//       )
-//       .method(
-//          'id',
-//          isWholeNumber,
-//          getJobBy(L.id)
-//       )
-//       .method(
-//          'update',
-//          _.isString,
-//          change(L.comment)
-//       )
-//       .method(
-//          'update',
-//          _.isDate,
-//          updateDate
-//       )
-//       .method(
-//          'addNew',
-//          isCreateJob,
-//          _.compose(addJob, createJob)
-//       )
-// )
+
+t = 
+   t.property(
+   'Jobs',
+   b.environment()
+      .method(
+         'create',
+         isArrayOf(b.isInstanceOf(Job)),
+         Jobs
+      )
+      .method(
+         'update',
+         b.isInstanceOf(JobOption),
+         function(x){ return Jobs(xAddJob(x, this) ) }
+      )
+      .method(
+         'get',
+         isWholeNumber,
+         getJobBy(L.id)
+      )
+     .property(
+        'toArray',
+        _.partial(getNow, L.list)
+     )
+)
 
 var extendObject = function(object, extensions){
       _(extensions).forIn(function(value, key){
@@ -315,5 +295,5 @@ var extendObject = function(object, extensions){
 
 extendObject(JobSettingOption, t.JobSetting)
 extendObject(JobSettings, t.JobSettings)
-// extendObject(Jobs, t.Jobs)
-// extendObject(Job, t.Job)
+extendObject(JobOption, t.Job)
+extendObject(Jobs, t.Jobs)

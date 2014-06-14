@@ -41,15 +41,15 @@ var filterByLensNow = function(thisLens, lens, value, thisArg){
 
 // Exclusively add object (unwrapped) to list based on comparator
 // example: xAddToList(lensId, someNone, []) => [object] OR []
-var xAddToList = function(lens, option, thisArg){
-      var self = thisArg || this
-      return option.fold(function(opt){
-         var isSame = isEqual(get(lens, opt))
-         return _.reject(self, function(o){
-            return isSame(get(lens, o))
-         }).concat(opt)
-         }
-      , self)
+var xAddToList = function(lens, option, list){
+   var list_ = list || this
+   return option.fold(function(opt){
+      var isSame = isEqual(get(lens, opt))
+      return _.reject(list_, function(o){
+         return isSame(get(lens, o))
+      }).concat(opt)
+      }
+   , list_)
 }
 
 // set new value in option object

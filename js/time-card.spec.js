@@ -208,6 +208,23 @@ describe("How the utilities are used in project", function () {
          expect(o).toEqual({otheKey: 'my', state: {in: 'some data'}})
       })
    })
+   describe('The function invoke', function(){
+      it('should invoke a method with a single argument', function(){
+         expect(t.invoke('toLowerCase', void 0)('HELLO')).toEqual('hello')
+         expect(t.invoke('toLowerCase', void 0)('HELLO')).not.toEqual('Hello')
+      })
+   })
+   describe('The function isArrayOf', function(){
+      var O = b.tagged('O', ['o'])
+      var F = b.tagged('F', ['f'])
+      var aO = [O('hi'), O('bye')]
+      it('should return true when array contains only what predicate describes as true', function(){
+         expect(t.isArrayOf(b.isInstanceOf(O))(aO)).toBe(true)
+      })
+      it('should return false when array contains falsy object that predicate describes as false', function(){
+         expect(t.isArrayOf(b.isInstanceOf(O))(aO.concat(F('doh!')))).toBe(false)
+      })
+   })
 })
 
 //describe('Core mithril extensions', function(){
@@ -295,78 +312,88 @@ describe('Job Setting object manipulation', function(){
 
 describe('JobSettings object manipulation and creation', function(){
 
-   var settings = t.JobSettings.new()
+   var settings = t.JobSettings.create([])
    var s0 = t.JobSetting.create(0, 'My lovely job', true)
    var s1 = t.JobSetting.create(1, 'My second job', true)
+   var newSettings = settings.update(s0).update(s1).update(JobSettingOption(b.none))
 
    describe('the function update', function(){
       it('should add a new job setting to the job setting list, overwriting the old list', function(){
-         var newSettings = settings.update(s0)
-         expect(newSettings.toArray()).toEqual([s0.toObject()])
-         expect(settings.toArray()).toEqual([s0.toObject()])
+         expect(_.isEqual(newSettings, settings)).toBe(false)
+         expect(newSettings.toArray()).toEqual([s0.toObject(), s1.toObject()])
+         expect(settings.toArray()).toEqual([])
       })
    })
-   describe('the function id', function(){
+   describe('the function get', function(){
       it('should select the object with selected id', function(){
-         settings.update(s0).update(s1)
-         expect(settings.id(0).toObject()).toEqual(get(L.target, s0).getOrElse(void 0))
-         expect(settings.id(1).toObject()).toEqual(get(L.target, s1).getOrElse(void 0))
+         expect(newSettings.get(0).toObject()).toEqual(get(L.target, s0).getOrElse(void 0))
+         expect(newSettings.get(1).toObject()).toEqual(get(L.target, s1).getOrElse(void 0))
+      })
+   })
+   describe('the function get', function(){
+      it('should select the object with selected name', function(){
+         expect(newSettings.get('My lovely job').toObject()).toEqual(get(L.target, s0).getOrElse(void 0))
+         expect(newSettings.get('My second job').toObject()).toEqual(get(L.target, s1).getOrElse(void 0))
+      })
+   })
+   describe('the method valid', function(){
+      var cata = {success: f('x'), failure: f('x')}
+      it('should return cata with success as id wrapped in a singleton', function(){
+         expect(newSettings.valid(0).cata(cata)).toEqual(b.singleton('id', 0))
+      })
+      it('should return cata with success as name wrapped in a singleton', function(){
+         expect(newSettings.valid('My new job name').cata(cata)).toEqual(b.singleton('name', 'My new job name'))
+      })
+      it('should return cata with failure as a string in an array', function(){
+         expect(newSettings.valid(3).cata(cata)).toEqual(['No ID number exists'])
+      })
+      it('should return cata with failure as a string in an array', function(){
+         expect(newSettings.valid('My lovely job').cata(cata)).toEqual(['Job name already exists'])
       })
    })
 })
 
-//describe('Job object manipulation and creation', function(){
-//
-//   var settings = t.JobSettings.new()
-//   var jobSetting1 = settings.create(0, 'My lovely job', true)
-//   var jobSetting2 = settings.create(1, 't', true)
-//   settings.add(jobSetting1).add(jobSetting2)
-//
-//   var jobs = t.Jobs.new()
-//   // (id, comment, singleDay, inOut, date)
-//   var job1 = jobs.create(settings, 0, '', bilby.none, t.k.out(), new Date())
-//   var job2 = jobs.create(settings, 1, 'My Comment', bilby.some(_.range(24).map(function(){return 1})), t.k.in(), new Date())
-//
-//   describe('the function create', function(){
-//      it('should be able to create a valid job', function(){
-//         expect(job1[t.k.id()]).toBe(0)
-//         expect(job2[t.k.id()]).toBe(1)
-//         expect(job1[t.k.name()]).toBe('My lovely job')
-//      })
-//   })
-//   describe('the function add', function(){
-//      it('should add a new job to the job list', function(){
-//         expect(jobs.add(job1).add(job2).toArray()).toEqual([job1, job2])
-//      })
-//   })
-//   describe('the function id', function(){
-//      it('should select the job with selected id', function(){
-//         jobs.add(job1).add(job2)
-//         expect(jobs.id(0).toObject().getOrElse(undefined)).toEqual(job1)
-//         expect(jobs.id(1).toObject().getOrElse(undefined)).toEqual(job2)
-//      })
-//   })
-//   describe('the function update', function(){
-//      it('should be able to update the comment', function(){
-//         var j1 = _.cloneDeep(jobs.id(0).toObject().getOrElse(undefined))
-//         var j1_ = _.assign(j1, {comment: 'New comment.'})
-//         expect(jobs.id(0).update('New comment.').toObject().getOrElse(undefined)).toEqual(j1_)
-//         expect(jobs.toArray()[1]).toEqual(j1_)
-//      })
-//      it('should be able to toggle clocked in/out status', function(){
-//         var j1 = _.cloneDeep(jobs.id(0).toObject().getOrElse(undefined))
-//         var newDate = new Date(2014, 4, 2, 10)
-//         var dateOut = new Date(2014, 4, 2, 10, 30)
-//         var j1_ = _.assign(j1, {clockState: {'in': newDate}})
-//         expect(jobs.id(0).update(newDate).toObject().getOrElse(undefined)).toEqual(j1_)
-//         var singleDay_ = _.range(24).map(function(){return 0})
-//         singleDay_[10] = 0.5
-//         var j1$ = _.assign(j1_, {clockState: {'out': dateOut}}, {total: 0.5}, {singleDay: singleDay_})
-//         expect(jobs.id(0).update(dateOut).toObject().getOrElse(undefined)).toEqual(j1$)
-//         expect(jobs.toArray()[1]).toEqual(j1$)
-//      })
-//   })
-//})
+describe('Job object manipulation and creation', function(){
+
+   var s0 = t.JobSetting.create(0, 'My lovely job', true)
+   var s1 = t.JobSetting.create(1, 'My second job', true)
+   var settings = t.JobSettings.create([s0.toObject(), s1.toObject()])
+   
+   settings_ = settings.update(s0).update(s1)
+
+//   var jobs = t.Jobs.create()
+   // (id, comment, singleDay, inOut, date)
+   var j0 = t.Job.create(settings, 0, '', bilby.none, t.k.out(), new Date())
+   var j1 = t.Job.create(settings, 1, 'My Comment', bilby.some(_.range(24).map(function(){return 1})), t.k.in(), new Date())
+
+   describe('the function create', function(){
+      it('should be able to create a valid job', function(){
+         expect(get(L.id, j0.toObject())).toBe(0)
+         expect(get(L.id, j1.toObject())).toBe(1)
+         expect(get(L.name, j0.toObject())).toBe('My lovely job')
+      })
+   })
+   describe('the function update', function(){
+      it('should be able to update the comment', function(){
+         expect(j0.update('New comment.').toObject()).toEqual(_.extend({}, j0.toObject(), {comment: 'New comment.'}))
+      })
+      it('should be able to toggle clocked in/out status', function(){
+         var newDate = new Date(2014, 4, 2, 10)
+         var dateOut = new Date(2014, 4, 2, 10, 30)
+         var j0_ = b.extend(j0.toObject(), {clockState: {'in': newDate}})
+         expect(j0.update(newDate).toObject()).toEqual(j0_) // clock in
+         var singleDay_ = _.range(24).map(function(){return 0}); singleDay_[10] = 0.5
+         var j0$ = _.extend({}, j0_, {clockState: {'out': dateOut}}, {total: 0.5}, {singleDay: singleDay_})
+         var j0_in = t.Job.create(settings, 0, '', b.none, t.k.in(), newDate)
+         expect(j0_in.update(dateOut).toObject()).toEqual(j0$)
+      })
+   })
+})
+
+describe('Jobs object manipulation and creation', function(){
+   //This uses the same methods as JobSettings with only slight variation. So I won't repeat the tests.   
+})
+
 //
 //describe('Object helpers', function(){
 //   describe('the function isClockedIn', function(){

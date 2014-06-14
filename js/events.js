@@ -14,7 +14,7 @@ var fadeOut = function(e, isInit){
    if (!isInit) $(e).delay(250).fadeOut(1000)
 }
 
-var $tm = undefined
+var $tm = void 0
 
 var define$tm = function(e, isInit){if (!isInit) $tm = $(e)}
 
@@ -34,39 +34,39 @@ var moveE = function(e, isInit){
 
 // ------ Job Input --------
 
+var createNewJob = function(name){
+   return confirm('Create a new job with name: "' + name + '"?')
+          ? t.JobSetting.create(t.JobSetting.newId(), name, true)
+          : b.none
+}
+
+// adds a new job to job & job settings list
 var addJob = function(ctrl, value){
    //*****validate job here**********
-   var job = b.none
-   var jobList = ctrl.jobSettings
+   var jobSettings = ctrl.jobSettings
 
-   jobList.validSelection(value).cata({
-      success: function(value){
-         job = b.some(value)
+   var jobSetting = jobSettings.valid(value).cata({
+      success: function(v){
+         return   b.isInstanceOf(JobSettingsOption, v)
+                  ? v
+                  : createNewJob(v)
       },
       failure: function(errors){
-         jobList.validName(value).cata({
-            success: function(name){
-               if (name && confirm('Create a new job with name: "' + name + '"?')){
-                  var job_ = jobList.create(jobList.newId(), name, true)
-                  job = b.some(job_)
-                  jobList.add(job_)
-               }
-            },
-            failure: function(errors){
-               //show errors to user
-            }
-         })
+         // show errors
+         // future work
+         return b.none
       }
    })
-   job.map(function(j){
+   jobSetting.map(function(j){
       // jobSettings, id, comment, singleDay, inOut, date
-      ctrl.jobs.addNew(jobList, j.id, '', b.none, k.in(), new Date())
+      ctrl.jobs.update(t.Job.create(jobSettings, j.id, '', b.none, k.in(), new Date()))
+      jobSettings.update(j)
    })
 }
 
 var toggleButton = _.curry(function(id, e){
    m.startComputation()
-   this.id(id).update(new Date())
+   this.update(this.get(id).update(new Date()))
    m.endComputation()
 })
 
