@@ -246,11 +246,14 @@ var concat = _.curry(function(a, b){
 })
 
 //Lodash function changed for single item
-var invoke = _.curry(function(methodName, args, value){
+var invokeNow = function(methodName, value, args){
    var isFunc = typeof methodName == 'function'
        func = isFunc ? methodName : (value != null && value[methodName])
-   return func ? func.apply(value, args) : void 0
-})
+       args_ = _.isArray(args) ? args : []
+   return func ? func.apply(value, args_) : void 0
+}
+
+var invoke = _.curry(invokeNow, 2)
 
 // Determine if array contains a single object type
 var isArrayOf = _.curry(function(fn, a){

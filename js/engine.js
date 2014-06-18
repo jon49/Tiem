@@ -17,8 +17,9 @@ var getNow = function(lens, thisArg){
 var get = _.curry(getNow)
 
 // set key of object and return a 'new' object
-var setNow = function(lens, thisArg, value){
-   return lens.run(thisArg).setter(value)
+var setNow = function(lens, object, value){
+   var newObject = lens.run(object).setter(value)
+   return _.isEqual(newObject.__proto__, object.__proto__) ? newObject : (newObject.__proto__ = object.__proto__, newObject)
 }
 var set = _.curry(setNow)
 
@@ -57,7 +58,7 @@ var xAddToList = function(lens, option, list){
 // example: over(numberLens, b.constant(2), b.some({number: 1})) => b.some({number: 2})
 var overNow = function(lens, fn, thisArg){
    var self = (thisArg || this)
-   return set(lens, self, fn.call(self))
+   return set(lens, self, fn.call(null, lens.run(self).getter))
 }
 
 var over = _.curry(overNow)

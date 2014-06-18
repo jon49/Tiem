@@ -6,10 +6,9 @@
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k */
 
-function controller() {
+function Controller() {
    this.date = new Date()
-   this.jobSettings = t.JobSettings.create([t.JobSetting.create(0, 'My Job', true).toObject(), t.JobSetting.create(1, 'My cool job', true).toObject()])
-   //addItems([[0, 'My new job', true],[1, 'Next Job', true]])
+   this.jobSettings = t.JobSettings.create([toObject(t.JobSetting.create(0, 'My Job', true)), toObject(t.JobSetting.create(1, 'My cool job', true))])
    
    this.jobs = t.Jobs.create([])
 
@@ -22,8 +21,9 @@ function controller() {
       
 }
 
-
-
+Controller.prototype.update = function(o){
+   return _.extend(this, o)
+}
 
 
 

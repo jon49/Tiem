@@ -43,13 +43,13 @@ var createNewJob = function(name){
 // adds a new job to job & job settings list
 var addJob = function(ctrl, value){
    //*****validate job here**********
-   var jobSettings = ctrl.jobSettings
+   var jobSettings = get(L.jobSettings, ctrl)
 
    var jobSetting = jobSettings.valid(value).cata({
       success: function(v){
-         return   b.isInstanceOf(JobSettingsOption, v)
-                  ? v
-                  : createNewJob(v)
+         return   _.has(v, k.id())
+                  ? jobSettings.get(get(L.id, v))
+                  : createNewJob(get(L.name, v))
       },
       failure: function(errors){
          // show errors
@@ -59,15 +59,18 @@ var addJob = function(ctrl, value){
    })
    jobSetting.map(function(j){
       // jobSettings, id, comment, singleDay, inOut, date
-      ctrl.jobs.update(t.Job.create(jobSettings, j.id, '', b.none, k.in(), new Date()))
-      jobSettings.update(j)
+      var settings = jobSettings.update(t.JobSetting.create(j)),
+          jobs = get(L.jobs, ctrl).update(t.Job.create(settings, j.id, '', b.none, k.in(), new Date()))
+      // update controller
+      ctrl.update(_.zipObject(['jobs', 'jobSettings'], [jobs, settings]))    
    })
 }
 
 var toggleButton = _.curry(function(id, e){
-   m.startComputation()
-   this.update(this.get(id).update(new Date()))
-   m.endComputation()
+   var ctrl = this 
+       jobs = get(L.jobs, ctrl), //jobs list
+       job = t.Job.update(new Date(), jobs.get(id)), // toggled job
+   ctrl.update(b.singleton('jobs', jobs.update(job))) // get new list then update controller
 })
 
 var selectize = {}
@@ -94,7 +97,7 @@ selectize.config = function(ctrl){
             onChange: function(value){
                m.startComputation()
                if (!_.isEmpty(value)){
-                  addJob(ctrl, value)
+                  addJob(ctrl, isLikeNumber(value) ? parseInt(value) : value)
                   selectize.removeOption(value)
                   selectize.refreshItems()
                   selectize.showInput()
