@@ -31,11 +31,11 @@ var toOption = function(thisArg){
 
 // get an object from an array and wrap in `option`
 // example: filterByLensNow(L.list, L.id, 0) => plucked object
-var filterByLensNow = function(thisLens, lens, value, thisArg){
-   var list = get(thisLens, (thisArg || this))
-   return _.first(_.filter(list, function(o){
+var filterByLensNow = function(lens, value, list){
+   var list_ = (list || this)
+   return toOption(_.first(_.filter(list_, function(o){
       return _.isEqual(get(lens, o), value)
-   }))
+   })))
 }
 
 //var filterByLens = _.curry(filterByLensNow)

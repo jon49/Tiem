@@ -49,10 +49,10 @@ var JobSetting = b.tagged('JobSetting', jobSettingKeys),
     JobSettings = b.tagged('JobSettings', listObjects),
     Jobs = b.tagged('Jobs', listObjects)
 
-// use lens to get job from list
-var getJobByNow = function(lens, value, list){
-   var list_ = list || this
-   return toOption(filterByLensNow(L.list, lens, value, list_))
+// use lens to get job from list, returns option
+var getJobByNow = function(lens, value, listObject){
+   var list = get(L.list, listObject || this)
+   return filterByLensNow(lens, value, list)
 }
 
 var getJobBy = _.curry(getJobByNow, 2)
