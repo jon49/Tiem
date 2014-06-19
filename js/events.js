@@ -109,7 +109,7 @@ selectize_.config = function(ctrl){
          var selectize = $select[0].selectize
       }
    }
-};
+}
 
 
 

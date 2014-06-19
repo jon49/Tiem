@@ -6,7 +6,7 @@
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k, m */
 
-(function(){
+;(function(){
    'use strict';
    
    var cssDeclaration = function(property, value){
