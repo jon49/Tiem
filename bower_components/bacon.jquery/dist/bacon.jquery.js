@@ -42,7 +42,6 @@
       }
     };
     Bacon.$.Model = Bacon.Model;
-    $.fn.asEventStream = Bacon.$.asEventStream;
     Bacon.$.textFieldValue = function(element, initValue) {
       var autofillPoller, events, get;
       get = function() {
@@ -98,6 +97,28 @@
           return radios.each(function(i, elem) {
             return $(elem).prop("checked", elem.value === value);
           });
+        }
+      });
+    };
+    Bacon.$.intRadioGroupValue = function(radios, initValue) {
+      var radioGroupValue;
+      radioGroupValue = Bacon.$.radioGroupValue(radios);
+      return Bacon.Binding({
+        initValue: initValue,
+        get: function() {
+          var value;
+          value = radioGroupValue.get();
+          if (value) {
+            return parseInt(value);
+          } else {
+            return value;
+          }
+        },
+        events: radioGroupValue.syncEvents(),
+        set: function(value) {
+          var strValue;
+          strValue = value ? Number(value).toString() : value;
+          return radioGroupValue.set(strValue);
         }
       });
     };
@@ -185,7 +206,6 @@
       e = eventNames[_i];
       _fn(e);
     }
-    $.fn.extend(events);
     effectNames = ["animate", "show", "hide", "toggle", "fadeIn", "fadeOut", "fadeTo", "fadeToggle", "slideDown", "slideUp", "slideToggle"];
     effects = {};
     _fn1 = function(e) {
@@ -199,7 +219,11 @@
       e = effectNames[_j];
       _fn1(e);
     }
-    $.fn.extend(effects);
+    if ($ != null ? $.fn : void 0) {
+      $.fn.extend(events);
+      $.fn.extend(effects);
+      $.fn.asEventStream = Bacon.$.asEventStream;
+    }
     return Bacon.$;
   };
 

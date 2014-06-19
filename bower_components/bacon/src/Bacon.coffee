@@ -88,7 +88,7 @@ Bacon.repeatedly = (delay, values) ->
 Bacon.spy = (spy) -> spys.push(spy)
 
 spys = []
-registerObs = (obs) -> 
+registerObs = (obs) ->
   if spys.length
     if not registerObs.running
       try
@@ -153,21 +153,37 @@ Bacon.fromArray = (values) ->
   values = cloneArray(values)
   new EventStream describe(Bacon, "fromArray", values), (sink) ->
     unsubd = false
-    send = ->
+    reply = Bacon.more
+    while (reply != Bacon.noMore) && !unsubd
       if _.empty values
         sink(end())
+        reply = Bacon.noMore
       else
-        value = values.splice(0,1)[0]
+        value = _.popHead(values)
         reply = sink(toEvent(value))
-        if (reply != Bacon.noMore) && !unsubd
-          send()
-    send()
     -> unsubd = true
 
 Bacon.mergeAll = (streams...) ->
   if isArray streams[0]
     streams = streams[0]
-  withDescription Bacon, "mergeAll", streams..., _.fold(streams, Bacon.never(), ((a, b) -> a.merge(b)))
+  if streams.length
+    new EventStream describe(Bacon, "mergeAll", streams...), (sink) ->
+      ends = 0
+      smartSink = (obs) -> (unsubBoth) -> obs.subscribeInternal (event) ->
+        if event.isEnd()
+          ends++
+          if ends == streams.length
+            sink end()
+          else
+            Bacon.more
+        else
+          reply = sink event
+          unsubBoth() if reply == Bacon.noMore
+          reply
+      sinks = _.map smartSink, streams
+      compositeUnsubscribe sinks...
+  else
+    Bacon.never()
 
 Bacon.zipAsArray = (streams...) ->
   if isArray streams[0]
@@ -194,7 +210,7 @@ Bacon.combineAsArray = (streams...) ->
     streams[index] = Bacon.constant(stream) if not (isObservable(stream))
   if streams.length
     sources = for s in streams
-      new Source(s, true, false, s.subscribeInternal)
+      new Source(s, true, s.subscribeInternal)
     withDescription(Bacon, "combineAsArray", streams..., Bacon.when(sources, ((xs...) -> xs)).toProperty())
   else
     Bacon.constant([])
@@ -237,6 +253,26 @@ Bacon.combineTemplate = (template) ->
     rootContext
   withDescription(Bacon, "combineTemplate", template, Bacon.combineAsArray(streams).map(combinator))
 
+
+Bacon.retry = (options) ->
+  throw "'source' option has to be a function" unless isFunction(options.source)
+  source = options.source
+  retries = options.retries || 0
+  maxRetries = options.maxRetries || retries
+  delay = options.delay || -> 0
+  isRetryable = options.isRetryable || -> true
+
+  retry = (context) ->
+    nextAttemptOptions = {source, retries: retries - 1, maxRetries, delay, isRetryable}
+    delayedRetry = -> Bacon.retry(nextAttemptOptions)
+    Bacon.later(delay(context)).filter(false).concat(Bacon.once().flatMap(delayedRetry))
+
+  withDescription(Bacon, "retry", options, source().flatMapError (e) ->
+    if isRetryable(e) && retries > 0
+      retry(error: e, retriesDone: maxRetries - retries)
+    else
+      Bacon.once(new Bacon.Error(e)))
+
 eventIdCounter = 0
 
 class Event
@@ -261,7 +297,9 @@ class Next extends Event
       @value = _.always(valueF)
   isNext: -> true
   hasValue: -> true
-  fmap: (f) -> @apply(=> f(@value()))
+  fmap: (f) ->
+    value = @value
+    @apply(-> f(value()))
   apply: (value) -> new Next(value)
   filter: (f) -> f(@value())
   toString: -> _.toString(@value())
@@ -284,7 +322,7 @@ class Error extends Event
   isError: -> true
   fmap: -> this
   apply: -> this
-  toString: -> 
+  toString: ->
     "<error> " + _.toString(@error)
 
 idCounter = 0
@@ -292,7 +330,6 @@ idCounter = 0
 class Observable
   constructor: (desc) ->
     @id = ++idCounter
-    @assign = @onValue
     withDescription(desc, this)
   onValue: ->
     f = makeFunctionArgs(arguments)
@@ -416,11 +453,10 @@ class Observable
         if reply == Bacon.noMore
           return reply
       reply
-  scan: (seed, f, lazyF) =>
+  scan: (seed, f, options = {}) ->
     f_ = toCombinator(f)
-    f = if lazyF then f_ else (x,y) -> f_(x(), y())
+    f = if options.lazyF then f_ else (x,y) -> f_(x(), y())
     acc = toOption(seed).map((x) -> _.always(x))
-    root = this
     subscribe = (sink) =>
       initSent = false
       unsub = nop
@@ -433,7 +469,7 @@ class Observable
             if (reply == Bacon.noMore)
               unsub()
               unsub = nop
-      unsub = @subscribeInternal (event) =>
+      unsub = @subscribeInternal (event) ->
         if (event.hasValue())
           if (initSent && event.isInitial())
             Bacon.more # init already sent, skip this one
@@ -443,6 +479,7 @@ class Observable
             prev = acc.getOrElse(-> undefined)
             next = _.cached(-> f(prev, event.value))
             acc = new Some(next)
+            next() if (options.eager)
             sink (event.apply(next))
         else
           if event.isEnd()
@@ -452,8 +489,8 @@ class Observable
       unsub
     resultProperty = new Property describe(this, "scan", seed, f), subscribe
 
-  fold: (seed, f) =>
-    withDescription(this, "fold", seed, f, @scan(seed, f).sampledBy(@filter(false).mapEnd().toProperty()))
+  fold: (seed, f, options) ->
+    withDescription(this, "fold", seed, f, @scan(seed, f, options).sampledBy(@filter(false).mapEnd().toProperty()))
 
   zip: (other, f = Array) ->
     withDescription(this, "zip", other,
@@ -468,16 +505,37 @@ class Observable
       .map((tuple) -> tuple[1]))
 
   flatMap: ->
-    flatMap_(this, makeSpawner(arguments))
+    flatMap_ this, makeSpawner(arguments)
 
   flatMapFirst: ->
-    flatMap_(this, makeSpawner(arguments), true)
+    flatMap_ this, makeSpawner(arguments), true
 
-  flatMapLatest: =>
+  flatMapWithConcurrencyLimit: (limit, args...) ->
+    withDescription this, "flatMapWithConcurrencyLimit", limit, args...,
+      flatMap_ this, makeSpawner(args), false, limit
+
+  flatMapLatest: ->
     f = makeSpawner(arguments)
     stream = @toEventStream()
-    withDescription(this, "flatMapLatest", f, stream.flatMap (value) =>
+    withDescription(this, "flatMapLatest", f, stream.flatMap (value) ->
       makeObservable(f(value)).takeUntil(stream))
+
+  flatMapError: (fn) =>
+    withDescription this, "flatMapError", fn, @mapError((err) -> new Bacon.Error(err)).flatMap (x) ->
+      if x instanceof Bacon.Error
+        fn(x.error)
+      else
+        Bacon.once(x)
+
+  flatMapConcat: ->
+    withDescription this, "flatMapConcat", arguments...,
+      @flatMapWithConcurrencyLimit 1, arguments...
+
+  bufferingThrottle:  (minimumInterval) ->
+    withDescription this, "bufferingThrottle", minimumInterval,
+      @flatMapConcat (x) ->
+        Bacon.once(x).concat(Bacon.later(minimumInterval).filter(false))
+
   not: -> withDescription(this, "not", @map((x) -> !x))
   log: (args...) ->
     @subscribe (event) -> console?.log?(args..., event.log())
@@ -485,21 +543,21 @@ class Observable
   slidingWindow: (n, minValues = 0) ->
     withDescription(this, "slidingWindow", n, minValues, this.scan([], ((window, value) -> window.concat([value]).slice(-n)))
           .filter(((values) -> values.length >= minValues)))
-  combine: (other, f) =>
+  combine: (other, f) ->
     combinator = toCombinator(f)
-    withDescription(this, "combine", other, f, 
+    withDescription(this, "combine", other, f,
       Bacon.combineAsArray(this, other)
         .map (values) ->
           combinator(values[0], values[1]))
   decode: (cases) -> withDescription(this, "decode", cases, @combine(Bacon.combineTemplate(cases), (key, values) -> values[key]))
 
   awaiting: (other) ->
-    withDescription(this, "awaiting", other, 
+    withDescription(this, "awaiting", other,
       Bacon.groupSimultaneous(this, other)
         .map(([myValues, otherValues]) -> otherValues.length == 0)
         .toProperty(false).skipDuplicates())
 
-  name: (name) -> 
+  name: (name) ->
     @toString = -> name
     this
 
@@ -507,10 +565,29 @@ class Observable
     describe(arguments...).apply(this)
 
 Observable :: reduce = Observable :: fold
+Observable :: assign = Observable :: onValue
 
-flatMap_ = (root, f, firstOnly) ->
+flatMap_ = (root, f, firstOnly, limit) ->
   new EventStream describe(root, "flatMap" + (if firstOnly then "First" else ""), f), (sink) ->
     composite = new CompositeUnsubscribe()
+    queue = []
+    spawn = (event) ->
+      child = makeObservable(f event.value())
+      composite.add (unsubAll, unsubMe) -> child.subscribeInternal (event) ->
+        if event.isEnd()
+          checkQueue()
+          checkEnd(unsubMe)
+          Bacon.noMore
+        else
+          if event instanceof Initial
+            # To support Property as the spawned stream
+            event = event.toNext()
+          reply = sink event
+          unsubAll() if reply == Bacon.noMore
+          reply
+    checkQueue = ->
+      event = _.popHead(queue)
+      spawn event if event
     checkEnd = (unsub) ->
       unsub()
       sink end() if composite.empty()
@@ -523,18 +600,10 @@ flatMap_ = (root, f, firstOnly) ->
         Bacon.more
       else
         return Bacon.noMore if composite.unsubscribed
-        child = makeObservable(f event.value())
-        composite.add (unsubAll, unsubMe) -> child.subscribeInternal (event) ->
-          if event.isEnd()
-            checkEnd(unsubMe)
-            Bacon.noMore
-          else
-            if event instanceof Initial
-              # To support Property as the spawned stream
-              event = event.toNext()
-            reply = sink event
-            unsubAll() if reply == Bacon.noMore
-            reply
+        if limit and composite.count() > limit
+          queue.push(event)
+        else
+          spawn event
     composite.unsubscribe
 
 
@@ -564,9 +633,9 @@ class EventStream extends Observable
   throttle: (delay) ->
     withDescription(this, "throttle", delay, @bufferWithTime(delay).map((values) -> values[values.length - 1]))
 
-  bufferWithTime: (delay) -> 
+  bufferWithTime: (delay) ->
     withDescription(this, "bufferWithTime", delay, @bufferWithTimeOrCount(delay, Number.MAX_VALUE))
-  bufferWithCount: (count) -> 
+  bufferWithCount: (count) ->
     withDescription(this, "bufferWithCount", count, @bufferWithTimeOrCount(undefined, count))
 
   bufferWithTimeOrCount: (delay, count) ->
@@ -619,28 +688,15 @@ class EventStream extends Observable
   merge: (right) ->
     assertEventStream(right)
     left = this
-    new EventStream describe(left, "merge", right), (sink) ->
-      ends = 0
-      smartSink = (obs) -> (unsubBoth) -> obs.subscribeInternal (event) ->
-        if event.isEnd()
-          ends++
-          if ends == 2
-            sink end()
-          else
-            Bacon.more
-        else
-          reply = sink event
-          unsubBoth() if reply == Bacon.noMore
-          reply
-      compositeUnsubscribe (smartSink left), (smartSink right)
+    withDescription left, "merge", right, Bacon.mergeAll(this, right)
 
   toProperty: (initValue) ->
     initValue = None if arguments.length == 0
-    withDescription this, "toProperty", initValue, @scan(initValue, latterF, true)
+    withDescription this, "toProperty", initValue, @scan(initValue, latterF, {lazyF: true})
 
   toEventStream: -> this
 
-  sampledBy: (sampler, combinator) =>
+  sampledBy: (sampler, combinator) ->
     withDescription(this, "sampledBy", sampler, combinator,
       @toProperty().sampledBy(sampler, combinator))
 
@@ -655,7 +711,7 @@ class EventStream extends Observable
           sink(e)
       -> unsubLeft() ; unsubRight()
 
-  takeUntil: (stopper) =>
+  takeUntil: (stopper) ->
     endMarker = {}
     withDescription(this, "takeUntil", stopper, Bacon.groupSimultaneous(this.mapEnd(endMarker), stopper.skipErrors())
       .withHandler((event) ->
@@ -689,6 +745,19 @@ class EventStream extends Observable
         else
           Bacon.more
 
+  holdWhen: (valve) ->
+    valve_ = valve.startWith(false)
+    releaseHold = valve_.filter (x) -> !x
+    putToHold = valve_.filter _.id
+
+    withDescription this, "holdWhen", valve,
+      # the filter(false) thing is added just to keep the subscription active all the time (improves stability with some streams)
+      this.filter(false).merge valve_.flatMapConcat (shouldHold) =>
+        if !shouldHold
+          this.takeUntil(putToHold)
+        else
+          this.scan([], ((xs,x) -> xs.concat(x)), {eager:true}).sampledBy(releaseHold).take(1).flatMap(Bacon.fromArray)
+
   startWith: (seed) ->
     withDescription(this, "startWith", seed,
       Bacon.once(seed).concat(this))
@@ -710,37 +779,37 @@ class Property extends Observable
     else
       @subscribeInternal = new PropertyDispatcher(this, subscribe, handler).subscribe
 
-    @sampledBy = (sampler, combinator) =>
-      if combinator?
-        combinator = toCombinator combinator
-      else
-        lazy = true
-        combinator = (f) -> f()
-      thisSource = new Source(this, false, false, this.subscribeInternal, lazy)
-      samplerSource = new Source(sampler, true, false, sampler.subscribeInternal, lazy)
-      stream = Bacon.when([thisSource, samplerSource], combinator)
-      result = if sampler instanceof Property then stream.toProperty() else stream
-      withDescription(this, "sampledBy", sampler, combinator, result)
-
     @subscribe = UpdateBarrier.wrappedSubscribe(this)
     registerObs(this)
 
-  sample: (interval) =>
+  sampledBy: (sampler, combinator) ->
+    if combinator?
+      combinator = toCombinator combinator
+    else
+      lazy = true
+      combinator = (f) -> f()
+    thisSource = new Source(this, false, this.subscribeInternal, lazy)
+    samplerSource = new Source(sampler, true, sampler.subscribeInternal, lazy)
+    stream = Bacon.when([thisSource, samplerSource], combinator)
+    result = if sampler instanceof Property then stream.toProperty() else stream
+    withDescription(this, "sampledBy", sampler, combinator, result)
+
+  sample: (interval) ->
     withDescription(this, "sample", interval,
       @sampledBy Bacon.interval(interval, {}))
 
-  changes: => new EventStream describe(this, "changes"), (sink) =>
-    @subscribeInternal (event) =>
+  changes: -> new EventStream describe(this, "changes"), (sink) =>
+    @subscribeInternal (event) ->
       #console.log "CHANGES", event.toString()
       sink event unless event.isInitial()
   withHandler: (handler) ->
     new Property describe(this, "withHandler", handler), @subscribeInternal, handler
-  toProperty: =>
+  toProperty: ->
     assertNoArguments(arguments)
     this
-  toEventStream: =>
+  toEventStream: ->
     new EventStream describe(this, "toEventStream"), (sink) =>
-      @subscribeInternal (event) =>
+      @subscribeInternal (event) ->
         event = event.toNext() if event.isInitial()
         sink event
   and: (other) -> withDescription(this, "and", other, @combine(other, (x, y) -> x && y))
@@ -748,16 +817,18 @@ class Property extends Observable
   delay: (delay) -> @delayChanges("delay", delay, (changes) -> changes.delay(delay))
   debounce: (delay) -> @delayChanges("debounce", delay, (changes) -> changes.debounce(delay))
   throttle: (delay) -> @delayChanges("throttle", delay, (changes) -> changes.throttle(delay))
-  delayChanges: (desc..., f) -> 
+  delayChanges: (desc..., f) ->
     withDescription(this, desc...,
       addPropertyInitValueToStream(this, f(@changes())))
   takeUntil: (stopper) ->
     changes = this.changes().takeUntil(stopper)
-    withDescription(this, "takeUntil", stopper, 
+    withDescription(this, "takeUntil", stopper,
       addPropertyInitValueToStream(this, changes))
   startWith: (value) ->
     withDescription(this, "startWith", value,
       @scan(value, (prev, next) -> next))
+  bufferingThrottle: ->
+    super.bufferingThrottle(arguments...).toProperty()
 
 convertArgsToFunction = (obs, f, args, method) ->
   if f instanceof Property
@@ -786,7 +857,7 @@ class Dispatcher
   constructor: (subscribe, handleEvent) ->
     subscribe ?= -> nop
     subscriptions = []
-    queue = null
+    queue = []
     pushing = false
     ended = false
     @hasSubscribers = -> subscriptions.length > 0
@@ -814,11 +885,10 @@ class Dispatcher
             success = true
           finally
             pushing = false
-            queue = null if not success # ditch queue in case of exception to avoid unexpected behavior
+            queue = [] unless success # ditch queue in case of exception to avoid unexpected behavior
           success = true
-          while queue?.length
-            event = _.head(queue)
-            queue = _.tail(queue)
+          while queue.length
+            event = queue.shift()
             @push event
           done(event)
           if @hasSubscribers()
@@ -827,7 +897,7 @@ class Dispatcher
             unsubscribeFromSource()
             Bacon.noMore
         else
-          queue = (queue or []).concat([event])
+          queue.push(event)
           Bacon.more
     @push = (event) =>
       UpdateBarrier.inTransaction event, this, pushIt, [event]
@@ -843,7 +913,7 @@ class Dispatcher
       else
         assertFunction sink
         subscription = { sink: sink }
-        subscriptions = subscriptions.concat(subscription)
+        subscriptions.push(subscription)
         if subscriptions.length == 1
           unsubSrc = subscribe @handleEvent
           unsubscribeFromSource = ->
@@ -900,7 +970,7 @@ class PropertyDispatcher extends Dispatcher
           maybeSubSource()
         else
           #console.log "bouncing value"
-          UpdateBarrier.inTransaction undefined, this, (-> 
+          UpdateBarrier.inTransaction undefined, this, (->
             reply = sink initial(current.get().value())
           ), []
           maybeSubSource()
@@ -950,83 +1020,101 @@ class Bus extends EventStream
       sink? end()
 
 class Source
-  constructor: (@obs, @sync, consume, @subscribe, lazy = false, queue = []) ->
-    lazify = if lazy then (x) -> (-> x) else _.id
-    @subscribe = obs.subscribeInternal if not @subscribe?
-    @markEnded = -> @ended = true
+  constructor: (@obs, @sync, @subscribe, @lazy = false) ->
+    @queue = []
+    @subscribe = @obs.subscribeInternal if not @subscribe?
     @toString = @obs.toString
-    if consume
-      @consume = -> lazify(queue.shift())
-      @push  = (x) -> queue.push(x)
-      @mayHave = (c) -> !@ended || queue.length >= c
-      @hasAtLeast = (c) -> queue.length >= c
-      @flatten = false
+  markEnded: -> @ended = true
+  consume: ->
+    if @lazy
+      _.always(@queue[0])
     else
-      @consume = -> lazify(queue[0])
-      @push  = (x) -> queue = [x]
-      @mayHave = -> true
-      @hasAtLeast = -> queue.length
-      @flatten = true
+      @queue[0]
+  push: (x) -> @queue = [x]
+  mayHave: -> true
+  hasAtLeast: -> @queue.length
+  flatten: true
+
+class ConsumingSource extends Source
+  consume: -> @queue.shift()
+  push: (x) -> @queue.push(x)
+  mayHave: (c) -> !@ended || @queue.length >= c
+  hasAtLeast: (c) -> @queue.length >= c
+  flatten: false
 
 class BufferingSource extends Source
   constructor: (@obs) ->
-    queue = []
-    super(@obs, true, false, @obs.subscribeInternal, false, queue)
-    @consume = ->
-      values = queue
-      queue = []
-      -> values
-    @push = (x) -> queue.push(x())
-    @hasAtLeast = -> true
+    super(@obs, true, @obs.subscribeInternal)
+  consume: ->
+    values = @queue
+    @queue = []
+    -> values
+  push: (x) -> @queue.push(x())
+  hasAtLeast: -> true
+
+Source.isTrigger = (s) ->
+  if s instanceof Source
+    s.sync
+  else
+    s instanceof EventStream
 
 Source.fromObservable = (s) ->
   if s instanceof Source
     s
   else if s instanceof Property
-    new Source(s, false, false)
+    new Source(s, false)
   else
-    new Source(s, true, true)
+    new ConsumingSource(s, true)
 
-describe = (context, method, args...) -> 
+describe = (context, method, args...) ->
   if (context || method) instanceof Desc
     context || method
   else
     new Desc(context, method, args)
 
+findDeps = (x) ->
+  if isArray(x)
+    _.flatMap findDeps, x
+  else if isObservable(x)
+    [x]
+  else if x instanceof Source
+    [x.obs]
+  else
+    []
+
 class Desc
   constructor: (context, method, args) ->
-    findDeps = (x) ->
-      if isArray(x)
-        _.flatMap findDeps, x
-      else if isObservable(x)
-        [x]
-      else if x instanceof Source
-        [x.obs]
-      else
-        []
-    flatDeps = null
+    @context = context
+    @method = method
+    @args = args
+    @flatDeps = null
 
-    collectDeps = (o) ->
-      deps = o.internalDeps()
-      for dep in deps
-        flatDeps[dep.id] = true
-        collectDeps(dep)
+  dependsOn = (o, b) ->
+    if !@flatDeps?
+      @flatDeps = {}
+      @collectDeps o
+    return @flatDeps[b.id]
 
-    dependsOn = (b) ->
-      if !flatDeps?
-        flatDeps = {}
-        collectDeps this
-      return flatDeps[b.id]
+  apply: (obs) ->
+    that = @
 
-    @apply = (obs) ->
-      deps = _.cached (-> findDeps([context].concat(args)))
-      obs.internalDeps = obs.internalDeps || deps
-      obs.dependsOn = dependsOn
-      obs.deps = deps
-      obs.toString = -> _.toString(context) + "." + _.toString(method) + "(" + _.map(_.toString, args) + ")"
-      obs.inspect = -> obs.toString()
-      obs.desc = -> { context, method, args }
-      obs
+    deps = _.cached (-> findDeps([that.context].concat(that.args)))
+    obs.internalDeps = obs.internalDeps || deps
+    obs.dependsOn = (b) -> dependsOn.call(that, obs, b)
+    obs.deps = deps
+
+    obs.toString = (-> _.toString(that.context) + "." + _.toString(that.method) + "(" + _.map(_.toString, that.args) + ")")
+    obs.inspect = -> obs.toString()
+    obs.desc = (-> { context: that.context, method: that.method, args: that.args })
+    obs
+
+  collectDeps: (o) ->
+    deps = o.internalDeps()
+    for dep in deps
+      @flatDeps[dep.id] = true
+      @collectDeps(dep)
+
+
 
 withDescription = (desc..., obs) ->
   describe(desc...).apply(obs)
@@ -1044,19 +1132,24 @@ Bacon.when = (patterns...) ->
        patSources = _.toArray patterns[i]
        f = patterns[i+1]
        pat = {f: (if isFunction(f) then f else (-> f)), ixs: []}
+       triggerFound = false
        for s in patSources
-         assert isObservable(s), usage
          index = _.indexOf(sources, s)
+         if !triggerFound
+           triggerFound = Source.isTrigger(s)
          if index < 0
             sources.push(s)
             index = sources.length - 1
          (ix.count++ if ix.index == index) for ix in pat.ixs
          pat.ixs.push {index: index, count: 1}
+       assert "At least one EventStream required", (triggerFound || (!patSources.length))
+
        pats.push pat if patSources.length > 0
        i = i + 2
 
     if !sources.length
       return Bacon.never()
+
 
     sources = _.map Source.fromObservable, sources
     needsBarrier = (_.any sources, (s) -> s.flatten) and (containsDuplicateDeps (_.map ((s) -> s.obs), sources))
@@ -1066,7 +1159,7 @@ Bacon.when = (patterns...) ->
       ends = false
       match = (p) ->
         for i in p.ixs
-          if !sources[i.index].hasAtLeast(i.count) 
+          if !sources[i.index].hasAtLeast(i.count)
             return false
         return true
       cannotSync = (source) ->
@@ -1161,7 +1254,7 @@ class CompositeUnsubscribe
     @subscriptions = []
     @starting = []
     @add s for s in ss
-  add: (subscription) =>
+  add: (subscription) ->
     return if @unsubscribed
     ended = false
     unsub = nop
@@ -1184,10 +1277,10 @@ class CompositeUnsubscribe
     s() for s in @subscriptions
     @subscriptions = []
     @starting = []
-  count: =>
+  count: ->
     return 0 if @unsubscribed
     @subscriptions.length + @starting.length
-  empty: =>
+  empty: ->
     @count() == 0
 
 Bacon.CompositeUnsubscribe = CompositeUnsubscribe
@@ -1232,15 +1325,15 @@ UpdateBarrier = (->
   independent = (waiter) ->
     !_.any(waiters, ((other) -> waiter.obs.dependsOn(other.obs)))
 
-  whenDoneWith = (obs, f) -> 
+  whenDoneWith = (obs, f) ->
     if rootEvent
       waiters.push {obs, f}
     else
       f()
   findIndependent = ->
     while (!independent(waiters[0]))
-      waiters.push(waiters.splice(0, 1)[0])
-    return waiters.splice(0, 1)[0]
+      waiters.push(_.popHead(waiters))
+    return _.popHead(waiters)
 
   flush = ->
     while waiters.length
@@ -1266,19 +1359,18 @@ UpdateBarrier = (->
 
   currentEventId = -> if rootEvent then rootEvent.id else undefined
 
-  wrappedSubscribe = (obs) -> (sink) -> 
+  wrappedSubscribe = (obs) -> (sink) ->
     unsubd = false
     doUnsub = ->
     unsub = ->
       unsubd = true
       doUnsub()
-    if !unsubd
-      doUnsub = obs.subscribeInternal (event) ->
-        afterTransaction ->
-          if not unsubd
-            reply = sink event
-            if reply == Bacon.noMore
-              unsub()
+    doUnsub = obs.subscribeInternal (event) ->
+      afterTransaction ->
+        if not unsubd
+          reply = sink event
+          if reply == Bacon.noMore
+            unsub()
     unsub
 
   { whenDoneWith, inTransaction, currentEventId, wrappedSubscribe }
@@ -1336,7 +1428,7 @@ makeObservable = (x) ->
   if (isObservable(x))
     x
   else
-    Bacon.once(x) 
+    Bacon.once(x)
 isFieldKey = (f) ->
   (typeof f == "string") and f.length > 1 and f.charAt(0) == "."
 Bacon.isFieldKey = isFieldKey
@@ -1420,12 +1512,14 @@ _ = {
     i = _.indexOf(xs, x)
     if i >= 0
       xs.splice(i, 1)
+  popHead: (xs) ->
+    xs.splice(0,1)[0]
   fold: (xs, seed, f) ->
     for x in xs
       seed = f(seed, x)
     seed
   flatMap: (f, xs) ->
-    _.fold xs, [], ((ys, x) -> 
+    _.fold xs, [], ((ys, x) ->
       ys.concat(f(x)))
 
   cached: (f) ->
@@ -1435,7 +1529,7 @@ _ = {
         value = f()
         f = null
       value
-  toString: (obj) -> 
+  toString: (obj) ->
     try
       recursionDepth++
       if !obj?

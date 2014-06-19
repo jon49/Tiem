@@ -64,7 +64,11 @@ element, given as a JQuery object. The value of the model corresponds to the `va
 Creates a `Model` for a
 group of `<input type="radio">` elements, given as a JQuery object or an Array
 of jQuery objects. The value of the model corresponds to the `value` attribute
-of the selected radio input element.
+of the selected radio input element. Note that `value` is a string.
+
+###Bacon.$.intRadioGroupValue(fields [, initValue])
+
+Like `Bacon.$.radioGroupValue`, but for integer values. 
 
 ###Bacon.$.checkBoxGroupValue(fields, [,initValue])
 
@@ -139,6 +143,15 @@ BJQ provides helpers for JQuery AJAX. All the methods return an
 `EventStream` of AJAX results. AJAX errors are mapped into `Error`
 events in the stream.
 
+Aborted requests are not sent into the error stream. If you want to have a
+stream that observes whether an AJAX request is running, use `Bacon.awaiting`.
+For example:
+
+    var searchParams = Bacon.once({ url: '/search', data: { query: 'apple' } })
+    var ajaxRequest = searchParams.ajax()
+    var requestRunning = searchParams.awaiting(ajaxRequest)
+    requestRunning.assign($('#ajaxSpinner'), 'toggle')
+
 ### stream.ajax(fn)
 
 Performs an AJAX request on each event of your stream, collating results in the result stream.
@@ -157,7 +170,7 @@ Performs an AJAX request and returns the results in an EventStream.
 or
 
     var results = Bacon.$.ajax({ url: "/get/results"})
-    
+
 ### Bacon.$.lazyAjax(params)
 
 Like above, but performs the AJAX call lazily, i.e. not before it has a subscriber.

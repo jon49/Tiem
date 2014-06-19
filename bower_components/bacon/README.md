@@ -83,13 +83,13 @@ Install
 
 You can download the latest [generated javascript](https://raw.github.com/baconjs/bacon.js/master/dist/Bacon.js).
 
-Version 0.7.2 can also be found from cdnjs hosting:
+Version 0.7.10 can also be found from cdnjs hosting:
 
-    http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.2/bacon.js
-    http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.2/bacon.min.js
+    http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.10/bacon.js
+    http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.10/bacon.min.js
 
-Visual Studio users can obtain version 0.7.2 via NuGet Packages
-    https://www.nuget.org/packages/Bacon.js/0.7.2
+Visual Studio users can obtain version 0.7.12 via NuGet Packages
+    https://www.nuget.org/packages/Bacon.js/0.7.12
 
 If you're targeting to [node.js](http://nodejs.org/), you can
 
@@ -161,7 +161,7 @@ was used here to calculate the "current sum" of events in the `both` stream, by 
 seed value and on each event in the source stream applies the accumulator function to the current
 property value and the new value from the stream.
 
-Properties can be very conventiently used for assigning values and attributes to DOM elements with JQuery.
+Properties can be very conveniently used for assigning values and attributes to DOM elements with JQuery.
 Here we assign the value of a property as the text of a span element whenever it changes:
 
 ```js
@@ -374,7 +374,7 @@ new Bacon.Next("value")
 
 But the canonical way would be
 ```js
-new Bacon.Next(function() { return "value") })
+new Bacon.Next(function() { return "value"; })
 ```
 
 The former version is safe only when you know that the actual value in
@@ -533,6 +533,22 @@ source:                      asdf----asdf----
 source.debounceImmediate(2): a-d-----a-d-----
 ```
 
+<a name="observable-bufferingthrottle"></a>
+[`observable.bufferingThrottle(minimumInterval)`](#observable-bufferingthrottle "observable.bufferingThrottle(@ : Observable[A], minimumInterval) : EventStream[A]") throttles the observable using a buffer so that at most one value event in minimumInteval is issued.
+Unlike [`throttle`](#observable-throttle), it doesn't discard the excessive events but buffers them instead, outputing
+them with a rate of at most one value per minimumInterval.
+
+Example:
+
+```js
+var throttled = source.bufferingThrottle(2)
+```
+
+```
+source:    asdf----asdf----
+throttled: a-s-d-f-a-s-d-f-
+```
+
 <a name="observable-doaction"></a>
 [`observable.doAction(f)`](#observable-doaction "observable.doAction(f)") returns a stream/property where the function f
 is executed for each value, before dispatching to subscribers. This is
@@ -566,7 +582,7 @@ stream.flatMap(function(text) {
 ```
 
 <a name="observable-flatmaplatest"></a>
-[`observable.flatMapLatest(f)`](#observable-flatmaplatest "observable.flatMapLatest(f)") like flatMap, but instead of including events from
+[`observable.flatMapLatest(f)`](#observable-flatmaplatest "observable.flatMapLatest(f)") like [`flatMap`](#observable-flatmap), but instead of including events from
 all spawned streams, only includes them from the latest spawned stream.
 You can think this as switching from stream to stream.
 Note that instead of a function, you can provide a stream/property too.
@@ -576,6 +592,20 @@ The [Function Construction rules](#function-construction-rules) below apply here
 <a name="observable-flatmapfirst"></a>
 [`observable.flatMapFirst(f)`](#observable-flatmapfirst "observable.flatMapFirst(f)") like flatMap, but doesn't spawns a new
 stream only if the previously spawned stream has ended.
+
+The [Function Construction rules](#function-construction-rules) below apply here.
+
+<a name="observable-flatmapwithconcurrencylimit"></a>
+[`observable.flatMapWithConcurrencyLimit(limit, f)`](#observable-flatmapwithconcurrencylimit "observable.flatMapWithConcurrencyLimit(@ : Observable[A], limit : Number, f : A -> Observable[B] | Event[B] | B) : EventStream[B]") a super method of *flatMap* family. It limits the number of open spawned streams and buffers incoming events.
+[`flatMapConcat`](#observable-flatmapconcat) is `flatMapWithConcurrencyLimit(1)` (only one input active),
+and [`flatMap`](#observable-flatmap) is `flatMapWithConcurrencyLimit ∞` (all inputs are piped to output).
+
+The [Function Construction rules](#function-construction-rules) below apply here.
+
+<a name="observable-flatmapconcat"></a>
+[`observable.flatMapConcat(f)`](#observable-flatmapconcat "observable.flatMapConcat(@ : Observable[A], f : A -> Observable[B] | Event[B] | B) : EventStream[B]") a [`flatMapWithConcurrencyLimit`](#observable-flatmapwithconcurrencylimit) with limit of 1.
+
+The [Function Construction rules](#function-construction-rules) below apply here.
 
 <a name="observable-scan"></a>
 [`observable.scan(seed, f)`](#observable-scan "observable.scan(seed, f) : Property[A]") scans stream/property with given seed value and
@@ -843,6 +873,10 @@ stream.
 
 <a name="stream-merge"></a>
 [`stream.merge(otherStream)`](#stream-merge "stream.merge(otherStream)") merges two streams into one stream that delivers events from both
+
+<a name="stream-holdwhen"></a>
+[`stream.holdWhen(valve)`](#stream-holdwhen "stream.holdWhen(@ : EventStream[A], valve : Observable[B]) : EventStream[A]") pauses and buffers the event stream if last event in valve is truthy.
+All buffered events are released when valve becomes falsy.
 
 <a name="stream-startwith"></a>
 [`stream.startWith(value)`](#stream-startwith "stream.startWith(value)") adds a starting value to the stream, i.e. concats a
@@ -1268,7 +1302,7 @@ as well as all the spawned stream.
 You can take action on errors by using the [`observable.onError(f)`](#observable-onerror)
 callback.
 
-See documentation on [`onError`](#observable-onerror), [`mapError`](#observable-maperror), [`errors`](#errors), [`skipErrors`](#observable-skiperrors) above.
+See documentation on [`onError`](#observable-onerror), [`mapError`](#observable-maperror), [`errors`](#errors), [`skipErrors`](#observable-skiperrors), `Bacon.retry` and `flatMapError` above.
 
 In case you want to convert (some) value events into [`Error`](#bacon-error) events, you may use [`flatMap`](#observable-flatmap) like this:
 
@@ -1614,7 +1648,11 @@ Run browser tests:
 
 Run performance tests:
 
-    coffee performance/*
+    coffee performance/PerformanceTest.coffe
+
+Run memory usage tests:
+
+    coffee --nodejs '--expose-gc' performance/MemoryTest.coffee
 
 Dependencies
 ============

@@ -43,13 +43,13 @@ doc.section "Install"
 doc.text """
 You can download the latest [generated javascript](https://raw.github.com/baconjs/bacon.js/master/dist/Bacon.js).
 
-Version 0.7.2 can also be found from cdnjs hosting:
+Version 0.7.10 can also be found from cdnjs hosting:
 
-    http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.2/bacon.js
-    http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.2/bacon.min.js
+    http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.10/bacon.js
+    http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.10/bacon.min.js
 
-Visual Studio users can obtain version 0.7.2 via NuGet Packages
-    https://www.nuget.org/packages/Bacon.js/0.7.2
+Visual Studio users can obtain version 0.7.12 via NuGet Packages
+    https://www.nuget.org/packages/Bacon.js/0.7.12
 
 If you're targeting to [node.js](http://nodejs.org/), you can
 
@@ -121,7 +121,7 @@ was used here to calculate the "current sum" of events in the `both` stream, by 
 seed value and on each event in the source stream applies the accumulator function to the current
 property value and the new value from the stream.
 
-Properties can be very conventiently used for assigning values and attributes to DOM elements with JQuery.
+Properties can be very conveniently used for assigning values and attributes to DOM elements with JQuery.
 Here we assign the value of a property as the text of a span element whenever it changes:
 
 ```js
@@ -352,7 +352,7 @@ new Bacon.Next("value")
 
 But the canonical way would be
 ```js
-new Bacon.Next(function() { return "value") })
+new Bacon.Next(function() { return "value"; })
 ```
 
 The former version is safe only when you know that the actual value in
@@ -529,6 +529,24 @@ source.debounceImmediate(2): a-d-----a-d-----
 ```
 """
 
+doc.fn "observable.bufferingThrottle(@ : Observable[A], minimumInterval) : EventStream[A]", """
+throttles the observable using a buffer so that at most one value event in minimumInteval is issued.
+Unlike `throttle`, it doesn't discard the excessive events but buffers them instead, outputing
+them with a rate of at most one value per minimumInterval.
+
+Example:
+
+```js
+var throttled = source.bufferingThrottle(2)
+```
+
+```
+source:    asdf----asdf----
+throttled: a-s-d-f-a-s-d-f-
+```
+"""
+
+
 doc.fn "observable.doAction(f)", """
 returns a stream/property where the function f
 is executed for each value, before dispatching to subscribers. This is
@@ -565,7 +583,7 @@ stream.flatMap(function(text) {
 """
 
 doc.fn "observable.flatMapLatest(f)", """
-like flatMap, but instead of including events from
+like `flatMap`, but instead of including events from
 all spawned streams, only includes them from the latest spawned stream.
 You can think this as switching from stream to stream.
 Note that instead of a function, you can provide a stream/property too.
@@ -576,6 +594,22 @@ The [Function Construction rules](#function-construction-rules) below apply here
 doc.fn "observable.flatMapFirst(f)", """
 like flatMap, but doesn't spawns a new
 stream only if the previously spawned stream has ended.
+
+The [Function Construction rules](#function-construction-rules) below apply here.
+"""
+
+doc.fn "observable.flatMapWithConcurrencyLimit(@ : Observable[A], limit : Number, f : A -> Observable[B] | Event[B] | B) : EventStream[B]", """
+a super method of *flatMap* family. It limits the number of open spawned streams and buffers incoming events.
+`flatMapConcat` is `flatMapWithConcurrencyLimit(1)` (only one input active),
+and `flatMap` is `flatMapWithConcurrencyLimit ∞` (all inputs are piped to output).
+
+The [Function Construction rules](#function-construction-rules) below apply here.
+"""
+
+doc.fn "observable.flatMapConcat(@ : Observable[A], f : A -> Observable[B] | Event[B] | B) : EventStream[B]", """
+a `flatMapWithConcurrencyLimit` with limit of 1.
+
+The [Function Construction rules](#function-construction-rules) below apply here.
 """
 
 doc.fn "observable.scan(seed, f) : Property[A]", """
@@ -858,8 +892,23 @@ occurring before the end of `stream` will not be included in the result
 stream.
 """
 
+doc.marble()
+  .input("Bacon.sequentially(200, [9,0,2]).filter(function(x) { return x })")
+  .input("Bacon.sequentially(200, [0,1,0,12,8,0]).filter(function(x) { return x })")
+  .output("function(a,b) { return a.concat(b) }")
+
 doc.fn "stream.merge(otherStream)", """
 merges two streams into one stream that delivers events from both
+"""
+
+doc.marble()
+  .input("Bacon.sequentially(200, [9,0,2,0,0,3]).filter(function(x) { return x })")
+  .input("Bacon.sequentially(200, [0,1,0,12,8,0]).filter(function(x) { return x })")
+  .output("function(a,b) { return a.merge(b) }")
+
+doc.fn "stream.holdWhen(@ : EventStream[A], valve : Observable[B]) : EventStream[A]", """
+pauses and buffers the event stream if last event in valve is truthy.
+All buffered events are released when valve becomes falsy.
 """
 
 doc.fn "stream.startWith(value)", """
@@ -1318,7 +1367,7 @@ as well as all the spawned stream.
 You can take action on errors by using the `observable.onError(f)`
 callback.
 
-See documentation on `onError`, `mapError`, `errors`, `skipErrors` above.
+See documentation on `onError`, `mapError`, `errors`, `skipErrors`, `Bacon.retry` and `flatMapError` above.
 
 In case you want to convert (some) value events into [`Error`](#bacon-error) events, you may use `flatMap` like this:
 

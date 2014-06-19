@@ -6,7 +6,7 @@
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k */
 
-function Controller() {
+var Controller = function() {
    this.date = new Date()
    this.jobSettings = t.JobSettings.create([toObject(t.JobSetting.create(0, 'My Job', true)), toObject(t.JobSetting.create(1, 'My cool job', true))])
    

@@ -1,3 +1,20 @@
+## 0.7.14
+
+- Fix Bacon.retry (#380)
+
+## 0.7.13
+
+- Add flatMapWithConcurrencyLimit, flatMapConcat, bufferingThrottle, holdWhen (#324)
+
+## 0.7.12
+
+- Add Bacon.retry, flatMapError, Bacon.error by @mileskin (#310)
+- Improve mergeAll performance by removing recursion (#373)
+
+## 0.7.11
+
+- Optimizations by @lautis (#370)
+
 ## 0.7.9
 
 - Fix #348: toString problems with jQuery

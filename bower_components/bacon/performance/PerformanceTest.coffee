@@ -2,7 +2,7 @@ Benchmark = require('benchmark')
 Bacon = (require "../src/Bacon").Bacon
 
 _ = Bacon._
-f = 
+f =
   generator: ->
     streams = []
     {
@@ -31,16 +31,28 @@ f =
       for i in [1..width]
         template[i] = f.combineTemplate gen, width, depth-1
       Bacon.combineTemplate(template)
+  diamond: (src, width, depth) ->
+    if depth == 0
+      src
+    else
+      branches = (f.diamond(src.map(->), width, depth-1) for s in [1..width])
+      Bacon.combineAsArray branches
+
   zip: (gen) ->
     gen.stream().zip(gen.stream())
 
 suite = new Benchmark.Suite
 
+suite.add 'diamond', ->
+  f.withGenerator(((gen) ->
+    s = f.diamond(gen.stream(), 3, 5)
+    s.onValue ->
+    s
+  ),1)
 suite.add 'combo', ->
   f.withGenerator(((gen) ->
-    s = f.combineTemplate(gen, 2, 2)
+    s = f.combineTemplate(gen, 4, 4)
     s.onValue ->
-      f.combineTemplate(gen, 2, 4).onValue(->)
     s), 1)
 suite.add 'zip', ->
   f.withGenerator (gen) ->
@@ -48,7 +60,7 @@ suite.add 'zip', ->
 suite.add 'Bacon.combineTemplate.sample', ->
   f.withGenerator (gen) ->
     f.combineTemplate(gen, 5, 1)
-      .sampledBy(f.everyNth(10, gen.stream())) 
+      .sampledBy(f.everyNth(10, gen.stream()))
 suite.add 'Bacon.combineTemplate (deep)', ->
   f.withGenerator (gen) ->
     f.combineTemplate(gen, 3, 3)

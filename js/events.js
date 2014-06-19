@@ -73,9 +73,9 @@ var toggleButton = _.curry(function(id, e){
    ctrl.update(b.singleton('jobs', jobs.update(job))) // get new list then update controller
 })
 
-var selectize = {}
+var selectize_ = {}
 
-selectize.config = function(ctrl){
+selectize_.config = function(ctrl){
    return function(element, isInit){
       var $el = $(element)
       if (!isInit){
@@ -109,7 +109,7 @@ selectize.config = function(ctrl){
          var selectize = $select[0].selectize
       }
    }
-}
+};
 
 
 
