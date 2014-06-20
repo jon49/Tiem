@@ -120,10 +120,10 @@ var addRollingArray = function (array, start, end, fraction) {
    var floor = Math.floor
    return _.map(array, function (value, index) {
       var isIndexStart = (floor(start) === index),
-          isSameAndCorrectIndex = (floor(start) === floor(end) && isIndexStart),
+          isSameStartEndAndCorrectIndex = (floor(start) === floor(end) && isIndexStart),
           isIndexBetween = (floor(start) <= index && index <= floor(end)),
           isIndexEnd = (floor(end) === index)
-      return   isSameAndCorrectIndex ? fraction * (end - start) + value
+      return   isSameStartEndAndCorrectIndex ? fraction * (end - start) + value
                : isIndexBetween
                   ? 
                      isIndexStart ? fraction * (1 + index - start) + value

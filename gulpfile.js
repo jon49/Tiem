@@ -3,26 +3,30 @@
 var gulp = require('gulp'); 
 
 // Include Our Plugins
-var concat = require('gulp-concat');
-var uglify = require('gulp-uglify');
-var rename = require('gulp-rename');
+var concat = require('gulp-concat'),
+    uglify = require('gulp-uglify'),
+    rename = require('gulp-rename'),
+    path = require('path')
 
 // combine array of names with their sources
 var combineFileName = function(src, names, extension){
-   return names.map(function(v){return src + v + extension})
+   return names.map(function(v){return path.join(src, v) + extension})
 }
 var app = combineFileName(
-            'js/', 
+            'js', 
             ['utilities', 'engine', 'objects', 'controller', 'events', 'ui'],
-            '.js')
-var libs = combineFileName(
-            'bower_components/',
-            ['mithril/mithril', 'jquery/dist/jquery.min', 'lodash/dist/lodash', 'bilby.js/bilby', 'selectize/dist/js/standalone/selectize.min'],
-            '.js')
+            '.js'
+)
+var libsBower = combineFileName(
+            'bower_components',
+            ['mithril/mithril', 'jquery/dist/jquery', 'lodash/dist/lodash', 'bilby.js/bilby', 'selectize/dist/js/standalone/selectize'],
+            '.js'
+)
 var css = combineFileName(
             'css/',
             ['selectize', 'main'],
-            '.css')
+            '.css'
+)
 
 // Concatenate & Minify JS
 gulp.task('css', function() {
@@ -34,8 +38,10 @@ gulp.task('css', function() {
 
 // Concatenate & Minify JS
 gulp.task('libraries', function() {
-   var dest = 'dist/static/js'
-   return gulp.src(libs)
+   var dest = 'dist/static/js',
+       destLib = 'js/lib'
+   return gulp.src(libsBower)
+       .pipe(gulp.dest(destLib))
        .pipe(concat('all-libraries.js'))
        .pipe(gulp.dest(dest))
        .pipe(rename('all-libraries.min.js'))
@@ -57,7 +63,7 @@ gulp.task('scripts', function() {
 
 // Watch Files For Changes
 gulp.task('watch', function() {
-    gulp.watch(libs.concat(app, css), ['libraries', 'scripts', 'css']);
+    gulp.watch(libsBower.concat(app, css), ['libraries', 'scripts', 'css']);
 });
 
 // Default Task

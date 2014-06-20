@@ -119,14 +119,17 @@ var complement = function (predicate) {
 var addRollingArray = function (array, start, end, fraction) {
    var floor = Math.floor
    return _.map(array, function (value, index) {
-      return   (floor(start) === floor(end) && index === floor(start))
-                  ? fraction * (end - start) + value
-               : (floor(start) <= index && index <= floor(end))
+      var isIndexStart = (floor(start) === index),
+          isSameStartEndAndCorrectIndex = (floor(start) === floor(end) && isIndexStart),
+          isIndexBetween = (floor(start) <= index && index <= floor(end)),
+          isIndexEnd = (floor(end) === index)
+      return   isSameStartEndAndCorrectIndex ? fraction * (end - start) + value
+               : isIndexBetween
                   ? 
-                     ((floor(start) === index) ? fraction * (1 + index - start) + value
-                     : (floor(end) === index) ? fraction * (end - index) + value
-                     : fraction + value)
-               : value
+                     isIndexStart ? fraction * (1 + index - start) + value
+                     : isIndexEnd ? fraction * (end - index) + value
+                     : fraction + value // Index is fully between start and end values
+               : value // Index is out of bounds return original value
    })
 }
 
@@ -819,7 +822,7 @@ selectize_.config = function(ctrl){
          var selectize = $select[0].selectize
       }
    }
-};
+}
 
 
 
@@ -833,7 +836,7 @@ selectize_.config = function(ctrl){
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k, m */
 
-(function(){
+;(function(){
    'use strict';
    
    var cssDeclaration = function(property, value){
