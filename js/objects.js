@@ -7,7 +7,7 @@
 /* global t, document, $, _, k, m, b */
 
 var k = constants([['id'],
-                   ['singleDay'],
+                   ['hours'],
                    ['in'],
                    ['out'],
                    ['state', 'clockState'],
@@ -17,7 +17,6 @@ var k = constants([['id'],
                    ['name'],
                    ['clocked'],
                    ['comment'],
-                   ['total'],
                    ['jobActive'],
                    ['jobs'],
                    ['jobPlaceHolder', 'Add Job'],
@@ -30,7 +29,7 @@ t = t.property('k', k)
 var jobSettingKeys = [k.id(), k.name(), k.jobActive()]
 var clockInKeys = [k.in()]
 var clockOutKeys = [k.out()]
-var jobKeys = [k.id(), k.name(), k.comment(), k.singleDay(), k.total(), k.state()]
+var jobKeys = [k.id(), k.comment(), k.hours(), k.state()]
 var listObjects = ['list']
 
 var L = makeLenses(_.union(jobSettingKeys, clockInKeys, clockOutKeys, jobKeys, listObjects, [k.jobs(), 'jobSettings']))
@@ -42,7 +41,7 @@ t = t.property('L', L)
 // #Object Definitions
 // {jobID: 0, name: 'name', jobActive: true|false}
 var JobSetting = b.tagged('JobSetting', jobSettingKeys),
-// {jobID: 0, name: 'name', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out|in: ''}}
+// {jobID: 0, comment: '', hours: [0..23].map(0), clockState: {out|in: ''}}
     ClockedIn = b.tagged('ClockedIn', clockInKeys),
     ClockedOut = b.tagged('ClockedOut', clockOutKeys),
     Job = b.tagged('Job', jobKeys),
@@ -118,8 +117,8 @@ var isClockedIn = hasDeep('in')
 var clockOut = function (job, date) {
     var start = fractionalHours(get(L.in.compose(L.clockState), job)),
         end = fractionalHours(date),
-        newSingleDay = addRollingArray(get(L.singleDay, job), start, end, 1)
-    return _.reduce([[L.clockState, ClockedOut(date)], [L.singleDay, newSingleDay], [L.total, sum(newSingleDay)]], 
+        newHours = addRollingArray(get(L.hours, job), start, end, 1)
+    return _.reduce([[L.clockState, ClockedOut(date)], [L.hours, newHours]], 
                     function(acc, value){
                        var temp = set(_.first(value), acc, _.last(value))
                        return set(_.first(value), acc, _.last(value))
@@ -143,24 +142,28 @@ var isCreateJobSetting = function(id, name, active){
 }
 
 // validate inputs
-var isCreateJob = function(jobSettings, id, comment, singleDay, inOut, date){
+var isCreateJob = function(jobSettings, id, comment, hours, inOut, date){
    return isWholeNumber(id)
       && _.isString(comment)
-      && (b.isOption(singleDay) && singleDay.fold(function(a){return _.isArray(a) && a.length === 24}, function(){return true}))
+      && (b.isOption(hours) && hours.fold(function(a){return _.isArray(a) && a.length === 24}, function(){return true}))
       && (_.isEqual(inOut, k.in()) || _.isEqual(inOut, k.out()))
       && _.isDate(date)
       && b.isInstanceOf(JobSettings, jobSettings)
 }
 
 // create a new job object
-var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
+var createJob = function(jobSettings, id, comment, hoursOption, inOut, date){
    var jobSetting = _.find(jobSettings.list, _.compose(isEqual(id), _.partial(getNow, L.id)))
    if (_.isEmpty(jobSetting))
       return b.error('A new job must be created in the job settings first!')
-   var singleDay_ = singleDay.getOrElse(_.range(24).map(function(){return 0}))
+   var hours_ = hoursOption.getOrElse(_.range(24).map(f('0')))
    var inOut_ = _.isEqual(inOut, k.out()) ? ClockedOut(date) : ClockedIn(date)
-   return Job(id, jobSetting[k.name()], comment, singleDay_, t.sum(singleDay_), inOut_)
+   return Job(id, comment, hours_, inOut_)
 }
+
+var jobName = _.curry(function(jobSettings, job){
+   return jobSettings.get(getNow(L.id, job)).fold(get(L.name), 'Unknown Name')
+})
 
 var toObject = function(thisArg){
    return (thisArg || this).getOrElse({})
@@ -230,6 +233,11 @@ t = t.property(
           _.isDate,
           updateDate
        )
+      .method(
+         'name',
+         function(jobSettings, job){return b.isInstanceOf(JobSettings, jobSettings) && b.isInstanceOf(Job, job)},
+         jobName
+      )
       .method(
          'toObject',
          b.isOption,

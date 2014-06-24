@@ -123,11 +123,10 @@ var addRollingArray = function (array, start, end, fraction) {
           isSameStartEndAndCorrectIndex = (floor(start) === floor(end) && isIndexStart),
           isIndexBetween = (floor(start) <= index && index <= floor(end)),
           isIndexEnd = (floor(end) === index)
-      return   isSameStartEndAndCorrectIndex ? fraction * (end - start) + value
-               : isIndexBetween
-                  ? 
-                     isIndexStart ? fraction * (1 + index - start) + value
-                     : isIndexEnd ? fraction * (end - index) + value
+      return     isSameStartEndAndCorrectIndex ? fraction * (end - start) + value
+               : isIndexBetween ? 
+                       isIndexStart ? fraction * (1 + index - start) + value
+                     : isIndexEnd   ? fraction * (end - index) + value
                      : fraction + value // Index is fully between start and end values
                : value // Index is out of bounds return original value
    })

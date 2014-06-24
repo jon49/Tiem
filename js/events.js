@@ -58,7 +58,7 @@ var addJob = function(ctrl, value){
       }
    })
    jobSetting.map(function(j){
-      // jobSettings, id, comment, singleDay, inOut, date
+      // jobSettings, id, comment, hours, inOut, date
       var settings = jobSettings.update(t.JobSetting.create(j)),
           jobs = get(L.jobs, ctrl).update(t.Job.create(settings, j.id, '', b.none, k.in(), new Date()))
       // update controller
@@ -79,8 +79,9 @@ selectize_.config = function(ctrl){
    return function(element, isInit){
       var $el = $(element)
       if (!isInit){
-         var options$ = _.reject(ctrl.jobSettings.toArray(), function(job){
-               return _.contains(ctrl.jobs.toArray(), job.name)
+         var currentJobIds = _.pluck(ctrl.jobs.toArray(), k.id())
+         var options$ = _.reject(ctrl.jobSettings.toArray(), function(j){
+               return _.contains(currentJobIds, get(L.id, j))
             })
          var options_ = {
             persist: false,

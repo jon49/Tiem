@@ -56,10 +56,11 @@
       var displayNone = (hideMe) ? {display: 'none'} : {},
           fadeMeIn = hideMe ? fadeIn : {},
           clockState = job.clockState[(isClockedIn(job) ? k.in() : k.out())]
+          name = t.Job.name(ctrl.jobSettings, job)
       return m('.stamp.pure-g', {id: job.id, style: displayNone, config: fadeMeIn}, [
-               m('button.pure-button.pure-u-14-24.jobButton', {title: job.name, onclick: toggleButton.bind(ctrl, job.id)}, job.name),
+               m('button.pure-button.pure-u-14-24.jobButton', {title: name, onclick: toggleButton.bind(ctrl, job.id)}, name),
                m('button.pure-button.pure-u-5-24.time', {title: clockState}, clockState.toLocaleTimeString()),
-               m('button.pure-button.pure-u-3-24.hours', job.total.toFixed(2)),
+               m('button.pure-button.pure-u-3-24.hours', t.sum(getNow(L.hours, job)).toFixed(2)),
                m('button.pure-button.pure-u-2-24.notes', {title: job.comment}, [
                   m('i.fa.fa-pencil')
                ]),
@@ -78,7 +79,7 @@
       return m(stampClass, 
                _(jobList)
                .filter(clockType)
-               .sortBy(_.compose(invoke('toLowerCase'), get(L.name)))
+               .sortBy(_.compose(invoke('toLowerCase'), jobName(ctrl.jobSettings)))
                .map(function(j){
                   return (isRecentlyAdded(get(L.id, j)) ? hiddenTiemStamp : visibleTiemStamp)(j, ctrl)
                })
