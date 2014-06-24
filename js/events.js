@@ -67,9 +67,9 @@ var addJob = function(ctrl, value){
 }
 
 var toggleButton = _.curry(function(id, e){
-   var ctrl = this 
+   var ctrl = this,
        jobs = get(L.jobs, ctrl), //jobs list
-       job = t.Job.update(new Date(), jobs.get(id)), // toggled job
+       job = t.Job.update(new Date(), jobs.get(id)) // toggled job
    ctrl.update(b.singleton('jobs', jobs.update(job))) // get new list then update controller
 })
 

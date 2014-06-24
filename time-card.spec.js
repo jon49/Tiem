@@ -6,16 +6,6 @@
 /*jshint indent:3, curly:false, laxbreak:true */
 
 describe("How the utilities are used in project", function () {
-   //stringSize
-   it('should trim and cut words which are too long', function () {
-      expect(t.stringSize(' yes! ', 3)).toEqual('yes')
-   })
-   it('should be able to trim without cutting', function () {
-      expect(t.stringSize(' yes! ', 4)).toEqual('yes!')
-   })
-   it('should leave alone a string without leading/following white space which isn\'t to long', function () {
-      expect(t.stringSize('yes !', 5)).toEqual('yes !')
-   })
    //isWholeNumber
    it('should return true when a whole number is given', function () {
       expect(t.isWholeNumber(3)).toEqual(true)
@@ -25,16 +15,6 @@ describe("How the utilities are used in project", function () {
    })
    it('should return false when given an item which is not a number', function () {
       expect(t.isWholeNumber('3')).toEqual(false)
-   })
-   //isBetween
-   it('should tell if a number is in between two numbers', function () {
-      expect(t.isBetween(2, 4, 3)).toBe(true)
-   })
-   it('should tell if a number is in between or equal to two numbers', function () {
-      expect(t.isBetween(2, 4, 2) && t.isBetween(2, 4, 4)).toBe(true)
-   })
-   it('should tell if a number is outside the bounds of two numbers', function () {
-      expect(t.isBetween(2, 4, 1) && t.isBetween(2, 4, 5)).toBe(false)
    })
    //areUnique
    it('should determine if the values in an object array are unique', function () {
@@ -57,9 +37,9 @@ describe("How the utilities are used in project", function () {
          color: 'brown'
       }]
 
-      expect(t.areUnique(uniqueObject, 'dogName')).toBe(true)
-      expect(t.areUnique(uniqueObjects, 'dogName')).toBe(true)
-      expect(t.areUnique(notUniqueObjects, 'dogName')).not.toBe(true)
+      expect(t.areUniqueNow('dogName', uniqueObject)).toBe(true)
+      expect(t.areUniqueNow('dogName', uniqueObjects)).toBe(true)
+      expect(t.areUniqueNow('dogName', notUniqueObjects)).not.toBe(true)
    })
    it('should convert arguments to array and flatten array', function () {
       var test = function () {
@@ -103,16 +83,16 @@ describe("How the utilities are used in project", function () {
          expect(t.sum([1, 2, '3', 'a'])).toEqual(6)
       })
    })
-   describe("The function areUniqueValues", function () {
+   describe("The function areUnique", function () {
       it("should return a function which evaluates an array of objects given a certain key - true when all unique", function () {
-         expect(t.areUniqueValues('myKey')([{
+         expect(t.areUnique('myKey')([{
             myKey: 1
          }, {
             myKey: 2
          }])).toBe(true)
       })
       it("should return a function which evaluates an array of objects given a certain key - false when not unique", function () {
-         expect(t.areUniqueValues('myKey')([{
+         expect(t.areUnique('myKey')([{
             myKey: 2
          }, {
             myKey: 2
@@ -141,35 +121,6 @@ describe("How the utilities are used in project", function () {
       })
       it('should be false when all specified keys are not in object', function(){
          expect(t.hasAll(['id','key1','key2'])(o)).toBe(false)
-      })
-   })
-   describe('The function singleTagged', function(){
-      it('should create an object with a single key', function(){
-         expect(t.singleTagged('id')(1)).toEqual({id: 1})
-      })
-   })
-   describe('The function zipOverObject', function(){
-      var o1 = {id:1, name: 'jon', last:'nyman'}
-      var o2 = {id:2, name: 'laura', book:'I love'}
-      var o = t.zipOverObject(o1, o2)
-      it('should combine two objects without changing the originals', function(){
-         expect(o1).toEqual({id:1, name: 'jon', last:'nyman'})
-         expect(o2).toEqual({id:2, name: 'laura', book:'I love'})
-      })
-      it('should combine the two object making any repetitive object into an array', function(){
-         expect(o).toEqual({id:[1, 2], name:['jon', 'laura'], last:'nyman', book:'I love'})
-      })
-   })
-   describe('The function zipOverObjects', function(){
-      var o1 = {id:1, name: 'jon', last:'nyman'}
-      var o2 = {id:2, name: 'laura', book:'I love'}
-      var o = t.zipOverObjects([o1, o2])
-      it('should combine two objects without changing the originals', function(){
-         expect(o1).toEqual({id:1, name: 'jon', last:'nyman'})
-         expect(o2).toEqual({id:2, name: 'laura', book:'I love'})
-      })
-      it('should combine the two object making any repetitive object into an array', function(){
-         expect(o).toEqual({id:[1, 2], name:['jon', 'laura'], last:'nyman', book:'I love'})
       })
    })
    describe('The function isNonEmpty', function(){

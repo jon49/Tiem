@@ -156,7 +156,7 @@ var createJob = function(jobSettings, id, comment, hoursOption, inOut, date){
    var jobSetting = _.find(jobSettings.list, _.compose(isEqual(id), _.partial(getNow, L.id)))
    if (_.isEmpty(jobSetting))
       return b.error('A new job must be created in the job settings first!')
-   var hours_ = hoursOption.getOrElse(_.range(24).map(f('0')))
+   var hours_ = hoursOption.getOrElse(_.range(24).map(_.constant(0)))
    var inOut_ = _.isEqual(inOut, k.out()) ? ClockedOut(date) : ClockedIn(date)
    return Job(id, comment, hours_, inOut_)
 }

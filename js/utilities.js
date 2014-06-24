@@ -11,28 +11,16 @@
  **Utilities**
  */
 
+"use strict";
+
 var b = bilby
 var t = b.environment()
 
 var f = function(func){
    var funcArray = func.split('->')
-   return   (funcArray.length === 1)
-            ? new Function('x', 'return (' + funcArray[0].trim() + ')')
-            : new Function(funcArray[0].trim(), 'return (' + funcArray[1].trim() + ')')
-}
-
-/**
- * Takes an object and returns a string of specified length or less, trimmed.
- * @param {String} string String to clean and resize.
- * @param {Number} size Integer to resize string to.
- * @returns {String} New string which has been trimmed and resized.
- */
-var stringSize = function (string, size) {
-   "use strict";
-   if (!_.isNumber(size)) {
-      throw new Error("stringSize : Not a number!")
-   }
-   return String(string).trim().slice(0, size)
+   return (funcArray.length === 1)
+          ? new Function('x', 'return (' + funcArray[0].trim() + ')')
+          : new Function(funcArray[0].trim(), 'return (' + funcArray[1].trim() + ')')
 }
 
 /**
@@ -45,37 +33,18 @@ var isWholeNumber = function (number) {
 }
 
 /**
- * Takes a number and determines if it is equal to or inbetween two other numbers.
- * @param {Number} lower Lower bound to test.
- * @param {Number} upper Upper bound to test.
- * @param {Number} value Number to test.
- * @returns {Boolean} True if between upper & lower bounds, otherwise false.
- */
-var isBetween = function (lower, upper, value) {
-   return ((lower <= value) && (value <= upper))
-}
-
-/**
  * Determine if items in object are unique.
  * @param {Array<Object>} objects Objects to test if they are unique.
  * @param {String} property Property name of object to test against.
  * @returns {Boolean} True if unique, otherwise false.
  */
-var areUnique = function (objects, property) {
+var areUniqueNow = function (property, objects) {
    return (_.isEmpty(objects)) 
           ? false
           : _.isEqual(_.uniq(_.map(objects, property)).length, objects.length)
 }
 
-/**
- * Determine if key has unique values for an array of objects
- * @example tiem.areUniqueValues('myKey')([{key1: 1}, {key1: 2}]) => true
- * @param {String} key Key value to test.
- * @returns {Function} Function which takes an array of objects.
- */
-var areUniqueValues = function (key) {
-   return _.partialRight(areUnique, key)
-}
+var areUnique = _.curry(areUniqueNow)
 
 /**
  * Converts to array then flattens results.
@@ -108,15 +77,14 @@ var complement = function (predicate) {
 var addRollingArray = function (array, start, end, fraction) {
    var floor = Math.floor
    return _.map(array, function (value, index) {
-      var isIndexStart = (floor(start) === index),
-          isSameStartEndAndCorrectIndex = (floor(start) === floor(end) && isIndexStart),
-          isIndexBetween = (floor(start) <= index && index <= floor(end)),
+      var isIndexBetween = (floor(start) <= index && index <= floor(end)),
+          isIndexStart = (floor(start) === index),
           isIndexEnd = (floor(end) === index)
-      return     isSameStartEndAndCorrectIndex ? fraction * (end - start) + value
-               : isIndexBetween ? 
-                       isIndexStart ? fraction * (1 + index - start) + value
-                     : isIndexEnd   ? fraction * (end - index) + value
-                     : fraction + value // Index is fully between start and end values
+      return   isIndexBetween ? 
+                    isIndexStart && isIndexEnd ? fraction * (end - start) + value
+                  : isIndexStart               ? fraction * (1 + index - start) + value
+                  : isIndexEnd                 ? fraction * (end - index) + value
+                  : fraction + value // Index is fully between start and end values
                : value // Index is out of bounds return original value
    })
 }
@@ -190,41 +158,13 @@ var hasAll = _.curry(function(attrs, o){
 
 var isEqual = _.curry(_.isEqual, 2)
 
-var singleTagged = function(type){
-   return b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type]))
-}
-
-// combine objects together into new object. any keys which are the same will have an array of values.
-var zipOverObject = _.curry(function(object1, object2){
-   var o1 = _.cloneDeep(object1)
-      o2 = _.cloneDeep(object2),
-      a1 = _.keys(o1), a2 = _.keys(o2),
-      diff = _.difference(a2, a1),
-      inter = _.intersection(a1, a2),
-      c1 = _.cloneDeep(o1)
-   _.forEach(diff, function(key){
-      c1[key] = o2[key]
-   })
-   _.forEach(inter, function(key){
-      c1[key] = (_.isArray(c1[key])) ? c1[key] : [c1[key]]
-      c1[key] = c1[key].concat(o2[key])
-   })
-   return c1
-})
-
-var zipOverObjects = _.partialRight(_.reduce, function(acc, o){
-   return zipOverObject(acc, o)
-})
-
 var isSomething = complement(_.isEmpty)
 
 var isSomeString = function(s){
    return isSomething(s) && _.isString(s)
 }
 
-var map = function(func){
-   return _.partialRight(_.map, func)
-}
+var mapWith = b.flip(_.curry(_.map))
 
 var not = complement(_.identity)
 
@@ -238,8 +178,8 @@ var concat = _.curry(function(a, b){
 
 //Lodash function changed for single item
 var invokeNow = function(methodName, value, args){
-   var isFunc = typeof methodName == 'function'
-       func = isFunc ? methodName : (value != null && value[methodName])
+   var isFunc = typeof methodName == 'function',
+       func = isFunc ? methodName : (value != null && value[methodName]),
        args_ = _.isArray(args) ? args : []
    return func ? func.apply(value, args_) : void 0
 }
@@ -252,16 +192,14 @@ var isArrayOf = _.curry(function(fn, a){
 })
 
 // Determine if option is an option and passes test function
-var isOptionOf = _.curry(function(test, option){
-   return b.isOption(option) ? option.fold(test, true) : false
+var isOptionOf = _.curry(function(predicate, option){
+   return b.isOption(option) ? option.fold(predicate, true) : false
 })
 
 t = t
-   .property('stringSize', stringSize)
    .property('isWholeNumber', isWholeNumber)
-   .property('isBetween', isBetween)
+   .property('areUniqueNow', areUniqueNow)
    .property('areUnique', areUnique)
-   .property('areUniqueValues', areUniqueValues)
    .property('toFlatArray', toFlatArray)
    .property('complement', complement)
    .property('addRollingArray', addRollingArray)
@@ -274,11 +212,9 @@ t = t
    .property('hasAll', hasAll)
    .property('isEqual', isEqual)
    .property('createObject', createObject)
-   .method('singleTagged', isSomeString, singleTagged)
-   .method('zipOverObject', function(a, b){return _.isPlainObject(a) && _.isPlainObject(b)}, zipOverObject)
-   .method('zipOverObjects', _.isArray, zipOverObjects)
    .property('isSomething', isSomething)
    .property('isSomeString', isSomeString)
+   .property('mapWith', mapWith)
    .method('not', _.isBoolean, not)
    .property('hasDeep', hasDeep)
    .property('invoke', invoke)
