@@ -41,11 +41,7 @@ var stringSize = function (string, size) {
  * @returns {Boolean} True if whole number otherwise false.
  */
 var isWholeNumber = function (number) {
-   "use strict";
-   if (_.isNumber(number) && (number > -1) && (Math.floor(number) === number)) {
-      return true
-   }
-   return false
+   return (_.isNumber(number) && (number > -1) && (Math.floor(number) === number))
 }
 
 /**
@@ -56,11 +52,7 @@ var isWholeNumber = function (number) {
  * @returns {Boolean} True if between upper & lower bounds, otherwise false.
  */
 var isBetween = function (lower, upper, value) {
-   "use strict";
-   if ((lower <= value) && (value <= upper)) {
-      return true
-   }
-   return false
+   return ((lower <= value) && (value <= upper))
 }
 
 /**
@@ -70,12 +62,9 @@ var isBetween = function (lower, upper, value) {
  * @returns {Boolean} True if unique, otherwise false.
  */
 var areUnique = function (objects, property) {
-   'use strict';
-   if (_.isEmpty(objects)) {
-      return false
-   }
-   var objectProperties = _.map(objects, property)
-   return _.isEqual(_.uniq(objectProperties).length, objects.length)
+   return (_.isEmpty(objects)) 
+          ? false
+          : _.isEqual(_.uniq(_.map(objects, property)).length, objects.length)
 }
 
 /**
