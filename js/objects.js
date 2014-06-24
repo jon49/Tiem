@@ -145,7 +145,7 @@ var isCreateJobSetting = function(id, name, active){
 var isCreateJob = function(jobSettings, id, comment, hours, inOut, date){
    return isWholeNumber(id)
       && _.isString(comment)
-      && (b.isOption(hours) && hours.fold(function(a){return _.isArray(a) && a.length === 24}, function(){return true}))
+      && isOptionOf(function(a){return _.isArray(a) && a.length === 24}, hours)
       && (_.isEqual(inOut, k.in()) || _.isEqual(inOut, k.out()))
       && _.isDate(date)
       && b.isInstanceOf(JobSettings, jobSettings)
@@ -168,17 +168,6 @@ var jobName = _.curry(function(jobSettings, job){
 var toObject = function(thisArg){
    return (thisArg || this).getOrElse({})
 }
-
-var isOptionOf = _.curry(function(objectType, option){
-   var temp = b.isOption(option)
-   var temp0 = option.fold(function(o){
-      return b.isInstanceOf(objectType, o)
-      } , false)
-   var temp0_ = option.fold(b.isInstanceOf(objectType), false)   
-   var temp1 = option.isNone
-   var all = temp && (temp0 || temp1)
-   return b.isOption(option) && (option.fold(b.isInstanceOf(objectType), false) || option.isNone)
-})
 
 t = 
    t.property(
@@ -266,7 +255,7 @@ t =
       )
       .method(
          'update',
-         isOptionOf(JobSetting),
+         isOptionOf(b.isInstanceOf(JobSetting)),
          function(x){ return JobSettings(xAddJob(x, this) ) }
       )
       .method(
@@ -296,7 +285,7 @@ t =
       )
       .method(
          'update',
-         isOptionOf(Job),
+         isOptionOf(b.isInstanceOf(Job)),
          function(x){ return Jobs(xAddJob(x, this) ) }
       )
       .method(

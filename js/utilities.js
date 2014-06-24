@@ -262,6 +262,11 @@ var isArrayOf = _.curry(function(fn, a){
    return _.isArray(a) && _.all(a, fn)
 })
 
+// Determine if option is an option and passes test function
+var isOptionOf = _.curry(function(test, option){
+   return b.isOption(option) ? option.fold(test, true) : false
+})
+
 t = t
    .property('stringSize', stringSize)
    .property('isWholeNumber', isWholeNumber)

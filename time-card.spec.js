@@ -225,6 +225,9 @@ describe("How the utilities are used in project", function () {
          expect(t.isArrayOf(b.isInstanceOf(O))(aO.concat(F('doh!')))).toBe(false)
       })
    })
+   describe('The function isOptionOf', function(){
+      
+   })
 })
 
 //describe('Core mithril extensions', function(){
@@ -245,9 +248,6 @@ describe("How the utilities are used in project", function () {
 describe("Core constants", function () {
    it("should return the string 'id'", function () {
       expect(t.k.id()).toEqual("id")
-   })
-   it("should return the string 'singleDay'", function () {
-      expect(t.k.singleDay()).toEqual("singleDay")
    })
    it("should return the string 'in'", function () {
       expect(t.k.in()).toEqual("in")
@@ -369,7 +369,7 @@ describe('Job object manipulation and creation', function(){
       it('should be able to create a valid job', function(){
          expect(get(L.id, toObject(j0))).toBe(0)
          expect(get(L.id, toObject(j1))).toBe(1)
-         expect(get(L.name, toObject(j0))).toBe('My lovely job')
+         expect(t.Job.name(settings, toObject(j0))).toBe('My lovely job')
       })
    })
    describe('the function update', function(){
@@ -381,8 +381,8 @@ describe('Job object manipulation and creation', function(){
          var dateOut = new Date(2014, 4, 2, 10, 30)
          var j0_ = b.extend(toObject(j0), {clockState: {'in': newDate}})
          expect(toObject(t.Job.update(newDate, j0))).toEqual(j0_) // clock in
-         var singleDay_ = _.range(24).map(function(){return 0}); singleDay_[10] = 0.5
-         var j0$ = _.extend({}, j0_, {clockState: {'out': dateOut}}, {total: 0.5}, {singleDay: singleDay_})
+         var singleDay_ = _.range(24).map(f('0')); singleDay_[10] = 0.5
+         var j0$ = _.extend({}, j0_, {clockState: {'out': dateOut}}, {hours: singleDay_})
          var j0_in = t.Job.create(settings, 0, '', b.none, t.k.in(), newDate)
          expect(toObject(t.Job.update(dateOut, j0_in))).toEqual(j0$)
       })
