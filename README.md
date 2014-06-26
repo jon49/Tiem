@@ -1,6 +1,6 @@
 # Time Card - Web
 
-Tiem is now available online at <http://tiemcard.appspot.com/>. It is still in the works but it does have some basic functionality.
+Tiem is now available online at <https://tiemcard.appspot.com/>. It is still in the works but it does have some basic functionality.
 
 ### Simple Mind Map (needs to be updated):
 
