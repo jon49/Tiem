@@ -1,0 +1,31 @@
+{
+  "name": "Tiem",
+  "version": "0.0.0",
+  "description": "Tiem is now available online at <https://tiemcard.appspot.com/>. It is still in the works but it does have some basic functionality.",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "dependencies": {
+    "gulp-rename": "~1.2.0",
+    "gulp-concat": "~2.2.0",
+    "gulp": "~3.8.1",
+    "gulp-uglify": "~0.3.0",
+    "hapi": "~6.0.2",
+    "path": "~0.4.9",
+    "nedb": "~0.10.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jon49/Tiem"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/jon49/Tiem/issues"
+  }
+}

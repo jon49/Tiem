@@ -11,28 +11,16 @@
  **Utilities**
  */
 
+"use strict";
+
 var b = bilby
 var t = b.environment()
 
 var f = function(func){
    var funcArray = func.split('->')
-   return   (funcArray.length === 1)
-            ? new Function('x', 'return (' + funcArray[0].trim() + ')')
-            : new Function(funcArray[0].trim(), 'return (' + funcArray[1].trim() + ')')
-}
-
-/**
- * Takes an object and returns a string of specified length or less, trimmed.
- * @param {String} string String to clean and resize.
- * @param {Number} size Integer to resize string to.
- * @returns {String} New string which has been trimmed and resized.
- */
-var stringSize = function (string, size) {
-   "use strict";
-   if (!_.isNumber(size)) {
-      throw new Error("stringSize : Not a number!")
-   }
-   return String(string).trim().slice(0, size)
+   return (funcArray.length === 1)
+          ? new Function('x', 'return (' + funcArray[0].trim() + ')')
+          : new Function(funcArray[0].trim(), 'return (' + funcArray[1].trim() + ')')
 }
 
 /**
@@ -41,26 +29,7 @@ var stringSize = function (string, size) {
  * @returns {Boolean} True if whole number otherwise false.
  */
 var isWholeNumber = function (number) {
-   "use strict";
-   if (_.isNumber(number) && (number > -1) && (Math.floor(number) === number)) {
-      return true
-   }
-   return false
-}
-
-/**
- * Takes a number and determines if it is equal to or inbetween two other numbers.
- * @param {Number} lower Lower bound to test.
- * @param {Number} upper Upper bound to test.
- * @param {Number} value Number to test.
- * @returns {Boolean} True if between upper & lower bounds, otherwise false.
- */
-var isBetween = function (lower, upper, value) {
-   "use strict";
-   if ((lower <= value) && (value <= upper)) {
-      return true
-   }
-   return false
+   return (_.isNumber(number) && (number > -1) && (Math.floor(number) === number))
 }
 
 /**
@@ -69,24 +38,13 @@ var isBetween = function (lower, upper, value) {
  * @param {String} property Property name of object to test against.
  * @returns {Boolean} True if unique, otherwise false.
  */
-var areUnique = function (objects, property) {
-   'use strict';
-   if (_.isEmpty(objects)) {
-      return false
-   }
-   var objectProperties = _.map(objects, property)
-   return _.isEqual(_.uniq(objectProperties).length, objects.length)
+var areUniqueNow = function (property, objects) {
+   return (_.isEmpty(objects)) 
+          ? false
+          : _.isEqual(_.uniq(_.map(objects, property)).length, objects.length)
 }
 
-/**
- * Determine if key has unique values for an array of objects
- * @example tiem.areUniqueValues('myKey')([{key1: 1}, {key1: 2}]) => true
- * @param {String} key Key value to test.
- * @returns {Function} Function which takes an array of objects.
- */
-var areUniqueValues = function (key) {
-   return _.partialRight(areUnique, key)
-}
+var areUnique = _.curry(areUniqueNow)
 
 /**
  * Converts to array then flattens results.
@@ -119,16 +77,14 @@ var complement = function (predicate) {
 var addRollingArray = function (array, start, end, fraction) {
    var floor = Math.floor
    return _.map(array, function (value, index) {
-      var isIndexStart = (floor(start) === index),
-          isSameStartEndAndCorrectIndex = (floor(start) === floor(end) && isIndexStart),
-          isIndexBetween = (floor(start) <= index && index <= floor(end)),
+      var isIndexBetween = (floor(start) <= index && index <= floor(end)),
+          isIndexStart = (floor(start) === index),
           isIndexEnd = (floor(end) === index)
-      return   isSameStartEndAndCorrectIndex ? fraction * (end - start) + value
-               : isIndexBetween
-                  ? 
-                     isIndexStart ? fraction * (1 + index - start) + value
-                     : isIndexEnd ? fraction * (end - index) + value
-                     : fraction + value // Index is fully between start and end values
+      return   isIndexBetween ? 
+                    isIndexStart && isIndexEnd ? fraction * (end - start) + value
+                  : isIndexStart               ? fraction * (1 + index - start) + value
+                  : isIndexEnd                 ? fraction * (end - index) + value
+                  : fraction + value // Index is fully between start and end values
                : value // Index is out of bounds return original value
    })
 }
@@ -202,41 +158,13 @@ var hasAll = _.curry(function(attrs, o){
 
 var isEqual = _.curry(_.isEqual, 2)
 
-var singleTagged = function(type){
-   return b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type]))
-}
-
-// combine objects together into new object. any keys which are the same will have an array of values.
-var zipOverObject = _.curry(function(object1, object2){
-   var o1 = _.cloneDeep(object1)
-      o2 = _.cloneDeep(object2),
-      a1 = _.keys(o1), a2 = _.keys(o2),
-      diff = _.difference(a2, a1),
-      inter = _.intersection(a1, a2),
-      c1 = _.cloneDeep(o1)
-   _.forEach(diff, function(key){
-      c1[key] = o2[key]
-   })
-   _.forEach(inter, function(key){
-      c1[key] = (_.isArray(c1[key])) ? c1[key] : [c1[key]]
-      c1[key] = c1[key].concat(o2[key])
-   })
-   return c1
-})
-
-var zipOverObjects = _.partialRight(_.reduce, function(acc, o){
-   return zipOverObject(acc, o)
-})
-
 var isSomething = complement(_.isEmpty)
 
 var isSomeString = function(s){
    return isSomething(s) && _.isString(s)
 }
 
-var map = function(func){
-   return _.partialRight(_.map, func)
-}
+var mapWith = b.flip(_.curry(_.map))
 
 var not = complement(_.identity)
 
@@ -250,8 +178,8 @@ var concat = _.curry(function(a, b){
 
 //Lodash function changed for single item
 var invokeNow = function(methodName, value, args){
-   var isFunc = typeof methodName == 'function'
-       func = isFunc ? methodName : (value != null && value[methodName])
+   var isFunc = typeof methodName == 'function',
+       func = isFunc ? methodName : (value != null && value[methodName]),
        args_ = _.isArray(args) ? args : []
    return func ? func.apply(value, args_) : void 0
 }
@@ -263,12 +191,15 @@ var isArrayOf = _.curry(function(fn, a){
    return _.isArray(a) && _.all(a, fn)
 })
 
+// Determine if option is an option and passes test function
+var isOptionOf = _.curry(function(predicate, option){
+   return b.isOption(option) ? option.fold(predicate, true) : false
+})
+
 t = t
-   .property('stringSize', stringSize)
    .property('isWholeNumber', isWholeNumber)
-   .property('isBetween', isBetween)
+   .property('areUniqueNow', areUniqueNow)
    .property('areUnique', areUnique)
-   .property('areUniqueValues', areUniqueValues)
    .property('toFlatArray', toFlatArray)
    .property('complement', complement)
    .property('addRollingArray', addRollingArray)
@@ -281,11 +212,9 @@ t = t
    .property('hasAll', hasAll)
    .property('isEqual', isEqual)
    .property('createObject', createObject)
-   .method('singleTagged', isSomeString, singleTagged)
-   .method('zipOverObject', function(a, b){return _.isPlainObject(a) && _.isPlainObject(b)}, zipOverObject)
-   .method('zipOverObjects', _.isArray, zipOverObjects)
    .property('isSomething', isSomething)
    .property('isSomeString', isSomeString)
+   .property('mapWith', mapWith)
    .method('not', _.isBoolean, not)
    .property('hasDeep', hasDeep)
    .property('invoke', invoke)
@@ -366,7 +295,7 @@ var over = _.curry(overNow)
 /* global t, document, $, _, k, m, b */
 
 var k = constants([['id'],
-                   ['singleDay'],
+                   ['hours'],
                    ['in'],
                    ['out'],
                    ['state', 'clockState'],
@@ -376,7 +305,6 @@ var k = constants([['id'],
                    ['name'],
                    ['clocked'],
                    ['comment'],
-                   ['total'],
                    ['jobActive'],
                    ['jobs'],
                    ['jobPlaceHolder', 'Add Job'],
@@ -389,7 +317,7 @@ t = t.property('k', k)
 var jobSettingKeys = [k.id(), k.name(), k.jobActive()]
 var clockInKeys = [k.in()]
 var clockOutKeys = [k.out()]
-var jobKeys = [k.id(), k.name(), k.comment(), k.singleDay(), k.total(), k.state()]
+var jobKeys = [k.id(), k.comment(), k.hours(), k.state()]
 var listObjects = ['list']
 
 var L = makeLenses(_.union(jobSettingKeys, clockInKeys, clockOutKeys, jobKeys, listObjects, [k.jobs(), 'jobSettings']))
@@ -401,7 +329,7 @@ t = t.property('L', L)
 // #Object Definitions
 // {jobID: 0, name: 'name', jobActive: true|false}
 var JobSetting = b.tagged('JobSetting', jobSettingKeys),
-// {jobID: 0, name: 'name', comment: '', singleDay: [0..23].map(0), total: 0, clockState: {out|in: ''}}
+// {jobID: 0, comment: '', hours: [0..23].map(0), clockState: {out|in: ''}}
     ClockedIn = b.tagged('ClockedIn', clockInKeys),
     ClockedOut = b.tagged('ClockedOut', clockOutKeys),
     Job = b.tagged('Job', jobKeys),
@@ -477,8 +405,8 @@ var isClockedIn = hasDeep('in')
 var clockOut = function (job, date) {
     var start = fractionalHours(get(L.in.compose(L.clockState), job)),
         end = fractionalHours(date),
-        newSingleDay = addRollingArray(get(L.singleDay, job), start, end, 1)
-    return _.reduce([[L.clockState, ClockedOut(date)], [L.singleDay, newSingleDay], [L.total, sum(newSingleDay)]], 
+        newHours = addRollingArray(get(L.hours, job), start, end, 1)
+    return _.reduce([[L.clockState, ClockedOut(date)], [L.hours, newHours]], 
                     function(acc, value){
                        var temp = set(_.first(value), acc, _.last(value))
                        return set(_.first(value), acc, _.last(value))
@@ -502,39 +430,37 @@ var isCreateJobSetting = function(id, name, active){
 }
 
 // validate inputs
-var isCreateJob = function(jobSettings, id, comment, singleDay, inOut, date){
+var isCreateJob = function(jobSettings, id, comment, hours, inOut, date){
    return isWholeNumber(id)
       && _.isString(comment)
-      && (b.isOption(singleDay) && singleDay.fold(function(a){return _.isArray(a) && a.length === 24}, function(){return true}))
+      && isOptionOf(function(a){return _.isArray(a) && a.length === 24}, hours)
       && (_.isEqual(inOut, k.in()) || _.isEqual(inOut, k.out()))
       && _.isDate(date)
       && b.isInstanceOf(JobSettings, jobSettings)
 }
 
 // create a new job object
-var createJob = function(jobSettings, id, comment, singleDay, inOut, date){
+var createJob = function(jobSettings, id, comment, hoursOption, inOut, date){
    var jobSetting = _.find(jobSettings.list, _.compose(isEqual(id), _.partial(getNow, L.id)))
    if (_.isEmpty(jobSetting))
       return b.error('A new job must be created in the job settings first!')
-   var singleDay_ = singleDay.getOrElse(_.range(24).map(function(){return 0}))
+   var hours_ = hoursOption.getOrElse(_.range(24).map(_.constant(0)))
    var inOut_ = _.isEqual(inOut, k.out()) ? ClockedOut(date) : ClockedIn(date)
-   return Job(id, jobSetting[k.name()], comment, singleDay_, t.sum(singleDay_), inOut_)
+   return Job(id, comment, hours_, inOut_)
 }
+
+var createJobFromObject = function(object){
+   var clockState = _.has(object.clockState, 'out') ? ClockedOut(new Date(object.clockState.out)) : ClockedIn(new Date(object.clockState.in))
+   return Job(parseInt(object.id), object.comment, _(object.hours).map(f('parseFloat(x)')).value(), clockState)
+}
+
+var jobName = _.curry(function(jobSettings, job){
+   return jobSettings.get(getNow(L.id, job)).fold(get(L.name), 'Unknown Name')
+})
 
 var toObject = function(thisArg){
    return (thisArg || this).getOrElse({})
 }
-
-var isOptionOf = _.curry(function(objectType, option){
-   var temp = b.isOption(option)
-   var temp0 = option.fold(function(o){
-      return b.isInstanceOf(objectType, o)
-      } , false)
-   var temp0_ = option.fold(b.isInstanceOf(objectType), false)   
-   var temp1 = option.isNone
-   var all = temp && (temp0 || temp1)
-   return b.isOption(option) && (option.fold(b.isInstanceOf(objectType), false) || option.isNone)
-})
 
 t = 
    t.property(
@@ -580,6 +506,11 @@ t = t.property(
            _.compose(toOption, createJob)
        )
        .method(
+          'create',
+          _.isPlainObject,
+          createJobFromObject
+       )
+       .method(
           'update',
           _.isString,
           change(L.comment)
@@ -589,6 +520,11 @@ t = t.property(
           _.isDate,
           updateDate
        )
+      .method(
+         'name',
+         function(jobSettings, job){return b.isInstanceOf(JobSettings, jobSettings) && b.isInstanceOf(Job, job)},
+         jobName
+      )
       .method(
          'toObject',
          b.isOption,
@@ -617,7 +553,7 @@ t =
       )
       .method(
          'update',
-         isOptionOf(JobSetting),
+         isOptionOf(b.isInstanceOf(JobSetting)),
          function(x){ return JobSettings(xAddJob(x, this) ) }
       )
       .method(
@@ -647,7 +583,7 @@ t =
       )
       .method(
          'update',
-         isOptionOf(Job),
+         isOptionOf(b.isInstanceOf(Job)),
          function(x){ return Jobs(xAddJob(x, this) ) }
       )
       .method(
@@ -678,12 +614,34 @@ extendObject(Jobs, t.Jobs)
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k */
 
+var app = {}
+
+//$.get( '/jobs', function(response){ test = response })
+var getJobs = function() {
+//   var test
+//   var test2 = $.get( '/jobs', function(response){ test = response })
+   //return test
+   var test = m.request({method: "GET", url: "/jobs"})();
+	return m.request({method: "GET", url: "/jobs"});
+};
+
 var Controller = function() {
+
+   var self = this
+   getJobs().then( function(data){ 
+      var data_ = _.last(data)
+      var data$ = _.has(data_, 'jobs') ? data_.jobs : []
+      var data__ = _(data$).map(function(j){
+         var j_ = t.Job.create(j)
+         return j_
+      }).value()
+      var result = t.Jobs.create(data__)
+      self.jobs = result
+   })
    this.date = new Date()
    this.jobSettings = t.JobSettings.create([toObject(t.JobSetting.create(0, 'My Job', true)), toObject(t.JobSetting.create(1, 'My cool job', true))])
+   this.jobs = []
    
-   this.jobs = t.Jobs.create([])
-
    this.settings = {
       inColor: 'DarkSeaGreen',
       outColor: 'FireBrick',
@@ -694,6 +652,11 @@ var Controller = function() {
 }
 
 Controller.prototype.update = function(o){
+   if (_.has(o, 'jobs')){
+      var result = {date: this.date, jobs: o.jobs.toArray()}
+      $.ajax({type: 'POST', url:'/jobs', data: result, dataType: 'json', success: function(response){console.log(response)}});
+//    $.ajax({type: 'POST', url:'/jobs', data:{name:'My lovely job', id: 0, hours: 2}, dataType: 'json', success: function(response){console.log(response)}})
+   }
    return _.extend(this, o)
 }
 
@@ -771,7 +734,7 @@ var addJob = function(ctrl, value){
       }
    })
    jobSetting.map(function(j){
-      // jobSettings, id, comment, singleDay, inOut, date
+      // jobSettings, id, comment, hours, inOut, date
       var settings = jobSettings.update(t.JobSetting.create(j)),
           jobs = get(L.jobs, ctrl).update(t.Job.create(settings, j.id, '', b.none, k.in(), new Date()))
       // update controller
@@ -780,9 +743,9 @@ var addJob = function(ctrl, value){
 }
 
 var toggleButton = _.curry(function(id, e){
-   var ctrl = this 
+   var ctrl = this,
        jobs = get(L.jobs, ctrl), //jobs list
-       job = t.Job.update(new Date(), jobs.get(id)), // toggled job
+       job = t.Job.update(new Date(), jobs.get(id)) // toggled job
    ctrl.update(b.singleton('jobs', jobs.update(job))) // get new list then update controller
 })
 
@@ -792,8 +755,9 @@ selectize_.config = function(ctrl){
    return function(element, isInit){
       var $el = $(element)
       if (!isInit){
-         var options$ = _.reject(ctrl.jobSettings.toArray(), function(job){
-               return _.contains(ctrl.jobs.toArray(), job.name)
+         var currentJobIds = _.pluck(ctrl.jobs.toArray(), k.id())
+         var options$ = _.reject(ctrl.jobSettings.toArray(), function(j){
+               return _.contains(currentJobIds, get(L.id, j))
             })
          var options_ = {
             persist: false,
@@ -886,10 +850,11 @@ selectize_.config = function(ctrl){
       var displayNone = (hideMe) ? {display: 'none'} : {},
           fadeMeIn = hideMe ? fadeIn : {},
           clockState = job.clockState[(isClockedIn(job) ? k.in() : k.out())]
+          name = t.Job.name(ctrl.jobSettings, job)
       return m('.stamp.pure-g', {id: job.id, style: displayNone, config: fadeMeIn}, [
-               m('button.pure-button.pure-u-14-24.jobButton', {title: job.name, onclick: toggleButton.bind(ctrl, job.id)}, job.name),
+               m('button.pure-button.pure-u-14-24.jobButton', {title: name, onclick: toggleButton.bind(ctrl, job.id)}, name),
                m('button.pure-button.pure-u-5-24.time', {title: clockState}, clockState.toLocaleTimeString()),
-               m('button.pure-button.pure-u-3-24.hours', job.total.toFixed(2)),
+               m('button.pure-button.pure-u-3-24.hours', t.sum(getNow(L.hours, job)).toFixed(2)),
                m('button.pure-button.pure-u-2-24.notes', {title: job.comment}, [
                   m('i.fa.fa-pencil')
                ]),
@@ -908,7 +873,7 @@ selectize_.config = function(ctrl){
       return m(stampClass, 
                _(jobList)
                .filter(clockType)
-               .sortBy(_.compose(invoke('toLowerCase'), get(L.name)))
+               .sortBy(_.compose(invoke('toLowerCase'), jobName(ctrl.jobSettings)))
                .map(function(j){
                   return (isRecentlyAdded(get(L.id, j)) ? hiddenTiemStamp : visibleTiemStamp)(j, ctrl)
                })

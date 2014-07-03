@@ -161,6 +161,11 @@ var createJob = function(jobSettings, id, comment, hoursOption, inOut, date){
    return Job(id, comment, hours_, inOut_)
 }
 
+var createJobFromObject = function(object){
+   var clockState = _.has(object.clockState, 'out') ? ClockedOut(new Date(object.clockState.out)) : ClockedIn(new Date(object.clockState.in))
+   return Job(parseInt(object.id), object.comment, _(object.hours).map(f('parseFloat(x)')).value(), clockState)
+}
+
 var jobName = _.curry(function(jobSettings, job){
    return jobSettings.get(getNow(L.id, job)).fold(get(L.name), 'Unknown Name')
 })
@@ -211,6 +216,11 @@ t = t.property(
           'create',
           isCreateJob,
            _.compose(toOption, createJob)
+       )
+       .method(
+          'create',
+          _.isPlainObject,
+          createJobFromObject
        )
        .method(
           'update',
