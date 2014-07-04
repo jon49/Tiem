@@ -6,34 +6,9 @@
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k, m */
 
-var $tm 
-
-var fadeIn = function(e, isInit){
-   if (!isInit) $(e).delay(250).fadeIn(1000)
-}
-
-var fadeOut = function(e, isInit){
-   if (!isInit) $(e).delay(250).fadeOut(1000)
-}
-
-var define$tm = function(e, isInit){if (!isInit) $tm = $(e)}
-
-var moveE = function(e, isInit){
-   if(!isInit){
-      var $te = $(e)
-      // position and widths of `Time` divs
-      var pTi = 0, wTi = 29, pm = 29, pe = 57, wm = 28, we = 18
-      $tm.delay(2000).animate({
-         left: (pe - pm - (wm - we))
-      }, 1000)
-      $te.delay(2000).animate({
-         left: (pm - pe)
-      }, 1000)
-   }
-}
-
 // ------ Job Input --------
 
+//create a new job setting
 var createNewJob = function(name){
    return confirm('Create a new job with name: "' + name + '"?')
           ? t.JobSetting.create(t.JobSetting.newId(), name, true)

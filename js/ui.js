@@ -30,9 +30,9 @@ var header = function(ctrl){
    return m('header.pure-g', [
       m('h1.title.pure-u-1-2.inColor', [
          m('#ti', 'Ti'),
-         m('#t-m', {config: define$tm}, 'm'),
-         m('#t-e', {config: moveE}, 'e'),
-         m('div', {config: fadeOut}, 'card')
+         m('#t-m', 'm'),
+         m('#t-e', 'e'),
+         m('#t-card', 'card')
       ]),
       m('.stamp.date.pure-u-1-2', [
          m('button.pure-button.options.inBackgroundColor', [
@@ -52,10 +52,9 @@ var autoComplete = function(ctrl){
 
 var tiemStamp = _.curry(function(hideMe, job, ctrl){
    var displayNone = (hideMe) ? {display: 'none'} : {},
-       fadeMeIn = hideMe ? fadeIn : {},
        clockState = job.clockState[(isClockedIn(job) ? k.in() : k.out())]
        name = t.Job.name(ctrl.jobSettings, job)
-   return m('.stamp.pure-g', {id: job.id, style: displayNone, config: fadeMeIn}, [
+   return m('.stamp.pure-g', {id: job.id, style: displayNone}, [
             m('button.pure-button.pure-u-14-24.jobButton', {title: name, onclick: toggleButton.bind(ctrl, job.id)}, name),
             m('button.pure-button.pure-u-5-24.time', {title: clockState}, clockState.toLocaleTimeString()),
             m('button.pure-button.pure-u-3-24.hours', t.sum(getNow(L.hours, job)).toFixed(2)),
