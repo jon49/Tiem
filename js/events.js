@@ -6,6 +6,8 @@
 /*jshint indent:3, curly:false, laxbreak:true */
 /* global t, document, $, _, k, m */
 
+var $tm 
+
 var fadeIn = function(e, isInit){
    if (!isInit) $(e).delay(250).fadeIn(1000)
 }
@@ -13,8 +15,6 @@ var fadeIn = function(e, isInit){
 var fadeOut = function(e, isInit){
    if (!isInit) $(e).delay(250).fadeOut(1000)
 }
-
-var $tm = void 0
 
 var define$tm = function(e, isInit){if (!isInit) $tm = $(e)}
 
@@ -43,20 +43,19 @@ var createNewJob = function(name){
 // adds a new job to job & job settings list
 var addJob = function(ctrl, value){
    //*****validate job here**********
-   var jobSettings = get(L.jobSettings, ctrl)
-
-   var jobSetting = jobSettings.valid(value).cata({
-      success: function(v){
-         return   _.has(v, k.id())
-                  ? jobSettings.get(get(L.id, v))
-                  : createNewJob(get(L.name, v))
-      },
-      failure: function(errors){
-         // show errors
-         // future work
-         return b.none
-      }
-   })
+   var jobSettings = get(L.jobSettings, ctrl),
+       jobSetting = jobSettings.valid(value).cata({
+          success: function(v){
+             return   _.has(v, k.id())
+                      ? jobSettings.get(get(L.id, v))
+                      : createNewJob(get(L.name, v))
+          },
+          failure: function(errors){
+             // show errors
+             // future work
+             return b.none
+          }
+       })
    jobSetting.map(function(j){
       // jobSettings, id, comment, hours, inOut, date
       var settings = jobSettings.update(t.JobSetting.create(j)),
@@ -69,8 +68,8 @@ var addJob = function(ctrl, value){
 var toggleButton = _.curry(function(id, e){
    var ctrl = this,
        jobs = get(L.jobs, ctrl), //jobs list
-       job = t.Job.update(new Date(), jobs.get(id)) // toggled job
-   ctrl.update(b.singleton('jobs', jobs.update(job))) // get new list then update controller
+       toggled = t.Job.update(new Date(), jobs.get(id)) // toggled job
+   ctrl.update(b.singleton('jobs', jobs.update(toggled))) // get new list then update controller
 })
 
 var selectize_ = {}

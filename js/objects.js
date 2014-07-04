@@ -24,21 +24,22 @@ var k = constants([['id'],
                    ['stampsOut', 'stamps-out']
 ])
 
-t = t.property('k', k)
+k.errors = {
+   createNewJob: 'A new job must be created in the job settings first!'
+}
 
-var jobSettingKeys = [k.id(), k.name(), k.jobActive()]
-var clockInKeys = [k.in()]
-var clockOutKeys = [k.out()]
-var jobKeys = [k.id(), k.comment(), k.hours(), k.state()]
-var listObjects = ['list']
+var jobSettingKeys = [k.id(), k.name(), k.jobActive()],
+    clockInKeys = [k.in()],
+    clockOutKeys = [k.out()],
+    jobKeys = [k.id(), k.comment(), k.hours(), k.state()],
+    listObjects = ['list']
 
 var L = makeLenses(_.union(jobSettingKeys, clockInKeys, clockOutKeys, jobKeys, listObjects, [k.jobs(), 'jobSettings']))
 
+t = t.property('k', k)
 t = t.property('L', L)
 
-// **Validate objects**
-
-// #Object Definitions
+// Object Models
 // {jobID: 0, name: 'name', jobActive: true|false}
 var JobSetting = b.tagged('JobSetting', jobSettingKeys),
 // {jobID: 0, comment: '', hours: [0..23].map(0), clockState: {out|in: ''}}
@@ -71,7 +72,7 @@ var replaceList = function(fn, object, thisArg){
 // determine if the job id is valid
 var validJobId = function(list, id){
    var id_ = parseInt(id)
-   return   isNaN(id_)                              ? b.failure(['ID is not a number'])
+   return isNaN(id_)                                ? b.failure(['ID is not a number'])
           : !_.any(list, b.singleton(k.id(), id_))  ? b.failure(['No ID number exists'])
           : b.success(id_)
 }
@@ -106,7 +107,7 @@ var validId = function(object, thisArg){
 // set property of target to new value
 var change = _.curry(function(lens, value, option){
    return option.map(function(o){
-      return set(lens, o, value)
+      return setNow(lens, o, value)
    })
 })
    
@@ -120,7 +121,6 @@ var clockOut = function (job, date) {
         newHours = addRollingArray(get(L.hours, job), start, end, 1)
     return _.reduce([[L.clockState, ClockedOut(date)], [L.hours, newHours]], 
                     function(acc, value){
-                       var temp = set(_.first(value), acc, _.last(value))
                        return set(_.first(value), acc, _.last(value))
                     }, job)
 }
@@ -153,11 +153,11 @@ var isCreateJob = function(jobSettings, id, comment, hours, inOut, date){
 
 // create a new job object
 var createJob = function(jobSettings, id, comment, hoursOption, inOut, date){
-   var jobSetting = _.find(jobSettings.list, _.compose(isEqual(id), _.partial(getNow, L.id)))
-   if (_.isEmpty(jobSetting))
-      return b.error('A new job must be created in the job settings first!')
-   var hours_ = hoursOption.getOrElse(_.range(24).map(_.constant(0)))
-   var inOut_ = _.isEqual(inOut, k.out()) ? ClockedOut(date) : ClockedIn(date)
+   var jobSetting = _.find(jobSettings.list, _.compose(isEqual(id), _.partial(getNow, L.id))),
+       hours_, inOut_
+   if (_.isEmpty(jobSetting)) return b.error(k.errors.createNewJob)
+   hours_ = hoursOption.getOrElse(_.range(24).map(_.constant(0)))
+   inOut_ = _.isEqual(inOut, k.out()) ? ClockedOut(date) : ClockedIn(date)
    return Job(id, comment, hours_, inOut_)
 }
 

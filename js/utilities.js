@@ -4,7 +4,7 @@
 
 /*jslint asi: true*/
 /*jshint indent:3, curly:false, laxbreak:true */
-/* global _ */
+/* global _, bilby  */
 
 /**
  * Contains useful functions for general use.

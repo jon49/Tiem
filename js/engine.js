@@ -3,7 +3,7 @@
  */
 
 /* jslint asi: true */
-/*jshint indent:3, curly:false, laxbreak:true */
+/*jshint indent:3, curly:false, laxbreak:true, asi:true */
 /* global t, document, $, _, k, m, b */
 
 // create an object of lens objects
@@ -18,8 +18,7 @@ var get = _.curry(getNow)
 
 // set key of object and return a 'new' object
 var setNow = function(lens, object, value){
-   var newObject = lens.run(object).setter(value)
-   return _.isEqual(newObject.__proto__, object.__proto__) ? newObject : (newObject.__proto__ = object.__proto__, newObject)
+   return _.create(Object.getPrototypeOf(object), lens.run(object).setter(value))
 }
 var set = _.curry(setNow)
 
@@ -34,11 +33,9 @@ var toOption = function(thisArg){
 var filterByLensNow = function(lens, value, list){
    var list_ = (list || this)
    return toOption(_.first(_.filter(list_, function(o){
-      return _.isEqual(get(lens, o), value)
+      return _.isEqual(getNow(lens, o), value)
    })))
 }
-
-//var filterByLens = _.curry(filterByLensNow)
 
 // Exclusively add object (unwrapped) to list based on comparator
 // example: xAddToList(lensId, someNone, []) => [object] OR []
@@ -49,8 +46,7 @@ var xAddToList = function(lens, option, list){
       return _.reject(list_, function(o){
          return isSame(get(lens, o))
       }).concat(opt)
-      }
-   , list_)
+      }, list_)
 }
 
 // set new value in option object
