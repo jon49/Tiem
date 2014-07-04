@@ -74,31 +74,6 @@ h1 div {
 
 /* Events */
 
-/* var define$tm = function(e, isInit){if (!isInit) $tm = $(e)}
-// 
-// var moveE = function(e, isInit){
-//    if(!isInit){
-//       var $te = $(e)
-//       // position and widths of `Time` divs
-//       var pTi = 0, wTi = 29, pm = 29, pe = 57, wm = 28, we = 18
-//       $tm.delay(2000).animate({
-//          left: (pe - pm - (wm - we))
-//       }, 1000)
-//       $te.delay(2000).animate({
-//          left: (pm - pe)
-//       }, 1000)
-//    }
-// }*/
-
-// ------ Job Input --------
-
-var createNewJob = function(name){
-   return confirm('Create a new job with name: "' + name + '"?')
-          ? t.JobSetting.create(t.JobSetting.newId(), name, true)
-          : b.none
-}
-
-// adds a new job to job & job settings list
 #t-m, #t-e, #t-card {
     position: relative;
     float:left;
@@ -108,21 +83,21 @@ var createNewJob = function(name){
     -webkit-animation-name: slideRight;
     -webkit-animation-iteration-count: once;
     -webkit-animation-timing-function: ease-in;
-    -webkit-animation-duration: 3s;
+    -webkit-animation-duration: 2s;
 }
 #t-e {
     left: -28px;
     -webkit-animation-name: slideLeft;
     -webkit-animation-iteration-count: once;
     -webkit-animation-timing-function: ease-in;
-    -webkit-animation-duration: 3s;
+    -webkit-animation-duration: 2s;
 }
 #t-card{
     opacity: 0.0;
     -webkit-animation-name: fadeOut;
     -webkit-animation-iteration-count: once;
     -webkit-animation-timing-function: ease-in;
-    -webkit-animation-duration: 3s;
+    -webkit-animation-duration: 2s;
 }
 @-webkit-keyframes fadeOut {
     0% { opacity: 1; }
