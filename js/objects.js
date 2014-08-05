@@ -3,51 +3,8 @@
  */
 
 /* jslint asi: true */
-/*jshint indent:3, curly:false, laxbreak:true */
-/* global t, document, $, _, k, m, b */
-
-var k = constants([['id'],
-                   ['hours'],
-                   ['in'],
-                   ['out'],
-                   ['state', 'clockState'],
-                   ['day'],
-                   ['jobList'],
-                   ['clockedState'],
-                   ['name'],
-                   ['clocked'],
-                   ['comment'],
-                   ['jobActive'],
-                   ['jobs'],
-                   ['jobPlaceHolder', 'Add Job'],
-                   ['stampsIn', 'stamps-in'],
-                   ['stampsOut', 'stamps-out']
-])
-
-k.errors = {
-   createNewJob: 'A new job must be created in the job settings first!'
-}
-
-var jobSettingKeys = [k.id(), k.name(), k.jobActive()],
-    clockInKeys = [k.in()],
-    clockOutKeys = [k.out()],
-    jobKeys = [k.id(), k.comment(), k.hours(), k.state()],
-    listObjects = ['list']
-
-var L = makeLenses(_.union(jobSettingKeys, clockInKeys, clockOutKeys, jobKeys, listObjects, [k.jobs(), 'jobSettings']))
-
-t = t.property('k', k)
-t = t.property('L', L)
-
-// Object Models
-// {jobID: 0, name: 'name', jobActive: true|false}
-var JobSetting = b.tagged('JobSetting', jobSettingKeys),
-// {jobID: 0, comment: '', hours: [0..23].map(0), clockState: {out|in: ''}}
-    ClockedIn = b.tagged('ClockedIn', clockInKeys),
-    ClockedOut = b.tagged('ClockedOut', clockOutKeys),
-    Job = b.tagged('Job', jobKeys),
-    JobSettings = b.tagged('JobSettings', listObjects),
-    Jobs = b.tagged('Jobs', listObjects)
+/*jshint indent:3, curly:false, laxbreak:true  */
+/* global document, $, _, m, b */
 
 // use lens to get job from list, returns option
 var getJobByNow = function(lens, value, listObject){

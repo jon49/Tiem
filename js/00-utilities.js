@@ -196,6 +196,41 @@ var isOptionOf = _.curry(function(predicate, option){
    return b.isOption(option) ? option.fold(predicate, true) : false
 })
 
+//altered from bilby.js - I want everything to stay a plain object with a _name so I can use 
+//getters/setters without messing up the naming of my object, KISS.
+var tagged = function(name, fields, defaults){
+   var defaultObject = _.zipObject(fields.concat("_name"), defaults.concat(name))
+   return function(){
+      var args, object
+      if(arguments.length != fields.length){
+         throw new TypeError("Expected " + fields.length + " arguments, got " + arguments.length)
+      }
+      args = (
+         _.toArray(arguments)).map(function(a){
+            return (b.isNone(a) ? void 0 : a)
+      }).value()
+      object = _.defaults(_.zipObject(fields, args), defaultObject)
+      _(_.functions(object)).forEach(function(f){
+         object[f] = object[f]()
+      })
+      return object
+   }
+}
+
+// validate multiple predicates of multiple values
+var ises = _.curry(function(arrayIs, values){
+   var values_ = _.toArray(arguments).slice(1)
+   if (!_.isEqual(arrayIs.length, values_.length)) b.error('ises requries equal length arrays.')
+   return _(_.range(arrayIs.length)).map(function(index){
+      return arrayIs[index].call(null, values_[index])
+   })
+})
+
+// determine if object is named `name`
+var isObjectName = _.curry(function(name, object){
+   return _.isEqual(name, object._name)
+})
+
 t = t
    .property('isWholeNumber', isWholeNumber)
    .property('areUniqueNow', areUniqueNow)
@@ -219,3 +254,14 @@ t = t
    .property('hasDeep', hasDeep)
    .property('invoke', invoke)
    .property('isArrayOf', isArrayOf)
+   .property('ises', ises)
+   .method(
+      'tagged',
+      ises([_.isString, _.isArray, _.isArray]),
+      tagged
+   )
+   .method(
+      'isObjectName',
+      ises([_.isString, _.isPlainObject]),
+      isObjectName
+   )
