@@ -227,7 +227,7 @@ var ises = _.curry(function(arrayIs, values){
 })
 
 // determine if object is named `name`
-var isObjectName = _.curry(function(name, object){
+var isObjectNamed = _.curry(function(name, object){
    return _.isEqual(name, object._name)
 })
 
@@ -261,7 +261,7 @@ t = t
       tagged
    )
    .method(
-      'isObjectName',
+      'isObjectNamed',
       ises([_.isString, _.isPlainObject]),
-      isObjectName
+      isObjectNamed
    )

@@ -26,7 +26,7 @@ var
    Job = b.environment()
       .method(
          'create',
-         ises([t.isWholeNumber, _.isString, t.isArrayOf(t.isObjectName('ClockState'))]),
+         ises([t.isWholeNumber, _.isString, t.isArrayOf(t.isObjectNamed('ClockState'))]),
          tagged('Job', jobKeys, [-1, "", function(){return [ClockState(b.none, b.none)]}])
       )
 
@@ -34,7 +34,7 @@ var
    JobSettings = b.environment() 
       .method(
          'create',
-         ises([t.isArrayOf(t.isObjectName('JobSetting'))]),
+         ises([t.isArrayOf(t.isObjectNamed('JobSetting'))]),
          tagged('JobSettings', listObjects, [[]])
       )
 
@@ -42,7 +42,7 @@ var
    Jobs = b.environment() 
       .method(
          'create',
-         ises([t.isArrayOf(t.isObjectName('Job'))]),
+         ises([t.isArrayOf(t.isObjectNamed('Job'))]),
          tagged('Jobs', listObjects, [[]])
       )
 
