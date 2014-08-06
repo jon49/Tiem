@@ -2,10 +2,6 @@
  * Contains functions for view.
  */
 
-/* jslint asi: true */
-/*jshint indent:3, curly:false, laxbreak:true, asi:true */
-/* global t, document, $, _, k, m, b */
-
 // create an object of lens objects
 var makeLenses = _.compose(zipObjectT(_.identity, b.objectLens), _.unique)
 
@@ -59,3 +55,35 @@ var overNow = function(lens, fn, thisArg){
 
 var over = _.curry(overNow)
 
+// set property of target to new value
+var setOption = _.curry(function(lens, value, option){
+   return option.map(function(o){
+      return setNow(lens, o, value)
+   })
+})
+
+// return plain object or empty object
+var toObject = function(option){
+   return option.getOrElse({})
+}
+
+// use lens to get job from list, returns option
+var getJobByNow = function(lens, listObject, value){
+   return filterByLensNow(lens, value, listObject)
+}
+
+var getJobBy = _.curry(getJobByNow)
+
+// use id key to get exclusively add updated job
+var xAddJobNow = function(listWrapped, option){
+   return xAddToList(L.id, option, getNow(L.list, listWrapped))
+}
+
+var xAddJob = _.curry(xAddJobNow)
+
+// replace the old list with updated list
+var replaceList = function(fn, object, thisArg){
+   var self = thisArg || this
+   self.list = fn.call(get(L.list, self), object)
+   return self
+}

@@ -1,11 +1,6 @@
 /**
  * Contains functions for view.
  */
-
-/* jslint asi: true */
-/*jshint indent:3, curly:false, laxbreak:true */
-/* global t, document, $, _, k, m */
-
    
 var cssDeclaration = function(property, value){
    return property + ': ' + value + ';'

@@ -2,16 +2,10 @@
  * Created by jon on 2/13/14.
  */
 
-/*jslint asi: true*/
-/*jshint indent:3, curly:false, laxbreak:true */
-/* global _, bilby  */
-
 /**
  * Contains useful functions for general use.
  **Utilities**
  */
-
-"use strict";
 
 var b = bilby
 var t = b.environment()
@@ -179,7 +173,7 @@ var concat = _.curry(function(a, b){
 //Lodash function changed for single item
 var invokeNow = function(methodName, value, args){
    var isFunc = typeof methodName == 'function',
-       func = isFunc ? methodName : (value != null && value[methodName]),
+       func = isFunc ? methodName : (value !== null && value[methodName]),
        args_ = _.isArray(args) ? args : []
    return func ? func.apply(value, args_) : void 0
 }
@@ -218,9 +212,9 @@ var tagged = function(name, fields, defaults){
 }
 
 // validate multiple predicates of multiple values
-var ises = _.curry(function(arrayIs, values){
+var identifiers = _.curry(function(arrayIs, values){
    var values_ = _.toArray(arguments).slice(1)
-   if (!_.isEqual(arrayIs.length, values_.length)) b.error('ises requries equal length arrays.')
+   if (!_.isEqual(arrayIs.length, values_.length)) b.error('identifiers requries equal length arrays.')
    return _(_.range(arrayIs.length)).map(function(index){
       return arrayIs[index].call(null, values_[index])
    })
@@ -254,14 +248,14 @@ t = t
    .property('hasDeep', hasDeep)
    .property('invoke', invoke)
    .property('isArrayOf', isArrayOf)
-   .property('ises', ises)
+   .property('identifiers', identifiers)
    .method(
       'tagged',
-      ises([_.isString, _.isArray, _.isArray]),
+      identifiers([_.isString, _.isArray, _.isArray]),
       tagged
    )
    .method(
       'isObjectNamed',
-      ises([_.isString, _.isPlainObject]),
+      identifiers([_.isString, _.isPlainObject]),
       isObjectNamed
    )

@@ -2,10 +2,6 @@
  * Contains functions for view.
  */
 
-/* jslint asi: true */
-/*jshint indent:3, curly:false, laxbreak:true */
-/* global t, document, $, _, k, m */
-
 // ------ Job Input --------
 
 //create a new job setting

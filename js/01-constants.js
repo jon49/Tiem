@@ -1,7 +1,3 @@
-/* jslint asi: true */
-/*jshint indent:3, curly:false, laxbreak:true */
-/* global document, $, _, m, b */
-
 var k = constants([['id'],
                    ['hours'],
                    ['in'],
