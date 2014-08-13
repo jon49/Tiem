@@ -1,3 +1,44 @@
 {
-   "jshintConfig": {"indent":3, "curly":false, "laxbreak":true, "asi":true} 
+  "jshintConfig": {
+    "indent": 3,
+    "curly": false,
+    "laxbreak": true,
+    "asi": true
+  },
+  "name": "Tiem",
+  "description": "Tiem is now available online at <https://tiemcard.appspot.com/>. It is still in the works but it does have some basic functionality.",
+  "version": "0.0.0",
+  "main": "gulpfile.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "dependencies": {
+    "gulp-concat": "~2.2.0",
+    "gulp-rename": "~1.2.0",
+    "gulp-uglify": "~0.3.0",
+    "hapi": "~6.0.2",
+    "nedb": "~0.10.5",
+    "gulp": "~3.8.1",
+    "path": "~0.4.9"
+  },
+  "devDependencies": {
+    "gulp-jasmine": "~0.3.0",
+    "fantasy-environment": "0.0.2",
+    "lodash": "~2.4.1",
+    "fantasy-lenses": "~0.1.1",
+    "fantasy-helpers": "0.0.1",
+    "fantasy-options": "0.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jon49/Tiem"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/jon49/Tiem/issues"
+  }
 }

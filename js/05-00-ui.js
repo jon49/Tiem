@@ -21,7 +21,7 @@ var styles = function(settings){
            )
 }
 
-var header = function(ctrl){
+var header = function(date){
    return m('header.pure-g', [
       m('h1.title.pure-u-1-2.inColor', [
          m('#ti', 'Ti'),
@@ -33,7 +33,7 @@ var header = function(ctrl){
          m('button.pure-button.options.inBackgroundColor', [
             m('i.fa.fa-gear')
          ]),
-         m('button.pure-button.inBackgroundColor', ctrl.date.toLocaleDateString(undefined, {year: "numeric", month: "long", day: "numeric" }))
+         m('button.pure-button.inBackgroundColor', date.toLocaleDateString(undefined, {year: "numeric", month: "long", day: "numeric" }))
       ])
    ])
 }
@@ -84,7 +84,8 @@ var clockedInStamps = stamps('.stamps-in')
 var clockedOutStamps = stamps('.stamps-out')
 
 var main = function(ctrl){
-   return [styles(ctrl.settings), header(ctrl), autoComplete(ctrl), clockedInStamps(ctrl), clockedOutStamps(ctrl)]
+   var tiem = ctrl.tiem
+   return [styles(ctrl.settings), header(tiem.date), autoComplete(ctrl), clockedInStamps(ctrl), clockedOutStamps(ctrl)]
 }
 
 m.module(document.body, {view: main, controller: Controller})

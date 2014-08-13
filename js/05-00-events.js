@@ -7,18 +7,19 @@
 //create a new job setting
 var createNewJob = function(name){
    return confirm('Create a new job with name: "' + name + '"?')
-          ? t.JobSetting.create(t.JobSetting.newId(), name, true)
+          ? JobSetting.create(b.none, name, true)
           : b.none
 }
 
 // adds a new job to job & job settings list
 var addJob = function(ctrl, value){
    //*****validate job here**********
-   var jobSettings = get(L.jobSettings, ctrl),
-       jobSetting = jobSettings.valid(value).cata({
+   var tiem = L.tiem.run(ctrl).getter()
+   var jobSettings = getNow(L.jobSettings, tiem),
+       jobSetting = JobSettings.valid(jobSettings, value).cata({
           success: function(v){
              return   _.has(v, k.id())
-                      ? jobSettings.get(get(L.id, v))
+                      ? JobSettings.get(jobSettings, get(L.id, v))
                       : createNewJob(get(L.name, v))
           },
           failure: function(errors){
@@ -29,18 +30,19 @@ var addJob = function(ctrl, value){
        })
    jobSetting.map(function(j){
       // jobSettings, id, comment, hours, inOut, date
-      var settings = jobSettings.update(t.JobSetting.create(j)),
-          jobs = get(L.jobs, ctrl).update(t.Job.create(settings, j.id, '', b.none, k.in(), new Date()))
+      var settings = JobSettings.update(jobSettings, j),
+          jobs = getNow(L.jobs, tiem),
+          jobs_ = Jobs.update(jobs, Job.create(j.id, '', b.none))
       // update controller
-      ctrl.update(_.zipObject(['jobs', 'jobSettings'], [jobs, settings]))    
+      ctrl.update({tiem: _.zipObject(['jobs', 'jobSettings'], [jobs, settings])})    
    })
 }
 
 var toggleButton = _.curry(function(id, e){
-   var ctrl = this,
-       jobs = get(L.jobs, ctrl), //jobs list
-       toggled = t.Job.update(new Date(), jobs.get(id)) // toggled job
-   ctrl.update(b.singleton('jobs', jobs.update(toggled))) // get new list then update controller
+   var tiem = getNow(L.tiem, this),
+       jobs = get(L.jobs, tiem), //jobs list
+       toggled = Job.update(new Date(), Jobs.get(jobs, id)) // toggled job
+   this.update(b.singleton(tiem, b.singleton('jobs', Jobs.update(toggled, jobs)))) // get new list then update controller
 })
 
 var selectize_ = {}
@@ -81,7 +83,3 @@ selectize_.config = function(ctrl){
       }
    }
 }
-
-
-
-
