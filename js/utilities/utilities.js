@@ -100,44 +100,51 @@ var isArrayOf = _.curry(function(fn, a){
 
 // Determine if option is an option and passes test function
 var isOptionOf = _.curry(function(predicate, option){
-   isOption = helpers.isInstanceOf(Option)
    return isOption(option) ? option.fold(predicate, _.constant(true)) : false
 })
 
-// //altered from bilby.js - I want everything to stay a plain object with a _name so I can use 
-// //getters/setters without messing up the naming of my object, KISS.
-// var tagged = function(name, fields, defaults){
-//    var defaultObject = _.zipObject(fields.concat("ctor"), defaults.concat(name))
-//    return function(){
-//       var args, object
-//       if(arguments.length != fields.length){
-//          throw new TypeError("Expected " + fields.length + " arguments, got " + arguments.length)
-//       }
-//       args = (
-//          _.toArray(arguments)).map(function(a){
-//             return (b.isNone(a) ? void 0 : a)
-//       }).value()
-//       object = _.defaults(_.zipObject(fields, args), defaultObject)
-//       _(_.functions(object)).forEach(function(f){
-//          object[f] = object[f]()
-//       })
-//       return object
-//    }
-// }
-// 
-// // validate multiple predicates of multiple values
-// var identifiers = _.curry(function(arrayIs, values){
-//    var values_ = _.toArray(arguments).slice(1)
-//    if (!_.isEqual(arrayIs.length, values_.length)) b.error('identifiers requries equal length arrays.')
-//    return _(_.range(arrayIs.length)).map(function(index){
-//       return arrayIs[index].call(null, values_[index])
-//    })
-// })
-// 
-// // determine if object is named `name`
-// var isObjectNamed = _.curry(function(name, object){
-//    return _.isEqual(name, object.ctor)
-// })
+var isOption = helpers.isInstanceOf(Option)
+var isSome = helpers.isInstanceOf(Option.Some)
+var isNone = function(o){
+   return isOption(o) && not(isSome(o))
+}
+
+//altered from bilby.js - I want everything to stay a plain object with a _name so I can use 
+//getters/setters without messing up the naming of my object, KISS.
+var tagged = function(name, fields, defaults){
+   var defaultObject = _.zipObject(fields.concat("ctor"), defaults.concat(name))
+   return function(){
+      var args, object
+      if(arguments.length != fields.length){
+         throw new TypeError("Expected " + fields.length + " arguments, got " + arguments.length)
+      }
+      args = 
+         _.toArray(arguments).map(function(a){
+            return (isNone(a) ? void 0 : a)
+      })
+      object = _.defaults(_.zipObject(fields, args), defaultObject)
+      _(_.functions(object)).forEach(function(f){
+         object[f] = object[f].call(null)
+      })
+      return object
+   }
+}
+
+// validate multiple predicates of multiple values
+var identifiers = _.curry(function(arrayIs, values){
+   var values_ = _.toArray(arguments).slice(1),
+       range
+   if (!_.isEqual(arrayIs.length, values_.length)) helpers.error('identifiers requries equal length arrays.')
+   range = _.range(arrayIs.length)
+   return _.reduce(range, function(result, index){
+      return result && arrayIs[index].call(null, values_[index])
+   }, true)
+})
+
+// determine if object is named `name`
+var isObjectNamed = _.curry(function(name, object){
+   return _.isEqual(name, object.ctor)
+})
 
 var utils = 
    environment()
@@ -153,16 +160,19 @@ var utils =
    .property('invoke', invoke)
    .property('isArrayOf', isArrayOf)
    .property('isOptionOf', isOptionOf)
-//    .property('identifiers', identifiers)
-//    .method(
-//       'tagged',
-//       identifiers([_.isString, _.isArray, _.isArray]),
-//       tagged
-//    )
-//    .method(
-//       'isObjectNamed',
-//       identifiers([_.isString, _.isPlainObject]),
-//       isObjectNamed
-//    )
+   .property('isOption', isOption)
+   .property('isNone', isNone)
+   .property('isSome', isSome)
+   .property('identifiers', identifiers)
+   .method(
+      'tagged',
+      identifiers([_.isString, _.isArray, _.isArray]),
+      tagged
+   )
+   .method(
+      'isObjectNamed',
+      identifiers([_.isString, _.isPlainObject]),
+      isObjectNamed
+   )
 
 module.exports = utils

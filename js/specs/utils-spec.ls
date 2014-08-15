@@ -77,15 +77,56 @@ describe 'How the utilities are used in project:', !->
          someBadType = Option.Some 'I am a string'
          (expect isOptionOfNumber someBadType).toBe false
 
+   describe 'The function isOption', !-> ``it``
+      .. 'should determine that Option.Some is of type Option', !->
+         some = Option.Some 1
+         (expect t.isOption some).toBe true
+      .. 'should determine that Option.None is of type Option', !->
+         none = Option.None
+         (expect t.isOption none).toBe true
+      .. 'should determine that a string is not type Option', !->
+         (expect t.isOption 'Not an option').toBe false
 
-#  .property('identifiers', identifiers)
-#  .method(
-#     'tagged',
-#     identifiers([_.isString, _.isArray, _.isArray]),
-#     tagged
-#  )
-#  .method(
-#     'isObjectNamed',
-#     identifiers([_.isString, _.isPlainObject]),
-#     isObjectNamed
-#  )
+   describe 'The function isSome', !-> ``it``
+      .. 'should determine that Option.Some is of type Some', !->
+         some = Option.Some 1
+         (expect t.isSome some).toBe true
+      .. 'should determine that Option.None is not of type Some', !->
+         none = Option.None
+         (expect t.isSome none).toBe false
+      .. 'should determine that a string is not type Some', !->
+         (expect t.isSome 'Not an option').toBe false
+
+   describe 'The function isNone', !-> ``it``
+      .. 'should determine that Option.None is not of type None', !->
+         some = Option.Some 1
+         (expect t.isNone some).toBe false
+      .. 'should determine that Option.None is of type None', !->
+         none = Option.None
+         (expect t.isNone none).toBe true
+      .. 'should determine that a string is not type None', !->
+         (expect t.isNone 'Not an option').toBe false
+
+   describe 'The function `tagged`', !-> ``it``
+      .. 'should return plain object with ctor key/value', !->
+         Person = t.tagged 'Person', ['id', 'first', 'last', 'age'], [0, 'Jon', 'Nyman', 30]
+         (expect Person(0, 'George', 'Henry', 31)).toEqual {id: 0, first: 'George', last: 'Henry', age: 31, ctor: 'Person'}
+      .. 'should return plain object with defaults returned for None/undefined', !->
+         Person = t.tagged 'Person', ['id', 'first', 'last', 'age'], [0, 'Jon', 'Nyman', 30]
+         (expect Person(0, void, null, Option.None)).toEqual {id: 0, first: 'Jon', last: null, age: 30, ctor: 'Person'}
+      .. 'should return plain object with None/undefined values for functions', !->
+         Person = t.tagged 'Person', ['id', 'first', 'last', 'age'], [0, 'Jon', 'Nyman', -> 30]
+         (expect Person(0, 'George', 'Henry', Option.None)).toEqual {id: 0, first: 'George', last: 'Henry', age: 30, ctor: 'Person'}
+
+   describe 'The function `isObjectNamed`', !-> ``it``
+      Person = t.tagged 'Person', ['id', 'first', 'last', 'age'], [0, 'Jon', 'Nyman', 30]
+      george = Person 0, 'George', 'Henry', 20
+      .. 'should return true when plain object\'s key `ctor` is the same name', !->
+         (expect t.isObjectNamed 'Person', george).toBe true
+      .. 'should return false when plain object\'s key `ctor` is a different name', !->
+         (expect t.isObjectNamed 'George', george).toBe false
+
+   describe 'The function `identifiers`', !-> ``it``
+      .. 'should determine if the arguments provided are the same type as the guard array', !->
+         (expect (t.identifiers [_.isString, _.isNumber, _.isPlainObject], 'I\'m a string!', 7, {plain: 'object'})).toBe true
+         (expect (t.identifiers [_.isString, _.isNumber, _.isPlainObject], 7,  'I\'m a string!', {plain: 'object'})).toBe false

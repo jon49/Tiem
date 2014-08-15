@@ -21,39 +21,6 @@
 // //   })
 // //})
 // 
-// describe("Core constants", function () {
-//    it("should return the string 'id'", function () {
-//       expect(t.k.id()).toEqual("id")
-//    })
-//    it("should return the string 'in'", function () {
-//       expect(t.k.in()).toEqual("in")
-//    })
-//    it("should return the string 'out'", function () {
-//       expect(t.k.out()).toEqual("out")
-//    })
-//    it("should return the string 'clockState'", function () {
-//       expect(t.k.state()).toEqual("clockState")
-//    })
-//    it("should return the string 'day'", function () {
-//       expect(t.k.day()).toEqual('day')
-//    })
-//    it("should return the string 'jobList'", function () {
-//       expect(t.k.jobList()).toEqual('jobList')
-//    })
-//    it("should return the string 'clockedState'", function () {
-//       expect(t.k.clockedState()).toEqual('clockedState')
-//    })
-//    it("should return the string 'name'", function () {
-//       expect(t.k.name()).toEqual('name')
-//    })
-//    it("should return the string 'clocked'", function () {
-//       expect(t.k.comment()).toEqual('comment')
-//    })
-//    it("should return the string 'jobActive'", function () {
-//       expect(t.k.jobActive()).toEqual('jobActive')
-//    })
-// })
-// 
 // describe('Job Setting object manipulation', function(){
 //    var id = t.JobSetting.newId()
 //    var newJobSetting = t.JobSetting.create(id, 'I love my job', true)

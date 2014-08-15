@@ -139,4 +139,120 @@ describe('How the utilities are used in project:', function(){
       expect(isOptionOfNumber(someBadType)).toBe(false);
     });
   });
+  describe('The function isOption', function(){
+    var x$;
+    x$ = it;
+    x$('should determine that Option.Some is of type Option', function(){
+      var some;
+      some = Option.Some(1);
+      expect(t.isOption(some)).toBe(true);
+    });
+    x$('should determine that Option.None is of type Option', function(){
+      var none;
+      none = Option.None;
+      expect(t.isOption(none)).toBe(true);
+    });
+    x$('should determine that a string is not type Option', function(){
+      expect(t.isOption('Not an option')).toBe(false);
+    });
+  });
+  describe('The function isSome', function(){
+    var x$;
+    x$ = it;
+    x$('should determine that Option.Some is of type Some', function(){
+      var some;
+      some = Option.Some(1);
+      expect(t.isSome(some)).toBe(true);
+    });
+    x$('should determine that Option.None is not of type Some', function(){
+      var none;
+      none = Option.None;
+      expect(t.isSome(none)).toBe(false);
+    });
+    x$('should determine that a string is not type Some', function(){
+      expect(t.isSome('Not an option')).toBe(false);
+    });
+  });
+  describe('The function isNone', function(){
+    var x$;
+    x$ = it;
+    x$('should determine that Option.None is not of type None', function(){
+      var some;
+      some = Option.Some(1);
+      expect(t.isNone(some)).toBe(false);
+    });
+    x$('should determine that Option.None is of type None', function(){
+      var none;
+      none = Option.None;
+      expect(t.isNone(none)).toBe(true);
+    });
+    x$('should determine that a string is not type None', function(){
+      expect(t.isNone('Not an option')).toBe(false);
+    });
+  });
+  describe('The function `tagged`', function(){
+    var x$;
+    x$ = it;
+    x$('should return plain object with ctor key/value', function(){
+      var Person;
+      Person = t.tagged('Person', ['id', 'first', 'last', 'age'], [0, 'Jon', 'Nyman', 30]);
+      expect(Person(0, 'George', 'Henry', 31)).toEqual({
+        id: 0,
+        first: 'George',
+        last: 'Henry',
+        age: 31,
+        ctor: 'Person'
+      });
+    });
+    x$('should return plain object with defaults returned for None/undefined', function(){
+      var Person;
+      Person = t.tagged('Person', ['id', 'first', 'last', 'age'], [0, 'Jon', 'Nyman', 30]);
+      expect(Person(0, void 8, null, Option.None)).toEqual({
+        id: 0,
+        first: 'Jon',
+        last: null,
+        age: 30,
+        ctor: 'Person'
+      });
+    });
+    x$('should return plain object with None/undefined values for functions', function(){
+      var Person;
+      Person = t.tagged('Person', ['id', 'first', 'last', 'age'], [
+        0, 'Jon', 'Nyman', function(){
+          return 30;
+        }
+      ]);
+      expect(Person(0, 'George', 'Henry', Option.None)).toEqual({
+        id: 0,
+        first: 'George',
+        last: 'Henry',
+        age: 30,
+        ctor: 'Person'
+      });
+    });
+  });
+  describe('The function `isObjectNamed`', function(){
+    var x$, Person, george;
+    x$ = it;
+    Person = t.tagged('Person', ['id', 'first', 'last', 'age'], [0, 'Jon', 'Nyman', 30]);
+    george = Person(0, 'George', 'Henry', 20);
+    x$('should return true when plain object\'s key `ctor` is the same name', function(){
+      expect(t.isObjectNamed('Person', george)).toBe(true);
+    });
+    x$('should return false when plain object\'s key `ctor` is a different name', function(){
+      expect(t.isObjectNamed('George', george)).toBe(false);
+    });
+  });
+  describe('The function `identifiers`', function(){
+    var x$;
+    x$ = it;
+    x$('should determine if the arguments provided are the same type as the guard array', function(){
+      expect(t.identifiers([_.isString, _.isNumber, _.isPlainObject], 'I\'m a string!', 7, {
+        plain: 'object'
+      })).toBe(true);
+      expect(t.identifiers([_.isString, _.isNumber, _.isPlainObject], 7, 'I\'m a string!', {
+        plain: 'object'
+      })).toBe(false);
+    });
+  });
 });
