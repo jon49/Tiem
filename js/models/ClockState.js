@@ -1,14 +1,16 @@
 var 
-   environment = require('./../../node_modules/fantasy-environment/fantasy-environment.js').environment,
-   u = require('utils'),
-   k = require('./../constants/keys'),
-   _ = require('lodash'),
+   environment = require('./../../node_modules/fantasy-environment/fantasy-environment'),
+   t = require('./../utilities/utilities'),
+   k = require('./../constants/object-keys'),
+   _ = require('./../../node_modules/lodash/lodash'),
+   Option = require('./../../node_modules/fantasy-options/option'),
 
-   ClockState = environment() 
+   ClockState =
+      environment() 
       .method(
          'create', // {in: Date, out: Date Option}
-         u.identifiers([u.isOptionOf(_.isDate), u.isOptionOf(_.isDate)]),
-         u.tagged('ClockState', clockStateKeys, [function(){return new Date()}, b.none])
+         t.identifiers([_.isDate, t.isOptionOf(_.isDate)]),
+         t.tagged('ClockState', k.clockStateKeys, [function(){return new Date()}, Option.None])
       )
 
 module.exports = ClockState

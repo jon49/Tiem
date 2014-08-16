@@ -1,26 +1,3 @@
-// /* brackets-xunit: jasmine */
-// /* brackets-xunit: includes=bower_components/lodash/dist/lodash.js,bower_components/bilby.js/bilby.js,bower_components/mithril/mithril.js,js/utilities.js,js/engine.js,js/objects.js,js/controller.js,js/events.js */
-// //,ui.js
-// /* global describe, it, expect, t, _, bilby */
-// /*jslint asi: true*/
-// /*jshint indent:3, curly:false, laxbreak:true */
-// 
-// 
-// //describe('Core mithril extensions', function(){
-// //   describe('The function parseM', function(){
-// //      it('should create a mithril virtual element', function(){
-// //         var el = mm.tag('#id'),
-// //             cls = mm.class('color'),
-// //             cls2 = mm.class('other-class'),
-// //             val = mm.value('laura'),
-// //             combined = zipOverObjects([el, cls, cls2, val])
-// //         var m_ = mm.parse(combined)
-// //         expect(combined).toEqual({ tag: '#id', class : [ 'color', 'other-class' ], value : 'laura' })
-// //         expect(m_).toEqual({tag:'div', attrs:{id:'id', 'class':' color other-class'}, children:'laura'})
-// //      })
-// //   })
-// //})
-// 
 // describe('Job Setting object manipulation', function(){
 //    var id = t.JobSetting.newId()
 //    var newJobSetting = t.JobSetting.create(id, 'I love my job', true)
