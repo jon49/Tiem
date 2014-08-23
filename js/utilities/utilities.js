@@ -5,9 +5,48 @@
 
  var 
    _ = require('./../../node_modules/lodash/lodash'),
-   environment = require('./../../node_modules/fantasy-environment/fantasy-environment')
-   helpers = require('./../../node_modules/fantasy-helpers/fantasy-helpers')
+   environment = require('./../../node_modules/fantasy-environment/fantasy-environment'),
+   helpers = require('./../../node_modules/fantasy-helpers/fantasy-helpers'),
    Option = require('./../../node_modules/fantasy-options/option')
+
+// Turns the `throw new Error(s)` statement into an expression. - bilby.js
+var error = function(s){
+   return function(){
+      throw new Error(s)
+   }
+}
+
+// validate multiple predicates of multiple values
+// e.g., identifiers([_.isString, _.isNumber])('string', 7)
+var identifiers = _.curry(function(arrayIs, values){
+   var args = _.toArray(arguments).slice(1),
+       range
+   if (!_.isEqual(arrayIs.length, args.length)) error('identifiers requries equal length arrays.')
+   range = _.range(arrayIs.length)
+   return _.reduce(range, function(result, index){
+      return result && arrayIs[index].call(null, args[index])
+   }, true)
+})
+
+// validate multiple predicates of multiple values and return
+// only values argument if true, else throw error
+// e.g., identifiers([_.isString, _.isNumber])('string', 7)
+var implement = _.curry(function(arrayIs, values){
+   return (
+      identifiers.apply(null, arguments)
+      ? _.toArray(arguments).slice(1)
+      : error('Method not implemented for this input.')()
+   )
+})
+
+// Apply array of arguments to function
+var apply = _.curry(function(f, args){
+   return f.apply(null, args)
+})
+
+var guardedCurry = function(f, identifiers, arity){
+   return _.curry(_.compose(apply(f), implement(identifiers)), arity)
+}
 
 /**
  * Takes a number and determines if it is a whole number.
@@ -98,6 +137,11 @@ var isArrayOf = _.curry(function(fn, a){
    return _.isArray(a) && _.all(a, fn)
 })
 
+//Check key name and value type of singleton
+var isSingletonOf = _.curry(function(keyName, valueType, singleton){
+   return _.has(singleton, keyName) && valueType.call(null, singleton[keyName])
+})
+
 // Determine if option is an option and passes test function
 var isOptionOf = _.curry(function(predicate, option){
    return isOption(option) ? option.fold(predicate, _.constant(true)) : false
@@ -116,7 +160,7 @@ var tagged = function(name, fields, defaults){
    return function(){
       var args, object
       if(arguments.length != fields.length){
-         throw new TypeError("Expected " + fields.length + " arguments, got " + arguments.length)
+         throw new TypeError("Expected " + fields.length + " argument(s), got " + arguments.length)
       }
       args = 
          _.toArray(arguments).map(function(a){
@@ -130,21 +174,21 @@ var tagged = function(name, fields, defaults){
    }
 }
 
-// validate multiple predicates of multiple values
-var identifiers = _.curry(function(arrayIs, values){
-   var values_ = _.toArray(arguments).slice(1),
-       range
-   if (!_.isEqual(arrayIs.length, values_.length)) helpers.error('identifiers requries equal length arrays.')
-   range = _.range(arrayIs.length)
-   return _.reduce(range, function(result, index){
-      return result && arrayIs[index].call(null, values_[index])
-   }, true)
-})
 
 // determine if object is named `name`
-var isObjectNamed = _.curry(function(name, object){
+var isObjectNamed = function(name, object){
    return _.isEqual(name, object.ctor)
-})
+}
+
+// create a single key/value pair plain object
+var singleton = function(key, value){
+   var o
+   return (
+       o = {},
+       o[key] = value, 
+       o
+   )
+}
 
 var utils = 
    environment()
@@ -164,15 +208,21 @@ var utils =
    .property('isNone', isNone)
    .property('isSome', isSome)
    .property('identifiers', identifiers)
+   .property('error', error)
+   .property('implement', implement)
+   .property('apply', apply)
+   .property('isObjectNamed', guardedCurry(isObjectNamed, [_.isString, _.isPlainObject], 2))
+   .property( 'isSingletonOf', guardedCurry(isSingletonOf, [_.isString, _.isFunction, _.isPlainObject], 3))
+   .property('singleton', guardedCurry(singleton, [_.isString], 2))
    .method(
       'tagged',
       identifiers([_.isString, _.isArray, _.isArray]),
       tagged
    )
    .method(
-      'isObjectNamed',
-      identifiers([_.isString, _.isPlainObject]),
-      isObjectNamed
+      'guardedCurry',
+      identifiers([_.isFunction, isArrayOf(_.isFunction), _.isNumber]),
+      guardedCurry
    )
 
 module.exports = utils

@@ -1,5 +1,5 @@
 var 
-   _ = require('./../../node_modules/lodash/lodash')
+   _ = require('./../../node_modules/lodash/lodash'),
    utils = require('./../utilities/utilities')
 
 /**
@@ -15,7 +15,7 @@ var k = constants([
    ['hours'],
    ['in'],
    ['out'],
-   ['state', 'clockState'],
+   ['clockState'],
    ['day'],
    ['jobList'],
    ['clockedState'],
@@ -28,11 +28,15 @@ var k = constants([
    ['stampsIn', 'stamps-in'],
    ['stampsOut', 'stamps-out'],
    ['tiem'],
-   ['date']
+   ['date'],
+   ['list']
 ])
 
-k.errors = {
+errors = {
    createNewJob: 'A new job must be created in the job settings first!'
 }
 
-module.exports = k
+module.exports = {
+   k: k,
+   errors: errors
+}

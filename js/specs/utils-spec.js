@@ -242,6 +242,9 @@ describe('How the utilities are used in project:', function(){
     x$('should return false when plain object\'s key `ctor` is a different name', function(){
       expect(t.isObjectNamed('George', george)).toBe(false);
     });
+    x$('should return true when plain object\'s key `ctor` is the same name and when curried', function(){
+      expect(t.isObjectNamed('Person')(george)).toBe(true);
+    });
   });
   describe('The function `identifiers`', function(){
     var x$;
@@ -250,9 +253,72 @@ describe('How the utilities are used in project:', function(){
       expect(t.identifiers([_.isString, _.isNumber, _.isPlainObject], 'I\'m a string!', 7, {
         plain: 'object'
       })).toBe(true);
-      expect(t.identifiers([_.isString, _.isNumber, _.isPlainObject], 7, 'I\'m a string!', {
+      expect(t.identifiers([_.isString, _.isNumber, _.isPlainObject], 7, 7, {
         plain: 'object'
       })).toBe(false);
+    });
+  });
+  describe('The function `error`', function(){
+    var x$;
+    x$ = it;
+    x$('should throw error', function(){
+      expect(t.error('Throw me!')).toThrow('Throw me!');
+    });
+  });
+  describe('The function `implement`', function(){
+    var x$;
+    x$ = it;
+    x$('should return array of arguments when identifiers are correct', function(){
+      expect(t.implement([_.isString], 'string')).toEqual(['string']);
+    });
+    x$('should throw error when incorrect argument is given', function(){
+      expect(function(){
+        t.implement([_.isString], 7);
+      }).toThrow('Method not implemented for this input.');
+    });
+    x$('should be able to be curried', function(){
+      expect(t.implement([_.isString])('string')).toEqual(['string']);
+    });
+  });
+  describe('The function `apply`', function(){
+    var x$;
+    x$ = it;
+    x$('should apply the given function to the given array of arguments', function(){
+      expect(t.apply(function(a, b){
+        return a + b;
+      }, [15, 16])).toBe(31);
+    });
+    x$('should be curried', function(){
+      expect(t.apply(function(a, b){
+        return a + b;
+      })([15, 16])).toBe(31);
+    });
+  });
+  describe('The function `guardedCurry`', function(){
+    var x$, f;
+    x$ = it;
+    f = function(a, b){
+      return a + b;
+    };
+    x$('should make a function curried and create a guard on the arguments', function(){
+      expect(t.guardedCurry(f, [t.isWholeNumber, t.isWholeNumber], 2)(2)(3)).toBe(5);
+    });
+    x$('should throw error when incorrect input is given', function(){
+      expect(function(){
+        t.guardedCurry(f, [t.isWholeNumber, t.isWholeNumber], 2)('This is a string.')(3);
+      }).toThrow('Method not implemented for this input.');
+    });
+  });
+  describe('The function `isSingletonOf`', function(){
+    var x$;
+    x$ = it;
+    x$('should determine if the singleton is of the correct type', function(){
+      var singleton;
+      singleton = {
+        key: 'value'
+      };
+      expect(t.isSingletonOf('key', _.isString, singleton)).toBe(true);
+      expect(t.isSingletonOf('key', _.isNumber, singleton)).toBe(false);
     });
   });
 });

@@ -27,7 +27,9 @@
     "lodash": "~2.4.1",
     "fantasy-lenses": "~0.1.1",
     "fantasy-helpers": "0.0.1",
-    "fantasy-options": "0.0.1"
+    "fantasy-options": "0.0.1",
+    "fantasy-tuples": "0.0.1",
+    "fantasy-validations": "0.0.2"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

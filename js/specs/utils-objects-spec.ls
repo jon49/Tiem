@@ -46,7 +46,5 @@ describe 'How the utilities are used in project:', !->
 
    describe 'The function `setOption`', !-> ``it``
       .. 'should set item in option', !->
-         (expect (t.setOption firstName, 'Adalida', option)).toEqual Option.Some {name: {first: 'Adalida', last: 'Nyman'}, sex: 'M'}
+         (expect (t.setOption firstName, option, {first: 'Adalida'})).toEqual Option.Some {name: {first: 'Adalida', last: 'Nyman'}, sex: 'M'}
          (expect option).toEqual Option.Some o
-
-   describe 'The function `toObject`', !-> ``it``

@@ -115,7 +115,9 @@ describe('How the utilities are used in project:', function(){
     var x$;
     x$ = it;
     x$('should set item in option', function(){
-      expect(t.setOption(firstName, 'Adalida', option)).toEqual(Option.Some({
+      expect(t.setOption(firstName, option, {
+        first: 'Adalida'
+      })).toEqual(Option.Some({
         name: {
           first: 'Adalida',
           last: 'Nyman'
@@ -124,8 +126,5 @@ describe('How the utilities are used in project:', function(){
       }));
       expect(option).toEqual(Option.Some(o));
     });
-  });
-  describe('The function `toObject`', function(){
-    it
   });
 });

@@ -48,9 +48,9 @@ var xAddToListNow = function(lens, option, list){
 var xAddToList = _.curry(xAddToListNow)
 
 // set property of target to new value
-var setOption = _.curry(function(lens, value, option){
+var setOption = _.curry(function(lens, option, singleton){
    return option.map(function(o){
-      return setNow(lens, o, value)
+      return setNow(lens, o, _.first(_.values(singleton)))
    })
 })
 
@@ -63,6 +63,7 @@ var objectUtils =
    .property('toOption', toOption)
    .property('filterByLensNow', filterByLensNow)
    .property('filterByLens', filterByLens)
+   .property('xAddToListNow', xAddToListNow)
    .property('xAddToList', xAddToList)
    .property('setOption', setOption)
 

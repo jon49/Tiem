@@ -1,85 +1,89 @@
+var
+   _ = require('./../../node_modules/lodash/lodash'),
+   environment = require('./../../node_modules/fantasy-environment/fantasy-environment'),
+   t = require('./../utilities/utilities'),
+   o = require('./../utilities/utilities-objects'),
+   keys = require('./../constants/object-keys'),
+   L = require('./../constants/lenses'),
+   k = require('./../constants/constants').k,
+   Validation = require('./../../node_modules/fantasy-validations/validation'),
 
-var JobSettings = (function(){
-   
+   jobSettings = 'JobSettings',
+
+   getList = o.get(L.list),
+
    // determine if the job id is valid
-   var validJobId = function(list, id){
-      var id_ = parseInt(id)
-      return isNaN(id_)                                ? b.failure(['ID is not a number'])
-             : !_.any(list, b.singleton(k.id(), id_))  ? b.failure(['No ID number exists'])
-             : b.success(id_)
-   }
-   
+   validId = function(objectList, id){
+      var list = getList(objectList),
+          id_ = parseInt(id)
+      return (
+         !_.any(list, t.singleton(k.id, id_)) ?
+            Validation.Failure(['No such ID number exists'])
+         : Validation.Success(id_)
+      )
+   },
+
    // determine if the new job name is valid
-   var validJobName = function(name, list){
-      var name_ = name.trim(), isSameName = isEqual(name_.toLowerCase())
-      return _.isEmpty(name_)          ? b.failure(['Job name must contain characters'])
-             : _.any(_.pluck(list, 'name'), _.compose(isSameName, invoke('toLowerCase')))
-                                       ? b.failure(['Job name already exists'])
-             : b.success(name_)
-   }
-   
-   // validate a single item
-   var validateSingle = function(type, validation){
-      var type_ = b.curry(b.tagged(type.replace(/^(.){1}/,'$1'.toUpperCase()), [type]))
-      return b.Do()(b.Do()(validation < type_))
-   }
-   
-   // validate the job name
-   var validJobName_ = _.curry(function(listObject, name){
-      var list = getNow(L.list, listObject)
-      return validateSingle(k.name(), validJobName(name, list))
-   })
-   
-   // validate the job selection (id or name)
-   var validId = _.curry(function(objectList, object){
-      var list = get(L.list, objectList)
-      return validateSingle(k.id(), validJobId(list, object))
-   })
+   validJobName = function(objectList, name){
+      var list = getList(objectList),
+          name_ = name.trim(),
+          isSameName = t.isEqual(name_.toLowerCase())
+      return (
+         _.isEmpty(name_)          
+            ? Validation.Failure(['Job name must contain characters'])
 
-   return (
-      JSs = b.environment() 
-         .method(
-            'create', // {list: Array JobSetting}
-            identifiers([t.isArrayOf(t.isObjectNamed('JobSetting'))]),
-            tagged('JobSettings', listObjects, [[]])
-         )
-         .property(
-            'isSelf',
-            t.isObjectNamed('JobSettings')
-         )
-         .method(
-            'valid',
-            identifiers([JSs.isSelf, _.isNumber]),
-            validId
-         ) 
-         .method(
-            'valid',
-            identifiers([JSs.isSelf, _.isString]),
-            validJobName_
-         )
-         .method(
-            'update',
-            identifiers([JSs.isSelf, isOptionOf(b.isInstanceOf(JobSetting))]),
-            xAddJob
-         )
-         .method(
-            'get',
-            identifiers([JSs.isSelf, isWholeNumber]),
-            getJobBy(L.id)
-         )
-         .method(
-            'get',
-            identifiers([JSs.isSelf, _.isString]),
-            getJobBy(L.name)
-         )
-         .method(
-            'toArray',
-            identifiers([JSs.isSelf]),
-            get(L.list)
-         )
-      
+         : _.any(_.pluck(list, 'name'),
+                 _.compose(isSameName, t.invoke('toLowerCase')))
+            ? Validation.Failure(['Job name already exists'])
+
+         : Validation.Success(name_)
+      )
+   },
+
+   isSelf = t.isObjectNamed(jobSettings),
+
+   getJobBy = _.curry(function(lens, jobSettings, value){
+      return o.filterByLensNow(lens, getList(jobSettings), value)
+   }),
+
+   JobSettings
+
+module.exports = ( JobSettings =
+   environment() 
+   .method(
+      'create', // {list: Array JobSetting}
+      t.identifiers([t.isArrayOf(t.isObjectNamed('JobSetting'))]),
+      t.tagged('JobSettings', keys.listObjects, [[]])
    )
-
-}(bilby, utils, _))
-   
-
+   .property(
+      'isSelf',
+      isSelf
+   )
+   .method(
+      'valid',
+      t.identifiers([isSelf, _.isNumber]),
+      validId
+   ) 
+   .method(
+      'valid',
+      t.identifiers([isSelf, _.isString]),
+      validJobName
+   )
+   .method(
+      'with',
+      t.identifiers([isSelf, t.isOptionOf(t.isObjectNamed('JobSetting'))]),
+      function(jobSettings, option){
+         return JobSettings.create(o.xAddToListNow(L.id, option, L.list.run(jobSettings).get()))
+      }
+   )
+   .method(
+      'get',
+      t.identifiers([isSelf, t.isWholeNumber]),
+      getJobBy(L.id)
+   )
+   .method(
+      'get',
+      t.identifiers([isSelf, _.isString]),
+      getJobBy(L.name)
+   )
+)

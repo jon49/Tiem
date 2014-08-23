@@ -125,8 +125,41 @@ describe 'How the utilities are used in project:', !->
          (expect t.isObjectNamed 'Person', george).toBe true
       .. 'should return false when plain object\'s key `ctor` is a different name', !->
          (expect t.isObjectNamed 'George', george).toBe false
+      .. 'should return true when plain object\'s key `ctor` is the same name and when curried', !->
+         (expect (t.isObjectNamed 'Person') george).toBe true
 
    describe 'The function `identifiers`', !-> ``it``
       .. 'should determine if the arguments provided are the same type as the guard array', !->
          (expect (t.identifiers [_.isString, _.isNumber, _.isPlainObject], 'I\'m a string!', 7, {plain: 'object'})).toBe true
-         (expect (t.identifiers [_.isString, _.isNumber, _.isPlainObject], 7,  'I\'m a string!', {plain: 'object'})).toBe false
+         (expect (t.identifiers [_.isString, _.isNumber, _.isPlainObject], 7, 7, {plain: 'object'})).toBe false
+
+   describe 'The function `error`', !-> ``it``
+      .. 'should throw error', !->
+         (expect (t.error('Throw me!'))).toThrow 'Throw me!'
+
+   describe 'The function `implement`', !-> ``it``
+      .. 'should return array of arguments when identifiers are correct', !->
+         (expect (t.implement [_.isString], 'string')).toEqual ['string']
+      .. 'should throw error when incorrect argument is given', !->
+         (expect ( !-> (t.implement [_.isString], 7))).toThrow 'Method not implemented for this input.'
+      .. 'should be able to be curried', !->
+         (expect ((t.implement [_.isString]) 'string')).toEqual ['string']
+
+   describe 'The function `apply`', !-> ``it``
+      .. 'should apply the given function to the given array of arguments', !->
+         (expect (t.apply ((a, b) -> a + b), [15, 16])).toBe 31
+      .. 'should be curried', !->
+         (expect ((t.apply ((a, b) -> a + b)) [15, 16])).toBe 31
+
+   describe 'The function `guardedCurry`', !-> ``it``
+      f = (a, b) -> a + b
+      .. 'should make a function curried and create a guard on the arguments', !->
+         (expect (t.guardedCurry f, [t.isWholeNumber, t.isWholeNumber], 2)(2)(3)).toBe 5
+      .. 'should throw error when incorrect input is given', !->
+         (expect ( !-> (t.guardedCurry f, [t.isWholeNumber, t.isWholeNumber], 2)('This is a string.')(3))).toThrow 'Method not implemented for this input.'
+
+   describe 'The function `isSingletonOf`', !-> ``it``
+      .. 'should determine if the singleton is of the correct type', !->
+         singleton = {key: 'value'}
+         (expect (t.isSingletonOf 'key', _.isString, singleton)).toBe true
+         (expect (t.isSingletonOf 'key', _.isNumber, singleton)).toBe false
