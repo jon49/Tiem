@@ -39,10 +39,10 @@ describe('How Jobs model is used:', function(){
     var x$;
     x$ = it;
     x$('should return a new array with the exclusively added Job object', function(){
-      var newSomeJob;
-      newSomeJob = Option.Some(Job.create(1, 'Another Comment', [clockState]));
-      expect(Jobs['with'](jobs, newSomeJob)).toEqual({
-        list: [job, newSomeJob.getOrElse({})],
+      var newJob;
+      newJob = Job.create(1, 'Another Comment', [clockState]);
+      expect(Jobs['with'](jobs, newJob)).toEqual({
+        list: [job, newJob],
         ctor: 'Jobs'
       });
     });

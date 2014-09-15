@@ -7,7 +7,8 @@
    _ = require('./../../node_modules/lodash/lodash'),
    environment = require('./../../node_modules/fantasy-environment/fantasy-environment'),
    helpers = require('./../../node_modules/fantasy-helpers/fantasy-helpers'),
-   Option = require('./../../node_modules/fantasy-options/option')
+   Option = require('./../../node_modules/fantasy-options/option'),
+   lens = require('./../../node_modules/fantasy-lenses/lens').Lens.objectLens
 
 // Turns the `throw new Error(s)` statement into an expression. - bilby.js
 var error = function(s){
@@ -190,6 +191,25 @@ var singleton = function(key, value){
    )
 }
 
+// create an object of lens objects
+var makeLenses = zipObjectT(_.identity, lens)
+
+/**
+ * Uses an array of array structure to create constants.
+ * @example tiem.constants([['yep', 'yay!'], ['nope']]) => {yep: _.constant('yay!'), nope: _.constant('nope')}
+ * @param {Array<Object>} array Array of arrays which map to object.
+ * @param {<Object>}
+ */
+var zipObjectArray = zipObjectT(_.identity, _.identity)
+
+/**
+* @param {Date} date Date/Time to convert to fractions of hours.
+* @returns {Number} Fractional representation of hours.
+*/
+var fractionalHours = function (date) {
+return date.getHours() + (date.getMinutes() + date.getSeconds() / 60) / 60
+}
+
 var utils = 
    environment()
    .property('isWholeNumber', isWholeNumber)
@@ -214,6 +234,8 @@ var utils =
    .property('isObjectNamed', guardedCurry(isObjectNamed, [_.isString, _.isPlainObject], 2))
    .property( 'isSingletonOf', guardedCurry(isSingletonOf, [_.isString, _.isFunction, _.isPlainObject], 3))
    .property('singleton', guardedCurry(singleton, [_.isString], 2))
+   .property('makeLenses', makeLenses)
+   .property('zipObjectArray', zipObjectArray)
    .method(
       'tagged',
       identifiers([_.isString, _.isArray, _.isArray]),
@@ -223,6 +245,11 @@ var utils =
       'guardedCurry',
       identifiers([_.isFunction, isArrayOf(_.isFunction), _.isNumber]),
       guardedCurry
+   )
+   .method(
+      'fractionalHours',
+      identifiers([_.isDate]),
+      fractionalHours
    )
 
 module.exports = utils

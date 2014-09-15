@@ -1,9 +1,7 @@
 Option = require './../../node_modules/fantasy-options/option'
-#L = require './../constants/lenses'
 ClockState = require './../models/ClockState'
 Job = require './../models/Job'
 Jobs = require './../models/Jobs'
-#Validation = require './../../node_modules/fantasy-validations/validation'
 
 describe 'How Jobs model is used:', !->
 
@@ -30,11 +28,11 @@ describe 'How Jobs model is used:', !->
 
    describe 'The function `with`', !-> ``it``
       .. 'should return a new array with the exclusively added Job object', !->
-         newSomeJob = Option.Some Job.create 1, 'Another Comment', [clockState]
-         (expect Jobs.with jobs, newSomeJob).toEqual (
+         newJob = Job.create 1, 'Another Comment', [clockState]
+         (expect Jobs.with jobs, newJob).toEqual (
             list: [
                job
-               newSomeJob.getOrElse {}
+               newJob
             ]
             ctor: 'Jobs'
          )

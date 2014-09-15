@@ -321,4 +321,14 @@ describe('How the utilities are used in project:', function(){
       expect(t.isSingletonOf('key', _.isNumber, singleton)).toBe(false);
     });
   });
+  describe('The function `zipObjectArray`', function(){
+    var x$;
+    x$ = it;
+    x$('should zip an array and turn it into an object', function(){
+      expect(t.zipObjectArray(['comment', 'other'])).toEqual({
+        comment: 'comment',
+        other: 'other'
+      });
+    });
+  });
 });

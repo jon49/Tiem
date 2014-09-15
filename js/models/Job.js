@@ -2,12 +2,17 @@ var
    environment = require('./../../node_modules/fantasy-environment/fantasy-environment'),
    t = require('./../utilities/utilities'),
    o = require('./../utilities/utilities-objects'),
-   keys = require('./../constants/object-keys'),
    _ = require('./../../node_modules/lodash/lodash'),
    Option = require('./../../node_modules/fantasy-options/option'),
-   L = require('./../constants/lenses'),
-   k = require('./../constants/constants').k,
    ClockState = require('./ClockState'),
+
+   keys = ['id', 'comment', 'clockState'],
+
+   k = t.zipObjectArray(keys),
+
+   lenses = t.makeLenses(keys),
+
+   L = _.assign({}, ClockState.L, lenses),
 
    //Determine if the job is clocked in or out.
    isClockedIn = function(clockState){
@@ -15,40 +20,41 @@ var
    },
    
    // Toggle the clock in object.
-   updateDate = function(option, date){
-      var result
-      return (
-         result = option.map(function(j){
-            var clockStore = L.clockState.run(j),
-                clockArray = clockStore.get(),
-                previousClockArray = clockArray.slice(0, -1),
-                previousClockState = _.last(clockArray),
-                date_ = date.date
-            return isClockedIn(previousClockState)
-                   ? clockStore.set(previousClockArray.concat(L.out.run(previousClockState).set(Option.Some(date_)))) // Clock out
-                   : clockStore.set(previousClockArray.concat(previousClockState, ClockState.create(date_, Option.None))) // clock in
-            })
-      )
+   updateDate = function(object, date){
+      var clockStore = L.clockState.run(object),
+          clockArray = clockStore.get(),
+          previousClockArray = clockArray.slice(0, -1),
+          previousClockState = _.last(clockArray),
+          date_ = date.date
+      return isClockedIn(previousClockState)
+             ? clockStore.set(previousClockArray.concat(L.out.run(previousClockState).set(Option.Some(date_)))) // Clock out
+             : clockStore.set(previousClockArray.concat(previousClockState, ClockState.create(date_, Option.None))) // clock in
    }, 
 
    jobString = 'Job',
 
-   isSelf = t.isOptionOf(t.isObjectNamed(jobString))
+   isSelf = t.isObjectNamed(jobString)
 
 module.exports = environment()
    .method(
       'create', // {id: Whole Number, comment: String, clockState: Array ClockState}
-      t.identifiers([t.isWholeNumber, _.isString, t.isArrayOf(t.isObjectNamed('ClockState'))]),
-      t.tagged(jobString, keys.jobKeys, [-1, "", function(){return [ClockState(Option.None, Option.None)]}])
+      t.identifiers([
+         t.isWholeNumber,
+         _.isString,
+         t.isArrayOf(ClockState.isSelf)
+      ]),
+      t.tagged(
+         jobString,
+         keys,
+         [-1, "", function(){return [ClockState.create(new Date(), Option.None)]}]
+      )
    )
-   .property(
-      'isSelf',
-      isSelf
-   )
+   .property('isSelf', isSelf)
+   .property('L', lenses)
    .method(
       'with',
       t.identifiers([isSelf, t.isSingletonOf(k.comment, _.isString)]),
-      o.setOption(L.comment)
+      o.set(L.comment)
    )
    .method(
       'with',
@@ -58,12 +64,7 @@ module.exports = environment()
    .method(
       'isClockedIn',
       t.identifiers([isSelf]),
-      function(job){
-         return job.fold(
-            function(j){
-               return isClockedIn(_.last(L.clockState.run(j).get()))
-            },
-            _.constant(false)
-         )
+      function(j){
+         return isClockedIn(_.last(L.clockState.run(j).get()))
       }
    )

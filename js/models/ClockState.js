@@ -1,16 +1,16 @@
 var 
    environment = require('./../../node_modules/fantasy-environment/fantasy-environment'),
-   utils = require('./../utilities/utilities'),
-   keys = require('./../constants/object-keys'),
    _ = require('./../../node_modules/lodash/lodash'),
    Option = require('./../../node_modules/fantasy-options/option'),
+   t = require('./../utilities/utilities'),
 
-   ClockState =
+   keys = ['in', 'out']
+
+module.exports =
       environment() 
       .method(
          'create', // {in: Date, out: Date Option}
-         utils.identifiers([_.isDate, utils.isOptionOf(_.isDate)]),
-         utils.tagged('ClockState', keys.clockStateKeys, [function(){return new Date()}, Option.None])
+         t.identifiers([_.isDate, t.isOptionOf(_.isDate)]),
+         t.tagged('ClockState', keys, [0, Option.None])
       )
-
-module.exports = ClockState
+      .property('L', t.makeLenses(keys))

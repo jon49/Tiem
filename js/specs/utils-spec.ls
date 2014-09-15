@@ -163,3 +163,10 @@ describe 'How the utilities are used in project:', !->
          singleton = {key: 'value'}
          (expect (t.isSingletonOf 'key', _.isString, singleton)).toBe true
          (expect (t.isSingletonOf 'key', _.isNumber, singleton)).toBe false
+
+   describe 'The function `zipObjectArray`', !-> ``it``
+      .. 'should zip an array and turn it into an object', !->
+         (expect t.zipObjectArray ['comment' 'other']).toEqual (
+            comment: 'comment'
+            other: 'other'
+         )

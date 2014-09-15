@@ -1,5 +1,4 @@
 Option = require './../../node_modules/fantasy-options/option'
-L = require './../constants/lenses'
 JobSetting = require './../models/JobSetting'
 JobSettings = require './../models/JobSettings'
 Validation = require './../../node_modules/fantasy-validations/validation'
@@ -50,11 +49,11 @@ describe 'How Job Settings model is used:', !->
 
    describe 'The function `with`', !-> ``it``
       .. 'should return a new array with the exclusively added JobSetting object', !->
-         newSomeJobSetting = Option.Some JobSetting.create JobSetting.createId!, 'Job1', true
-         (expect JobSettings.with jobSettings, newSomeJobSetting).toEqual (
+         newJobSetting = JobSetting.create JobSetting.createId!, 'Job1', true
+         (expect JobSettings.with jobSettings, newJobSetting).toEqual (
             list: [
                jobSetting
-               newSomeJobSetting.getOrElse {}
+               newJobSetting
             ]
             ctor: 'JobSettings'
          )

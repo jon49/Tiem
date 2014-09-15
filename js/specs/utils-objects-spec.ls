@@ -23,10 +23,10 @@ describe 'How the utilities are used in project:', !->
 
    describe 'The function `setNow`', !-> ``it``
       .. 'should set the specified object without changing the original', !->
-         (expect (t.setNow sexyLens, o, 'F')).toEqual {name: {first: 'Jon', last: 'Nyman'}, sex: 'F'}
+         (expect (t.setNow sexyLens, o, {sex: 'F'})).toEqual {name: {first: 'Jon', last: 'Nyman'}, sex: 'F'}
          (expect o).toEqual {name: {first: 'Jon', last: 'Nyman'}, sex: 'M'}
       .. 'should have curried version `set`', !->
-         (expect ((t.set sexyLens) o) 'F').toEqual {name: {first: 'Jon', last: 'Nyman'}, sex: 'F'}
+         (expect ((t.set sexyLens) o) {sex: 'F'}).toEqual {name: {first: 'Jon', last: 'Nyman'}, sex: 'F'}
 
    describe 'The function `toOption`', !-> ``it``
       .. 'should return None when value is empty', !->
@@ -42,9 +42,4 @@ describe 'How the utilities are used in project:', !->
 
    describe 'The function `xAddToList`', !-> ``it``
       .. 'should return new list with replaced object', !->
-         (expect (t.xAddToList idLens, (Option.Some {id: 1, name: 'Millie'}), objects)).toEqual [{id: 0, name: 'Jon'}, {id: 1, name: 'Millie'}]
-
-   describe 'The function `setOption`', !-> ``it``
-      .. 'should set item in option', !->
-         (expect (t.setOption firstName, option, {first: 'Adalida'})).toEqual Option.Some {name: {first: 'Adalida', last: 'Nyman'}, sex: 'M'}
-         (expect option).toEqual Option.Some o
+         (expect (t.xAddToList idLens, {id: 1, name: 'Millie'}, objects)).toEqual [{id: 0, name: 'Jon'}, {id: 1, name: 'Millie'}]

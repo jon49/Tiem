@@ -3,12 +3,14 @@ var
    environment = require('./../../node_modules/fantasy-environment/fantasy-environment'),
    t = require('./../utilities/utilities'),
    o = require('./../utilities/utilities-objects'),
-   keys = require('./../constants/object-keys'),
-   L = require('./../constants/lenses'),
-   k = require('./../constants/constants').k,
    Validation = require('./../../node_modules/fantasy-validations/validation'),
+   JobSetting = require('./JobSetting'),
 
    jobSettings = 'JobSettings',
+
+   keys = ['list'],
+
+   L = _.assign(t.makeLenses(keys), JobSetting.L),
 
    getList = o.get(L.list),
 
@@ -17,7 +19,7 @@ var
       var list = getList(objectList),
           id_ = parseInt(id)
       return (
-         !_.any(list, t.singleton(k.id, id_)) ?
+         !_.any(list, t.singleton('id', id_)) ?
             Validation.Failure(['No such ID number exists'])
          : Validation.Success(id_)
       )
@@ -53,7 +55,7 @@ module.exports = ( JobSettings =
    .method(
       'create', // {list: Array JobSetting}
       t.identifiers([t.isArrayOf(t.isObjectNamed('JobSetting'))]),
-      t.tagged('JobSettings', keys.listObjects, [[]])
+      t.tagged('JobSettings', keys, [[]])
    )
    .property(
       'isSelf',
@@ -71,7 +73,7 @@ module.exports = ( JobSettings =
    )
    .method(
       'with',
-      t.identifiers([isSelf, t.isOptionOf(t.isObjectNamed('JobSetting'))]),
+      t.identifiers([isSelf, t.isObjectNamed('JobSetting')]),
       function(jobSettings, option){
          return JobSettings.create(o.xAddToListNow(L.id, option, L.list.run(jobSettings).get()))
       }

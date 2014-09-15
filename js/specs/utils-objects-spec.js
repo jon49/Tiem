@@ -43,7 +43,9 @@ describe('How the utilities are used in project:', function(){
     var x$;
     x$ = it;
     x$('should set the specified object without changing the original', function(){
-      expect(t.setNow(sexyLens, o, 'F')).toEqual({
+      expect(t.setNow(sexyLens, o, {
+        sex: 'F'
+      })).toEqual({
         name: {
           first: 'Jon',
           last: 'Nyman'
@@ -59,7 +61,9 @@ describe('How the utilities are used in project:', function(){
       });
     });
     x$('should have curried version `set`', function(){
-      expect(t.set(sexyLens)(o)('F')).toEqual({
+      expect(t.set(sexyLens)(o)({
+        sex: 'F'
+      })).toEqual({
         name: {
           first: 'Jon',
           last: 'Nyman'
@@ -97,10 +101,10 @@ describe('How the utilities are used in project:', function(){
     var x$;
     x$ = it;
     x$('should return new list with replaced object', function(){
-      expect(t.xAddToList(idLens, Option.Some({
+      expect(t.xAddToList(idLens, {
         id: 1,
         name: 'Millie'
-      }), objects)).toEqual([
+      }, objects)).toEqual([
         {
           id: 0,
           name: 'Jon'
@@ -109,22 +113,6 @@ describe('How the utilities are used in project:', function(){
           name: 'Millie'
         }
       ]);
-    });
-  });
-  describe('The function `setOption`', function(){
-    var x$;
-    x$ = it;
-    x$('should set item in option', function(){
-      expect(t.setOption(firstName, option, {
-        first: 'Adalida'
-      })).toEqual(Option.Some({
-        name: {
-          first: 'Adalida',
-          last: 'Nyman'
-        },
-        sex: 'M'
-      }));
-      expect(option).toEqual(Option.Some(o));
     });
   });
 });
